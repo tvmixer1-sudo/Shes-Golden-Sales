@@ -2,6 +2,6 @@
 // url: the Web app URL from your Apps Script deployment (ends in /exec)
 // key: the password you set at the top of your script
 window.SHEET_CONFIG = {
-  url: "",
-  key: ""
+  url: "https://script.google.com/macros/s/AKfycbwpHOdBrnRbk2mQsXGcQ2FalNPpjlYX7tl4BsdEDr9KS1pmZDNDnnpOpCk8pJlskcwa/exec",
+  key: "shesgolden"
 };
