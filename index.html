@@ -133,6 +133,8 @@ label, .label {
   outline: none;
   font-variant-numeric: tabular-nums;
 }
+.locin { padding: 0 12px; border-radius: 10px; }
+.locin input { font: 500 1rem var(--font-body); padding: 10px 0; }
 .compact { flex-direction: row; align-items: center; justify-content: space-between; gap: 12px; }
 .compact .input { width: 120px; padding: 0 10px; border-radius: 10px; }
 .compact .input input { font-size: 1.05rem; padding: 6px 0; }
@@ -333,6 +335,12 @@ footer { color: var(--muted); font-size: 0.8rem; }
       <p class="note" id="a-note"></p>
     </div>
 
+    <div class="field">
+      <label for="a-loc">Location</label>
+      <div class="input locin"><input id="a-loc" type="text" list="loc-list" autocomplete="off" maxlength="40" placeholder="Where are you selling today?"></div>
+      <datalist id="loc-list"></datalist>
+    </div>
+
     <div class="field compact">
       <label for="a-tax">Sales tax</label>
       <div class="input"><input id="a-tax" inputmode="decimal" autocomplete="off" value="0"><span>%</span></div>
@@ -424,6 +432,7 @@ footer { color: var(--muted); font-size: 0.8rem; }
 //# sourceMappingURL=pdf-lib.min.js.map
 
 </script>
+<script src="config.js"></script>
 <script>
 (function () {
   var money = new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" });
@@ -583,6 +592,28 @@ footer { color: var(--muted); font-size: 0.8rem; }
     }
   }
 
+  /* ---------- Location ---------- */
+  var LOC_KEY = "last-location", LOC_RECENT = "recent-locations";
+  function recentLocs() { try { var a = JSON.parse(localStorage.getItem(LOC_RECENT) || "[]"); return Array.isArray(a) ? a : []; } catch (e) { return []; } }
+  function renderLocList() {
+    var dl = $("loc-list");
+    dl.innerHTML = "";
+    recentLocs().forEach(function (n) { var o = document.createElement("option"); o.value = n; dl.appendChild(o); });
+  }
+  function currentLoc() { return $("a-loc").value.trim().slice(0, 40); }
+  function rememberLoc() {
+    var n = currentLoc();
+    try { localStorage.setItem(LOC_KEY, $("a-loc").value); } catch (e) {}
+    if (!n) return;
+    var list = recentLocs().filter(function (x) { return x.toLowerCase() !== n.toLowerCase(); });
+    list.unshift(n);
+    try { localStorage.setItem(LOC_RECENT, JSON.stringify(list.slice(0, 8))); } catch (e) {}
+    renderLocList();
+  }
+  try { $("a-loc").value = localStorage.getItem(LOC_KEY) || ""; } catch (e) {}
+  $("a-loc").addEventListener("change", rememberLoc);
+  renderLocList();
+
   /* ---------- Receipt ---------- */
   var RW = 40;
   function line(l, r) {
@@ -615,7 +646,10 @@ footer { color: var(--muted); font-size: 0.8rem; }
     var tax = Math.round(after * taxPct / 100);
 
     var when = new Date().toLocaleString("en-US", { weekday: "short", year: "numeric", month: "short", day: "numeric", hour: "numeric", minute: "2-digit" });
-    var out = ["RECEIPT", when, rule("="), ""];
+    var loc = currentLoc();
+    var out = ["RECEIPT", when];
+    if (loc) out.push(loc.length > RW ? loc.slice(0, RW) : loc);
+    out.push(rule("="), "");
     items.forEach(function (it) {
       out.push(line(it.name, money.format(it.c / 100)));
       if (pct > 0) out.push(line("  after " + pctText(pct) + " off", money.format(it.a / 100)));
@@ -698,6 +732,7 @@ footer { color: var(--muted); font-size: 0.8rem; }
       msg.textContent = "Enter at least one price and a discount first.";
       return;
     }
+    rememberLoc();
     sendToSheet(collectReceipt());
     var name = receiptName();
     makePdf(text).then(function (bytes) {
@@ -733,7 +768,14 @@ footer { color: var(--muted); font-size: 0.8rem; }
   function lsDel(k) { try { localStorage.removeItem(k); } catch (e) {} }
   function readQ() { try { var q = JSON.parse(lsGet(QUEUE_KEY) || "[]"); return Array.isArray(q) ? q : []; } catch (e) { return []; } }
   function writeQ(q) { lsSet(QUEUE_KEY, JSON.stringify(q)); }
+  function fileCfg() {
+    var c = window.SHEET_CONFIG || {};
+    var u = String(c.url || "").trim(), k = String(c.key || "");
+    return u && k ? { url: u, key: k } : null;
+  }
   function getCfg() {
+    var f = fileCfg();
+    if (f) return f;
     var u = (lsGet(SHEET_URL_KEY) || "").trim(), k = lsGet(SHEET_KEY_KEY) || "";
     return u && k ? { url: u, key: k } : null;
   }
@@ -768,6 +810,7 @@ footer { color: var(--muted); font-size: 0.8rem; }
     if (!items.length) return null;
     var tax = Math.round(after * taxPct / 100);
     return {
+      location: currentLoc(),
       id: "r" + Date.now().toString(36) + Math.random().toString(36).slice(2, 6),
       time: new Date().toISOString(),
       items: items,
@@ -856,6 +899,7 @@ footer { color: var(--muted); font-size: 0.8rem; }
     $("sheet-key").value = "";
     idleStatus();
   });
+  if (fileCfg()) { $("sheet-toggle").hidden = true; $("sheet-form").hidden = true; }
   window.addEventListener("online", flushQueue);
   idleStatus();
   flushQueue();
