@@ -211,6 +211,7 @@ label, .label {
 .pricebox { display: flex; align-items: center; gap: 4px; min-width: 0; }
 .pricebox span { font-family: var(--font-mono); color: var(--muted); font-size: 0.95rem; }
 .pricebox input {
+  text-align: right;
   flex: 1;
   min-width: 0;
   border: 0;
@@ -591,6 +592,17 @@ footer { color: var(--muted); font-size: 0.8rem; }
       taxLine.textContent = money.format(afterCents / 100) + " + " + money.format(taxCents / 100) + " tax (" + pctText(taxPct) + ")";
     }
   }
+
+  /* Tapping a number field selects its contents, so typing replaces the old number. */
+  document.addEventListener("focusin", function (e) {
+    var t = e.target;
+    if (!t || !t.classList) return;
+    if (t.classList.contains("price") || t.id === "a-pct" || t.id === "a-tax") {
+      setTimeout(function () {
+        try { t.select(); t.setSelectionRange(0, String(t.value).length); } catch (err) {}
+      }, 0);
+    }
+  });
 
   /* ---------- Location ---------- */
   var LOC_KEY = "last-location", LOC_RECENT = "recent-locations";
