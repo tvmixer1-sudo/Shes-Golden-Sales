@@ -237,6 +237,16 @@ label, .label {
 }
 .addbtn:hover { background: var(--accent-soft); }
 .addbtn:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.sheetbox { display: flex; flex-direction: column; gap: 8px; }
+.sheetrow { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+.sheetstat { font-size: 0.85rem; color: var(--muted); min-width: 0; overflow-wrap: anywhere; }
+.sheetstat.ok { color: var(--accent); }
+.sheetstat.bad { color: var(--save); }
+.sheetform { display: flex; flex-direction: column; gap: 8px; }
+.sheetform .input { padding: 0 12px; border-radius: 10px; }
+.sheetform .input input { font: 400 0.9rem var(--font-mono); padding: 10px 0; }
+.sheetbtns { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; }
+.savebtn.small { padding: 0 18px; min-height: 44px; font-size: 0.95rem; }
 .savebtn {
   font: 600 1rem var(--font-body);
   color: var(--accent-fg);
@@ -353,6 +363,22 @@ footer { color: var(--muted); font-size: 0.8rem; }
     <div class="field" id="receipt-box" hidden>
       <button class="savebtn" type="button" id="save-receipt">Save receipt</button>
       <p class="note" id="save-msg" role="status"></p>
+      <div class="sheetbox">
+        <div class="sheetrow">
+          <span class="sheetstat" id="sheet-stat" role="status">Google Sheet: not connected</span>
+          <button class="linkbtn" type="button" id="sheet-toggle" aria-expanded="false" aria-controls="sheet-form">Set up</button>
+        </div>
+        <div class="sheetform" id="sheet-form" hidden>
+          <label for="sheet-url">Web app address</label>
+          <div class="input"><input id="sheet-url" type="url" inputmode="url" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="https://script.google.com/macros/s/.../exec"></div>
+          <label for="sheet-key">Password</label>
+          <div class="input"><input id="sheet-key" type="text" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="The password from your script"></div>
+          <div class="sheetbtns">
+            <button class="savebtn small" type="button" id="sheet-save">Save connection</button>
+            <button class="linkbtn" type="button" id="sheet-off">Disconnect</button>
+          </div>
+        </div>
+      </div>
     </div>
   </section>
 
@@ -651,16 +677,15 @@ footer { color: var(--muted); font-size: 0.8rem; }
       });
     });
   }
-  function saveBlob(filename, bytes) {
-    var blob = new Blob([bytes], { type: "application/pdf" });
-    var url = URL.createObjectURL(blob);
+  function blobLink(filename, bytes, label) {
+    var url = URL.createObjectURL(new Blob([bytes], { type: "application/pdf" }));
     var a = document.createElement("a");
     a.href = url;
+    a.target = "_blank";
+    a.rel = "noopener";
     a.download = filename;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    setTimeout(function () { URL.revokeObjectURL(url); }, 10000);
+    a.textContent = label;
+    return a;
   }
   $("receipt-box").hidden = false;
   $("save-receipt").addEventListener("click", function () {
@@ -673,14 +698,167 @@ footer { color: var(--muted); font-size: 0.8rem; }
       msg.textContent = "Enter at least one price and a discount first.";
       return;
     }
+    sendToSheet(collectReceipt());
+    var name = receiptName();
     makePdf(text).then(function (bytes) {
-      saveBlob(receiptName(), bytes);
-      msg.textContent = "Receipt created.";
+      var file = null;
+      try { file = new File([bytes], name, { type: "application/pdf" }); } catch (e) {}
+      var canShare = file && navigator.canShare && navigator.share && navigator.canShare({ files: [file] });
+      function fallback() {
+        msg.className = "note";
+        msg.textContent = "Receipt ready. ";
+        var link = blobLink(name, bytes, "Tap to open receipt");
+        msg.appendChild(link);
+        link.click();
+      }
+      if (canShare) {
+        return navigator.share({ files: [file], title: name }).then(function () {
+          msg.textContent = "Receipt shared.";
+        }, function (err) {
+          if (err && err.name === "AbortError") return;
+          fallback();
+        });
+      }
+      fallback();
     }, function () {
       msg.className = "note warn";
       msg.textContent = "Couldn't build the PDF. Reload the page and try again.";
     });
   });
+
+  /* ---------- Google Sheet sync ---------- */
+  var SHEET_URL_KEY = "sheet-url", SHEET_KEY_KEY = "sheet-key", QUEUE_KEY = "sheet-queue";
+  function lsGet(k) { try { return localStorage.getItem(k); } catch (e) { return null; } }
+  function lsSet(k, v) { try { localStorage.setItem(k, v); } catch (e) {} }
+  function lsDel(k) { try { localStorage.removeItem(k); } catch (e) {} }
+  function readQ() { try { var q = JSON.parse(lsGet(QUEUE_KEY) || "[]"); return Array.isArray(q) ? q : []; } catch (e) { return []; } }
+  function writeQ(q) { lsSet(QUEUE_KEY, JSON.stringify(q)); }
+  function getCfg() {
+    var u = (lsGet(SHEET_URL_KEY) || "").trim(), k = lsGet(SHEET_KEY_KEY) || "";
+    return u && k ? { url: u, key: k } : null;
+  }
+  function sheetStatus(text, kind) {
+    var el = $("sheet-stat");
+    el.textContent = text;
+    el.className = "sheetstat" + (kind ? " " + kind : "");
+  }
+  function idleStatus() {
+    var q = readQ();
+    if (!getCfg()) { sheetStatus("Google Sheet: not connected"); return; }
+    if (q.length) sheetStatus("Google Sheet: " + q.length + " receipt" + (q.length > 1 ? "s" : "") + " waiting to send", "bad");
+    else sheetStatus("Google Sheet: connected", "ok");
+  }
+
+  function collectReceipt() {
+    var pct = num($("a-pct").value);
+    if (isNaN(pct)) return null;
+    if (pct > 100) pct = 100;
+    var taxPct = num($("a-tax").value);
+    if (isNaN(taxPct)) taxPct = 0;
+    var list = rows(), items = [], before = 0, after = 0;
+    for (var r = 0; r < list.length; r++) {
+      var p = num(list[r].querySelector(".price").value);
+      if (isNaN(p)) continue;
+      var c = Math.round(p * 100);
+      var a = Math.round(c * (100 - pct) / 100);
+      items.push({ name: list[r].querySelector(".name").value.trim() || ("Item " + (r + 1)), price: c / 100, after: a / 100 });
+      before += c;
+      after += a;
+    }
+    if (!items.length) return null;
+    var tax = Math.round(after * taxPct / 100);
+    return {
+      id: "r" + Date.now().toString(36) + Math.random().toString(36).slice(2, 6),
+      time: new Date().toISOString(),
+      items: items,
+      subtotal: before / 100,
+      discountPct: pct,
+      discountAmt: (before - after) / 100,
+      taxPct: taxPct,
+      tax: tax / 100,
+      total: (after + tax) / 100
+    };
+  }
+
+  function postReceipt(cfg, receipt) {
+    var body = JSON.stringify({ key: cfg.key, receipt: receipt });
+    return fetch(cfg.url, { method: "POST", body: body, redirect: "follow" }).then(function (res) {
+      return res.json().then(function (j) { return j; }, function () {
+        return { ok: false, error: "Google didn't accept it. Check that the web app is shared with Anyone." };
+      });
+    }, function () {
+      /* A blocked reply looks the same as no network. Send once more without reading the reply. */
+      return fetch(cfg.url, { method: "POST", body: body, mode: "no-cors" }).then(function () { return { ok: true }; });
+    });
+  }
+
+  var flushing = false;
+  function flushQueue() {
+    var cfg = getCfg();
+    if (!cfg || flushing || !readQ().length) { idleStatus(); return; }
+    flushing = true;
+    sheetStatus("Google Sheet: sending...");
+    (function next() {
+      var q = readQ();
+      if (!q.length) { flushing = false; sheetStatus("Google Sheet: receipt added", "ok"); return; }
+      postReceipt(cfg, q[0]).then(function (res) {
+        if (res && res.ok) {
+          writeQ(readQ().filter(function (x) { return x.id !== q[0].id; }));
+          next();
+        } else {
+          flushing = false;
+          var why = res && res.error ? res.error : "unknown problem";
+          sheetStatus("Google Sheet: not added (" + why + "). Receipt is saved on this phone and will retry.", "bad");
+        }
+      }, function () {
+        flushing = false;
+        sheetStatus("Google Sheet: offline. " + readQ().length + " receipt" + (readQ().length > 1 ? "s" : "") + " will send when you're back online.", "bad");
+      });
+    })();
+  }
+  function sendToSheet(receipt) {
+    if (!receipt || !getCfg()) return;
+    var q = readQ();
+    q.push(receipt);
+    writeQ(q);
+    flushQueue();
+  }
+
+  $("sheet-toggle").addEventListener("click", function () {
+    var form = $("sheet-form");
+    form.hidden = !form.hidden;
+    $("sheet-toggle").setAttribute("aria-expanded", String(!form.hidden));
+    $("sheet-toggle").textContent = form.hidden ? "Set up" : "Close";
+    if (!form.hidden) {
+      $("sheet-url").value = lsGet(SHEET_URL_KEY) || "";
+      $("sheet-key").value = lsGet(SHEET_KEY_KEY) || "";
+    }
+  });
+  $("sheet-save").addEventListener("click", function () {
+    var u = $("sheet-url").value.trim(), k = $("sheet-key").value.trim();
+    if (!/^https:\/\/script\.google\.com\/.+\/exec$/.test(u)) {
+      sheetStatus("That address should start with https://script.google.com and end with /exec.", "bad");
+      return;
+    }
+    if (!k) { sheetStatus("Enter the password from your script.", "bad"); return; }
+    lsSet(SHEET_URL_KEY, u);
+    lsSet(SHEET_KEY_KEY, k);
+    $("sheet-form").hidden = true;
+    $("sheet-toggle").setAttribute("aria-expanded", "false");
+    $("sheet-toggle").textContent = "Set up";
+    idleStatus();
+    flushQueue();
+  });
+  $("sheet-off").addEventListener("click", function () {
+    lsDel(SHEET_URL_KEY);
+    lsDel(SHEET_KEY_KEY);
+    $("sheet-url").value = "";
+    $("sheet-key").value = "";
+    idleStatus();
+  });
+  window.addEventListener("online", flushQueue);
+  idleStatus();
+  flushQueue();
 
   /* ---------- Find the percent ---------- */
   function calcB() {
