@@ -1,6 +1,6 @@
 {
-  "name": "Discount Calculator",
-  "short_name": "Discounts",
+  "name": "She's Golden Calculator",
+  "short_name": "She's Golden",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",
