@@ -265,6 +265,17 @@ label, .label {
 .savebtn.small { padding: 0 18px; min-height: 44px; font-size: 0.95rem; }
 .addrow { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; }
 .addrow .addbtn { font-size: 0.9rem; padding: 0 4px; }
+.added-toast { position: fixed; z-index: 200; left: 50%; top: 34%; transform: translate(-50%, -50%); width: min(86vw, 340px); box-sizing: border-box; padding: 20px 18px 18px; border-radius: 22px; background: var(--accent); color: var(--accent-fg); text-align: center; box-shadow: 0 14px 40px rgba(0, 0, 0, 0.35); pointer-events: none; display: flex; flex-direction: column; align-items: center; gap: 2px; }
+.added-toast[hidden] { display: none; }
+.at-check { width: 48px; height: 48px; border-radius: 50%; background: var(--accent-fg); color: var(--accent); font: 700 1.8rem/48px var(--font-body); margin-bottom: 4px; }
+.at-title { font: 700 0.85rem var(--font-body); letter-spacing: 0.14em; text-transform: uppercase; opacity: 0.85; }
+.at-name { font: 700 1.35rem/1.2 var(--font-display); overflow-wrap: anywhere; }
+.at-price { font: 700 1.9rem var(--font-display); font-variant-numeric: tabular-nums; }
+.at-note { font: 600 0.9rem var(--font-body); min-height: 1.2em; opacity: 0.9; }
+@media (prefers-reduced-motion: no-preference) {
+  .added-toast.pop { animation: atpop .18s ease-out; }
+  @keyframes atpop { from { transform: translate(-50%, -50%) scale(0.9); opacity: 0.4; } to { transform: translate(-50%, -50%) scale(1); opacity: 1; } }
+}
 .picker { position: fixed; inset: 0; z-index: 90; background: var(--bg); color: var(--fg); display: flex; flex-direction: column; gap: 10px; padding-top: calc(env(safe-area-inset-top, 0px) + 12px); padding-bottom: env(safe-area-inset-bottom, 0px); padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
 .picker[hidden] { display: none; }
 .picker-head { display: flex; align-items: center; gap: 12px; }
@@ -452,6 +463,13 @@ footer { color: var(--muted); font-size: 0.8rem; }
   <footer>A sample price is filled in so you can see how it works. Type over it, and add more items as needed. Each item's discounted price is rounded to the cent, and the total is the sum of those prices.</footer>
 </div>
 
+<div class="added-toast" id="added-toast" hidden role="status" aria-live="polite">
+  <div class="at-check" aria-hidden="true">&#10003;</div>
+  <div class="at-title">Added</div>
+  <div class="at-name" id="at-name"></div>
+  <div class="at-price" id="at-price"></div>
+  <div class="at-note" id="at-note"></div>
+</div>
 <div class="picker" id="picker" hidden role="dialog" aria-modal="true" aria-label="Find an item">
   <div class="picker-head">
     <div class="input picker-search"><input id="pick-q" type="search" placeholder="Search items" autocomplete="off" autocapitalize="off" spellcheck="false" aria-label="Search items"></div>
@@ -10807,6 +10825,21 @@ function findAlignmentPattern(matrix, alignmentPatternQuads, topRight, topLeft, 
   window.addEventListener("online", refreshCatalog);
   refreshCatalog();
 
+  /* ---------- Big "Added" pop-up ---------- */
+  var toastTimer = null;
+  function showAdded(name, price, count, sold) {
+    var t = $("added-toast");
+    $("at-name").textContent = name;
+    $("at-price").textContent = money.format(Number(price));
+    $("at-note").textContent = (sold ? "Marked sold out. " : "") + (count > 1 ? count + " items added" : "");
+    t.hidden = false;
+    t.classList.remove("pop");
+    void t.offsetWidth;
+    t.classList.add("pop");
+    if (toastTimer) clearTimeout(toastTimer);
+    toastTimer = setTimeout(function () { t.hidden = true; }, 1500);
+  }
+
   /* ---------- Find an item (search and tap to add) ---------- */
   var pickCat = "All", pickCount = 0;
   function catList() {
@@ -10861,6 +10894,7 @@ function findAlignmentPattern(matrix, alignmentPatternQuads, topRight, topLeft, 
   function pickItem(it) {
     addScanned({ id: it.id, name: it.name, price: it.price.toFixed(2) });
     pickCount++;
+    showAdded(it.name, it.price, pickCount, it.sold);
     $("pick-msg").textContent = "Added: " + it.name + " " + money.format(it.price) + (it.sold ? " (marked sold out)" : "") + "   (" + pickCount + " added)";
     try { if (navigator.vibrate) navigator.vibrate(40); } catch (e) {}
   }
@@ -10938,6 +10972,7 @@ function findAlignmentPattern(matrix, alignmentPatternQuads, topRight, topLeft, 
     if (item.missing) { scanMsg.textContent = "Item " + item.missing + " isn't in your item list. Check the Products tab in your sheet."; return false; }
     addScanned(item);
     addedCount++;
+    showAdded(item.name, item.price, addedCount, item.sold);
     scanMsg.textContent = "Added: " + item.name + " " + money.format(Number(item.price)) + (item.sold ? " (marked sold out)" : "") + "  (" + addedCount + " scanned)";
     try { if (navigator.vibrate) navigator.vibrate(60); } catch (e) {}
     return true;
