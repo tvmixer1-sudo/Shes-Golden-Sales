@@ -10886,7 +10886,7 @@ function findAlignmentPattern(matrix, alignmentPatternQuads, topRight, topLeft, 
   });
 
   /* ---------- Payment type ---------- */
-  var CARD_FEE_PCT = 3;   /* surcharge added when the customer pays by credit */
+  var CARD_FEE_PCT = 0;   /* surcharge % added when the customer pays by credit (0 = none) */
   function payType() { return $("a-pay").value; }
   function payLabel() { var o = $("a-pay"); return o.options[o.selectedIndex].text; }
   function cardFee(afterCents, taxCents) { return payType() === "credit" ? Math.round((afterCents + taxCents) * CARD_FEE_PCT / 100) : 0; }
