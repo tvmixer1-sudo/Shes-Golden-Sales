@@ -1,4 +1,4 @@
-var CACHE = "discount-calc-v13";
+var CACHE = "discount-calc-v14";
 var CORE = ["./", "index.html", "manifest.webmanifest", "config.js", "icon-192.png", "icon-512.png", "apple-touch-icon.png"];
 self.addEventListener("install", function (e) {
   e.waitUntil(caches.open(CACHE).then(function (c) { return c.addAll(CORE); }).then(function () { return self.skipWaiting(); }));

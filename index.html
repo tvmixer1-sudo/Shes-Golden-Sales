@@ -263,7 +263,29 @@ label, .label {
 .sheetform .input input { font: 400 0.9rem var(--font-mono); padding: 10px 0; }
 .sheetbtns { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; }
 .savebtn.small { padding: 0 18px; min-height: 44px; font-size: 0.95rem; }
-.addrow { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.addrow { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; }
+.addrow .addbtn { font-size: 0.9rem; padding: 0 4px; }
+.picker { position: fixed; inset: 0; z-index: 90; background: var(--bg); color: var(--fg); display: flex; flex-direction: column; gap: 10px; padding-top: calc(env(safe-area-inset-top, 0px) + 12px); padding-bottom: env(safe-area-inset-bottom, 0px); padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+.picker[hidden] { display: none; }
+.picker-head { display: flex; align-items: center; gap: 12px; }
+.picker-search { flex: 1; min-width: 0; padding: 0 12px; border-radius: 12px; }
+.picker-search input { font: 500 1rem var(--font-body); padding: 12px 0; }
+.picker-done { flex: none; min-height: 44px; padding: 0 18px; border: 0; border-radius: 12px; background: var(--accent); color: var(--accent-fg); font: 600 1rem var(--font-body); cursor: pointer; }
+.picker-cats { display: flex; gap: 5px; flex-wrap: wrap; }
+.pcat { font: 500 0.8rem var(--font-body); color: var(--accent); background: var(--accent-soft); border: 0; border-radius: 999px; padding: 0 9px; min-height: 36px; cursor: pointer; }
+.pcat[aria-pressed="true"] { background: var(--accent); color: var(--accent-fg); }
+.pcat:focus-visible, .pick-item:focus-visible, .picker-done:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.picker-msg { margin: 0; min-height: 1.3em; font-size: 0.9rem; color: var(--accent); }
+.picker-list { list-style: none; margin: 0; padding: 0; flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 6px; overscroll-behavior: contain; }
+.pick-item { width: 100%; display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 2px 12px; align-items: center; text-align: left; background: var(--surface); color: var(--fg); border: 1.5px solid var(--line); border-radius: 12px; padding: 10px 14px; min-height: 56px; font: 500 1rem var(--font-body); cursor: pointer; }
+.pick-item:active { border-color: var(--accent); }
+.pick-item .pn { overflow-wrap: anywhere; }
+.pick-item .pp { font: 500 1rem var(--font-mono); font-variant-numeric: tabular-nums; }
+.pick-item .pm { grid-column: 1 / -1; font-size: 0.78rem; color: var(--muted); }
+.pick-item.sold { opacity: 0.6; }
+.pick-item .pm .tagsold { color: var(--save); font-weight: 600; }
+.picker-foot { margin: 0; padding-bottom: 8px; font-size: 0.78rem; color: var(--muted); }
+.picker-empty { color: var(--muted); padding: 16px 4px; }
 .scanbtn { color: var(--accent-fg); background: var(--accent); border-style: solid; }
 .scanbtn:hover { background: var(--accent); filter: brightness(1.08); }
 .scanner { position: fixed; inset: 0; z-index: 100; background: #000; color: #fff; display: flex; flex-direction: column; align-items: center; justify-content: center; }
@@ -383,6 +405,7 @@ footer { color: var(--muted); font-size: 0.8rem; }
       <div class="items" id="items" role="group" aria-labelledby="items-label"></div>
       <div class="addrow">
         <button class="addbtn" type="button" id="add-item">+ Add item</button>
+        <button class="addbtn" type="button" id="pick-open">Find item</button>
         <button class="addbtn scanbtn" type="button" id="scan-open">Scan item</button>
       </div>
     </div>
@@ -429,6 +452,16 @@ footer { color: var(--muted); font-size: 0.8rem; }
   <footer>A sample price is filled in so you can see how it works. Type over it, and add more items as needed. Each item's discounted price is rounded to the cent, and the total is the sum of those prices.</footer>
 </div>
 
+<div class="picker" id="picker" hidden role="dialog" aria-modal="true" aria-label="Find an item">
+  <div class="picker-head">
+    <div class="input picker-search"><input id="pick-q" type="search" placeholder="Search items" autocomplete="off" autocapitalize="off" spellcheck="false" aria-label="Search items"></div>
+    <button class="picker-done" type="button" id="pick-done">Done</button>
+  </div>
+  <div class="picker-cats" id="pick-cats" role="group" aria-label="Category"></div>
+  <p class="picker-msg" id="pick-msg" role="status">Tap an item to add it to the sale.</p>
+  <ul class="picker-list" id="pick-list"></ul>
+  <p class="picker-foot" id="pick-foot"></p>
+</div>
 <div class="scanner" id="scanner" hidden role="dialog" aria-modal="true" aria-label="Scan an item QR code">
   <video id="scan-video" playsinline muted></video>
   <div class="scan-frame" aria-hidden="true"></div>
@@ -10731,6 +10764,128 @@ function findAlignmentPattern(matrix, alignmentPatternQuads, topRight, topLeft, 
     addRow("", true);
   });
 
+  /* ---------- Item list (built-in copy, refreshed from the Google Sheet) ---------- */
+  var BUILT_IN_ITEMS = [["SG001","Sunlit Sage Pearl Necklace","Necklaces",132.0,0],["SG002","Evergreen Star Pearl Necklace","Necklaces",122.0,0],["SG003","Pearl Essence Necklace","Necklaces",122.0,0],["SG004","Petals of Pearl Necklace","Necklaces",102.0,0],["SG005","Blue Lagoon Pearl Necklace","Necklaces",102.0,0],["SG006","The Golden Standard Necklace","Necklaces",88.0,0],["SG007","Luna Horn Necklace","Necklaces",88.0,0],["SG008","L.O.V.E Necklace","Necklaces",82.0,0],["SG009","Opal Sky Necklace","Necklaces",78.0,0],["SG010","True North Compass Necklace","Necklaces",72.0,0],["SG011","Golden Promise Necklace","Necklaces",72.0,0],["SG012","Cosmic Keepsake Necklace","Necklaces",68.0,0],["SG013","Guiding Light - Harmony Necklace","Necklaces",68.0,0],["SG014","Blush Heart - Harmony Necklace","Necklaces",68.0,0],["SG015","First Bloom - Harmony Necklace","Necklaces",68.0,0],["SG016","Harbor Light - Harmony Necklace","Necklaces",68.0,0],["SG017","Turquoise Star - Harmony Necklace","Necklaces",68.0,0],["SG018","Fortune Found Necklace","Necklaces",68.0,0],["SG019","Forever Yours Locket","Necklaces",68.0,0],["SG020","Soleil Necklace","Necklaces",68.0,0],["SG021","Ocean Muse Necklace","Necklaces",68.0,0],["SG022","Everly Lariat Necklace","Necklaces",68.0,0],["SG023","The Maren Necklace","Necklaces",66.0,0],["SG024","The Evermore Necklace","Necklaces",62.0,0],["SG025","Golden Drift Necklace","Necklaces",62.0,0],["SG026","Camille Lariat Necklace","Necklaces",62.0,0],["SG027","Wild Luck Necklace","Necklaces",62.0,0],["SG028","Golden Drift Necklace","Necklaces",62.0,0],["SG029","The Awakening Necklace","Necklaces",62.0,0],["SG030","The Crescent Necklace","Necklaces",58.0,0],["SG031","Golden Girl Necklace","Necklaces",58.0,0],["SG032","Pacific Starfish Necklace","Necklaces",58.0,0],["SG033","Golden Rhythm Necklace","Necklaces",56.0,0],["SG034","North Star Duo Necklace","Necklaces",56.0,0],["SG035","Forever Rooted Necklace","Necklaces",52.0,0],["SG036","The Halo Necklace","Necklaces",52.0,0],["SG037","Desert Darling Necklace","Necklaces",48.0,0],["SG038","Tiny Miracles Necklace","Necklaces",48.0,0],["SG039","A Little Love Necklace","Necklaces",48.0,0],["SG040","Lucky Charm Necklace","Necklaces",48.0,0],["SG041","Free Spirit Necklace","Necklaces",48.0,0],["SG042","Golden Wings Necklace","Necklaces",48.0,0],["SG043","Everleaf Necklace","Necklaces",48.0,0],["SG044","Autumn Bloom Pearl Necklace","Necklaces",122.0,0],["SG045","Classic Cuban","Bracelets",52.0,0],["SG046","Lucky Streak Bracelet","Bracelets",58.0,0],["SG047","Chasing Feathers Bracelet","Bracelets",62.0,0],["SG048","Legacy Link Bracelet","Bracelets",58.0,0],["SG049","The Maren Bracelet","Bracelets",56.0,0],["SG050","Sunbeam Heart Bracelet","Bracelets",52.0,0],["SG051","The Dainty Staple Bracelet","Bracelets",42.0,0],["SG052","Luna Horn Bracelet","Bracelets",72.0,0],["SG053","Twist of Luck Bracelet","Bracelets",52.0,0],["SG054","Wild Spirit Bracelet","Bracelets",58.0,0],["SG055","The Classic Bracelet","Bracelets",68.0,0],["SG056","The Lennox Bracelet","Bracelets",58.0,0],["SG057","Starfall Huggies","Earrings",56.0,0],["SG058","Golden Dagger Huggies","Earrings",52.0,0],["SG059","Mini Luxe Huggies","Earrings",38.0,0],["SG060","Silver Luster Hoops","Earrings",56.0,0],["SG061","Classic Pearl Huggies","Earrings",52.0,0],["SG062","The Promise Huggies","Earrings",48.0,0],["SG063","The Golden Studs","Earrings",48.0,0],["SG064","Moonlight Hoops","Earrings",52.0,0],["SG065","Nova Oval Bezel Huggie","Earrings",56.0,0],["SG066","Goddess Hoops","Earrings",62.0,0],["SG067","Nova Hoops","Earrings",48.0,1],["SG068","The Soho Hoop","Earrings",44.0,0],["SG069","The Baby Studs","Earrings",32.0,0],["SG070","Forever Hiuggies","Earrings",42.0,0],["SG071","Duo Link Earrings","Earrings",52.0,0],["SG072","The Boulevard Huggies","Earrings",52.0,0],["SG073","The Essential Studs","Earrings",52.0,0],["SG074","The Box Hoops","Earrings",52.0,0],["SG075","Twinkle Studs","Earrings",42.0,0],["SG076","The Catalina Hoops","Earrings",52.0,0],["SG077","Classic Chunky Hoops","Earrings",54.0,0],["SG078","Golden Trio Huggies","Earrings",48.0,0],["SG079","Nova Bezel Huggies","Earrings",56.0,1],["SG080","Sun Kissed - Harmony Anklet","Anklets",48.0,0],["SG081","Olive Grove - Harmony Beaded Anklet","Anklets",48.0,0],["SG082","Turquoise Tide - Harmony Anklet","Anklets",48.0,0],["SG083","Laguna - Harmony Anklet","Anklets",48.0,0],["SG084","Midnight Muse - Harmony Anklet","Anklets",42.0,0],["SG085","Pearl Confetti Anklet","Anklets",42.0,0]];
+  var CATALOG_KEY = "item-list-cache";
+  var CATEGORY_ORDER = ["Necklaces", "Bracelets", "Earrings", "Anklets"];
+  var catalog = BUILT_IN_ITEMS.map(function (a) { return { id: a[0], name: a[1], cat: a[2], price: a[3], sold: !!a[4] }; });
+  var catalogSource = "Built-in list";
+  function timeText(ms) { return new Date(ms).toLocaleString("en-US", { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" }); }
+  function validItems(list) {
+    return Array.isArray(list) && list.length > 0 && list.every(function (x) {
+      return x && typeof x.id === "string" && typeof x.name === "string" && typeof x.price === "number" && isFinite(x.price);
+    });
+  }
+  try {
+    var cached = JSON.parse(localStorage.getItem(CATALOG_KEY) || "null");
+    if (cached && validItems(cached.items)) { catalog = cached.items; catalogSource = "From your Google Sheet, saved " + timeText(cached.time); }
+  } catch (e) {}
+  function findItem(id) {
+    id = String(id).toUpperCase();
+    for (var i = 0; i < catalog.length; i++) if (String(catalog[i].id).toUpperCase() === id) return catalog[i];
+    return null;
+  }
+  function refreshCatalog() {
+    var cfg = getCfg();
+    if (!cfg || !navigator.onLine) return;
+    fetch(cfg.url + (cfg.url.indexOf("?") === -1 ? "?" : "&") + "action=products&key=" + encodeURIComponent(cfg.key), { redirect: "follow" })
+      .then(function (res) { return res.json(); })
+      .then(function (j) {
+        if (!j || !j.ok || !validItems(j.items)) return;
+        catalog = j.items;
+        var now = Date.now();
+        catalogSource = "From your Google Sheet, updated " + timeText(now);
+        try { localStorage.setItem(CATALOG_KEY, JSON.stringify({ time: now, items: j.items })); } catch (e) {}
+        if (!$("picker").hidden) {
+          if (catList().indexOf(pickCat) === -1) pickCat = "All";
+          renderCats();
+          renderPicker();
+        }
+      })
+      .catch(function () {});
+  }
+  window.addEventListener("online", refreshCatalog);
+  refreshCatalog();
+
+  /* ---------- Find an item (search and tap to add) ---------- */
+  var pickCat = "All", pickCount = 0;
+  function catList() {
+    var seen = {}, extra = [];
+    catalog.forEach(function (it) { if (!seen[it.cat]) { seen[it.cat] = 1; if (CATEGORY_ORDER.indexOf(it.cat) === -1) extra.push(it.cat); } });
+    return ["All"].concat(CATEGORY_ORDER.filter(function (c) { return seen[c]; }), extra);
+  }
+  function renderCats() {
+    var box = $("pick-cats");
+    box.innerHTML = "";
+    catList().forEach(function (c) {
+      var b = document.createElement("button");
+      b.type = "button";
+      b.className = "pcat";
+      b.textContent = c;
+      b.setAttribute("aria-pressed", String(c === pickCat));
+      b.addEventListener("click", function () { pickCat = c; renderCats(); renderPicker(); });
+      box.appendChild(b);
+    });
+  }
+  function renderPicker() {
+    var q = $("pick-q").value.trim().toLowerCase();
+    var list = $("pick-list");
+    list.innerHTML = "";
+    var shown = 0;
+    catalog.forEach(function (it) {
+      if (pickCat !== "All" && it.cat !== pickCat) return;
+      if (q && it.name.toLowerCase().indexOf(q) === -1 && String(it.id).toLowerCase().indexOf(q) === -1) return;
+      shown++;
+      var li = document.createElement("li");
+      var b = document.createElement("button");
+      b.type = "button";
+      b.className = "pick-item" + (it.sold ? " sold" : "");
+      var n = document.createElement("span"); n.className = "pn"; n.textContent = it.name;
+      var pr = document.createElement("span"); pr.className = "pp"; pr.textContent = money.format(it.price);
+      var m = document.createElement("span"); m.className = "pm";
+      m.textContent = it.cat + " · " + it.id;
+      if (it.sold) { var t = document.createElement("span"); t.className = "tagsold"; t.textContent = " · Sold out"; m.appendChild(t); }
+      b.appendChild(n); b.appendChild(pr); b.appendChild(m);
+      b.addEventListener("click", function () { pickItem(it); });
+      li.appendChild(b);
+      list.appendChild(li);
+    });
+    if (!shown) {
+      var e = document.createElement("li");
+      e.className = "picker-empty";
+      e.textContent = "No items match. Try fewer letters or pick All.";
+      list.appendChild(e);
+    }
+    $("pick-foot").textContent = catalog.length + " items. " + catalogSource + ".";
+  }
+  function pickItem(it) {
+    addScanned({ id: it.id, name: it.name, price: it.price.toFixed(2) });
+    pickCount++;
+    $("pick-msg").textContent = "Added: " + it.name + " " + money.format(it.price) + (it.sold ? " (marked sold out)" : "") + "   (" + pickCount + " added)";
+    try { if (navigator.vibrate) navigator.vibrate(40); } catch (e) {}
+  }
+  function openPicker() {
+    pickCount = 0;
+    pickCat = "All";
+    $("pick-q").value = "";
+    $("pick-msg").textContent = "Tap an item to add it to the sale.";
+    renderCats();
+    renderPicker();
+    $("picker").hidden = false;
+    document.body.style.overflow = "hidden";
+    refreshCatalog();
+    $("pick-q").focus();
+  }
+  function closePicker() {
+    $("picker").hidden = true;
+    document.body.style.overflow = "";
+    $("pick-open").focus();
+  }
+  $("pick-open").addEventListener("click", openPicker);
+  $("pick-done").addEventListener("click", closePicker);
+  $("pick-q").addEventListener("input", renderPicker);
+  document.addEventListener("keydown", function (e) { if (e.key === "Escape" && !$("picker").hidden) closePicker(); });
+
   /* ---------- Scan an item QR code ---------- */
   var scanner = $("scanner"), scanVideo = $("scan-video"), scanMsg = $("scan-msg");
   var scanStream = null, scanTimer = null, lastCode = "", lastAt = 0, addedCount = 0;
@@ -10746,6 +10901,14 @@ function findAlignmentPattern(matrix, alignmentPatternQuads, topRight, topLeft, 
     var m = /^SG\|(.+)\|(\d+(?:\.\d{1,2})?)$/.exec(String(text || ""));
     return m ? { name: m[1], price: m[2] } : null;
   }
+  function resolveCode(text) {
+    var m = /^SGID\|([A-Za-z0-9-]+)$/.exec(String(text || "").trim());
+    if (m) {
+      var it = findItem(m[1]);
+      return it ? { id: it.id, name: it.name, price: it.price.toFixed(2), sold: it.sold } : { missing: m[1].toUpperCase() };
+    }
+    return parseItem(text);
+  }
   function addScanned(item) {
     var list = rows();
     var first = list.length === 1 ? list[0] : null;
@@ -10755,24 +10918,27 @@ function findAlignmentPattern(matrix, alignmentPatternQuads, topRight, topLeft, 
       first.removeAttribute("data-sample");
       first.querySelector(".price").value = item.price;
       first.querySelector(".name").value = item.name;
+      first.setAttribute("data-id", item.id || "");
       calcA();
     } else {
       addRow(item.price, false);
       var all = rows();
       all[all.length - 1].querySelector(".name").value = item.name;
+      all[all.length - 1].setAttribute("data-id", item.id || "");
     }
   }
   function handleCode(text) {
     var now = Date.now();
     /* A code that stays in view counts as one scan. Move away and back to add another. */
     if (text === lastCode && now - lastAt < 1500) { lastAt = now; return false; }
-    var item = parseItem(text);
+    var item = resolveCode(text);
     lastCode = text;
     lastAt = now;
     if (!item) { scanMsg.textContent = "That QR code isn't a She's Golden item."; return false; }
+    if (item.missing) { scanMsg.textContent = "Item " + item.missing + " isn't in your item list. Check the Products tab in your sheet."; return false; }
     addScanned(item);
     addedCount++;
-    scanMsg.textContent = "Added: " + item.name + " " + money.format(Number(item.price)) + "  (" + addedCount + " scanned)";
+    scanMsg.textContent = "Added: " + item.name + " " + money.format(Number(item.price)) + (item.sold ? " (marked sold out)" : "") + "  (" + addedCount + " scanned)";
     try { if (navigator.vibrate) navigator.vibrate(60); } catch (e) {}
     return true;
   }
@@ -11088,7 +11254,7 @@ function findAlignmentPattern(matrix, alignmentPatternQuads, topRight, topLeft, 
       if (isNaN(p)) continue;
       var c = Math.round(p * 100);
       var a = Math.round(c * (100 - pct) / 100);
-      items.push({ name: list[r].querySelector(".name").value.trim() || ("Item " + (r + 1)), price: c / 100, after: a / 100 });
+      items.push({ name: list[r].querySelector(".name").value.trim() || ("Item " + (r + 1)), price: c / 100, after: a / 100, id: list[r].getAttribute("data-id") || "" });
       before += c;
       after += a;
     }
