@@ -317,6 +317,8 @@ label, .label {
   min-height: 48px;
   cursor: pointer;
 }
+.savepair { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.savebtn.alt { background: transparent; color: var(--accent); border: 2px solid var(--accent); }
 .savebtn:hover { filter: brightness(1.08); }
 .savebtn:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 
@@ -412,7 +414,7 @@ footer { color: var(--muted); font-size: 0.8rem; }
     </div>
 
     <div class="field">
-      <div class="labelrow"><span class="label" id="items-label">Original prices</span><button class="linkbtn clearbtn" type="button" id="clear-items">Clear prices</button></div>
+      <div class="labelrow"><span class="label" id="items-label">Original prices</span><button class="linkbtn clearbtn" type="button" id="clear-items">Clear sale</button></div>
       <div class="items" id="items" role="group" aria-labelledby="items-label"></div>
       <div class="addrow">
         <button class="addbtn" type="button" id="add-item">+ Add item</button>
@@ -438,7 +440,10 @@ footer { color: var(--muted); font-size: 0.8rem; }
     </div>
 
     <div class="field" id="receipt-box" hidden>
-      <button class="savebtn" type="button" id="save-receipt">Save receipt</button>
+      <div class="savepair">
+        <button class="savebtn" type="button" id="save-sale">Save sale</button>
+        <button class="savebtn alt" type="button" id="save-receipt">Save + PDF receipt</button>
+      </div>
       <p class="note" id="save-msg" role="status"></p>
       <div class="sheetbox">
         <div class="sheetrow">
@@ -460,7 +465,7 @@ footer { color: var(--muted); font-size: 0.8rem; }
   </section>
 
 
-  <footer>A sample price is filled in so you can see how it works. Type over it, and add more items as needed. Each item's discounted price is rounded to the cent, and the total is the sum of those prices.<br><span id="app-ver">Version 2.16 (pop-up)</span></footer>
+  <footer>Type a price, or tap Find item or Scan item, and add more items as needed. Each item's discounted price is rounded to the cent, and the total is the sum of those prices.<br><span id="app-ver">Version 2.21 (no sample)</span></footer>
 </div>
 
 <div class="added-toast" id="added-toast" hidden role="status" aria-live="polite">
@@ -10775,11 +10780,24 @@ function findAlignmentPattern(matrix, alignmentPatternQuads, topRight, topLeft, 
     }
   }
 
-  $("clear-items").addEventListener("click", function () {
-    while (itemsEl.firstChild) itemsEl.removeChild(itemsEl.firstChild);
-    $("save-msg").textContent = "";
+  /* Clears the sale (items, payment). Location, tax and discount stay. Returns what was cleared, for Undo. */
+  function clearSale() {
+    var snap = { nodes: [], pay: $("a-pay").value, loc: $("a-loc").value };
+    while (itemsEl.firstChild) { snap.nodes.push(itemsEl.firstChild); itemsEl.removeChild(itemsEl.firstChild); }
     $("a-pay").value = "cash";
     addRow("", true);
+    calcA();
+    return snap;
+  }
+  function undoClear(snap) {
+    while (itemsEl.firstChild) itemsEl.removeChild(itemsEl.firstChild);
+    snap.nodes.forEach(function (n) { itemsEl.appendChild(n); });
+    $("a-pay").value = snap.pay;
+    calcA();
+  }
+  $("clear-items").addEventListener("click", function () {
+    $("save-msg").textContent = "";
+    clearSale();
   });
 
   /* ---------- Item list (built-in copy, refreshed from the Google Sheet) ---------- */
@@ -11208,6 +11226,30 @@ function findAlignmentPattern(matrix, alignmentPatternQuads, topRight, topLeft, 
     return a;
   }
   $("receipt-box").hidden = false;
+  function finishSaleFn(msg) {
+      var snap = clearSale();
+      var u = document.createElement("button");
+      u.type = "button"; u.className = "linkbtn"; u.textContent = "Undo clear";
+      msg.appendChild(document.createTextNode(" Sale cleared for the next customer. "));
+      msg.appendChild(u);
+      var t = setTimeout(function () { if (u.parentNode) u.parentNode.removeChild(u); }, 20000);
+      u.addEventListener("click", function () { clearTimeout(t); undoClear(snap); msg.textContent = "Sale restored."; });
+  }
+  $("save-sale").addEventListener("click", function () {
+    var msg = $("save-msg");
+    msg.className = "note";
+    msg.textContent = "";
+    var text = buildReceipt();
+    if (!text) {
+      msg.className = "note warn";
+      msg.textContent = "Enter at least one price and a discount first.";
+      return;
+    }
+    rememberLoc();
+    sendToSheet(collectReceipt());
+    msg.textContent = "Sale saved.";
+    finishSaleFn(msg);
+  });
   $("save-receipt").addEventListener("click", function () {
     var msg = $("save-msg");
     msg.className = "note";
@@ -11221,6 +11263,15 @@ function findAlignmentPattern(matrix, alignmentPatternQuads, topRight, topLeft, 
     rememberLoc();
     sendToSheet(collectReceipt());
     var name = receiptName();
+    function finishSale() {
+      var snap = clearSale();
+      var u = document.createElement("button");
+      u.type = "button"; u.className = "linkbtn"; u.textContent = "Undo clear";
+      msg.appendChild(document.createTextNode(" Sale cleared for the next customer. "));
+      msg.appendChild(u);
+      var t = setTimeout(function () { if (u.parentNode) u.parentNode.removeChild(u); }, 20000);
+      u.addEventListener("click", function () { clearTimeout(t); undoClear(snap); msg.textContent = "Sale restored."; });
+    }
     makePdf(text).then(function (bytes) {
       var file = null;
       try { file = new File([bytes], name, { type: "application/pdf" }); } catch (e) {}
@@ -11231,10 +11282,12 @@ function findAlignmentPattern(matrix, alignmentPatternQuads, topRight, topLeft, 
         var link = blobLink(name, bytes, "Tap to open receipt");
         msg.appendChild(link);
         link.click();
+        finishSale();
       }
       if (canShare) {
         return navigator.share({ files: [file], title: name }).then(function () {
           msg.textContent = "Receipt shared.";
+          finishSale();
         }, function (err) {
           if (err && err.name === "AbortError") return;
           fallback();
@@ -11416,8 +11469,7 @@ function findAlignmentPattern(matrix, alignmentPatternQuads, topRight, topLeft, 
     updateDefaultUI(p);
   });
 
-  addRow("80", false);
-  rows()[0].setAttribute("data-sample", "1");
+  addRow("", false);
   calcA();
 })();
 </script>
