@@ -276,6 +276,20 @@ label, .label {
   .added-toast.pop { animation: atpop .18s ease-out; }
   @keyframes atpop { from { transform: translate(-50%, -50%) scale(0.9); opacity: 0.4; } to { transform: translate(-50%, -50%) scale(1); opacity: 1; } }
 }
+.saved-pop { position: fixed; inset: 0; z-index: 300; display: flex; align-items: center; justify-content: center; padding: 24px; background: rgba(0, 0, 0, 0.45); }
+.saved-pop[hidden] { display: none; }
+.sp-card { width: min(92vw, 360px); box-sizing: border-box; padding: 26px 20px 18px; border-radius: 26px; background: var(--accent); color: var(--accent-fg); text-align: center; box-shadow: 0 18px 50px rgba(0, 0, 0, 0.4); display: flex; flex-direction: column; align-items: center; gap: 4px; }
+.sp-check { width: 72px; height: 72px; border-radius: 50%; background: var(--accent-fg); color: var(--accent); font: 700 2.8rem/72px var(--font-body); margin-bottom: 6px; }
+.sp-title { font: 700 1rem var(--font-body); letter-spacing: 0.16em; text-transform: uppercase; opacity: 0.9; }
+.sp-total { font: 700 2.6rem var(--font-display); font-variant-numeric: tabular-nums; }
+.sp-detail { font: 600 1rem var(--font-body); opacity: 0.95; overflow-wrap: anywhere; }
+.sp-sheet { font: 600 0.95rem var(--font-body); margin-top: 8px; padding: 6px 12px; border-radius: 999px; background: rgba(255, 255, 255, 0.18); }
+.sp-sheet.bad { background: #fde8e8; color: #8a1c1c; }
+.sp-hint { font: 500 0.78rem var(--font-body); opacity: 0.7; margin-top: 10px; }
+@media (prefers-reduced-motion: no-preference) {
+  .saved-pop.pop .sp-card { animation: sppop .22s ease-out; }
+  @keyframes sppop { from { transform: scale(0.88); opacity: 0.3; } to { transform: scale(1); opacity: 1; } }
+}
 .picker { position: fixed; inset: 0; z-index: 90; background: var(--bg); color: var(--fg); display: flex; flex-direction: column; gap: 10px; padding-top: calc(env(safe-area-inset-top, 0px) + 12px); padding-bottom: env(safe-area-inset-bottom, 0px); padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
 .picker[hidden] { display: none; }
 .picker-head { display: flex; align-items: center; gap: 12px; }
@@ -465,7 +479,7 @@ footer { color: var(--muted); font-size: 0.8rem; }
   </section>
 
 
-  <footer>Type a price, or tap Find item or Scan item, and add more items as needed. Each item's discounted price is rounded to the cent, and the total is the sum of those prices.<br><span id="app-ver">Version 2.21 (no sample)</span></footer>
+  <footer>Type a price, or tap Find item or Scan item, and add more items as needed. Each item's discounted price is rounded to the cent, and the total is the sum of those prices.<br><span id="app-ver">Version 2.23 (PDF clear fix)</span></footer>
 </div>
 
 <div class="added-toast" id="added-toast" hidden role="status" aria-live="polite">
@@ -474,6 +488,16 @@ footer { color: var(--muted); font-size: 0.8rem; }
   <div class="at-name" id="at-name"></div>
   <div class="at-price" id="at-price"></div>
   <div class="at-note" id="at-note"></div>
+</div>
+<div class="saved-pop" id="saved-pop" hidden role="status" aria-live="assertive">
+  <div class="sp-card" id="sp-card">
+    <div class="sp-check" aria-hidden="true">&#10003;</div>
+    <div class="sp-title" id="sp-title">Sale saved</div>
+    <div class="sp-total" id="sp-total"></div>
+    <div class="sp-detail" id="sp-detail"></div>
+    <div class="sp-sheet" id="sp-sheet"></div>
+    <div class="sp-hint">Tap anywhere to close</div>
+  </div>
 </div>
 <div class="picker" id="picker" hidden role="dialog" aria-modal="true" aria-label="Find an item">
   <div class="picker-head">
@@ -11226,6 +11250,43 @@ function findAlignmentPattern(matrix, alignmentPatternQuads, topRight, topLeft, 
     return a;
   }
   $("receipt-box").hidden = false;
+  /* ---------- Big "Sale saved" pop-up ---------- */
+  var savedTimer = null, savedPoll = null;
+  function hideSaved() {
+    $("saved-pop").hidden = true;
+    if (savedTimer) { clearTimeout(savedTimer); savedTimer = null; }
+    if (savedPoll) { clearInterval(savedPoll); savedPoll = null; }
+  }
+  $("saved-pop").addEventListener("click", hideSaved);
+  function showSaved(rc, withPdf) {
+    var pop = $("saved-pop"), sheet = $("sp-sheet");
+    $("sp-title").textContent = withPdf ? "Sale saved + receipt" : "Sale saved";
+    $("sp-total").textContent = money.format(rc.total);
+    var n = rc.items.length;
+    var parts = [n + (n === 1 ? " item" : " items"), rc.payment];
+    if (rc.location) parts.push(rc.location);
+    $("sp-detail").textContent = parts.join(" \u00b7 ");
+    function stillQueued() { return readQ().some(function (q) { return q.id === rc.id; }); }
+    function setSheet() {
+      if (!getCfg()) { sheet.className = "sp-sheet bad"; sheet.textContent = "Not sent: Google Sheet not connected"; return true; }
+      if (stillQueued()) { sheet.className = "sp-sheet"; sheet.textContent = "Sending to Google Sheet\u2026"; return false; }
+      sheet.className = "sp-sheet"; sheet.textContent = "\u2713 Saved to Google Sheet"; return true;
+    }
+    var done = setSheet();
+    pop.hidden = false; pop.classList.remove("pop"); void pop.offsetWidth; pop.classList.add("pop");
+    if (savedTimer) clearTimeout(savedTimer);
+    if (savedPoll) clearInterval(savedPoll);
+    var waited = 0;
+    savedPoll = setInterval(function () {
+      waited += 300;
+      var d = setSheet();
+      if (d || waited >= 6000) {
+        clearInterval(savedPoll); savedPoll = null;
+        if (!d) { sheet.className = "sp-sheet bad"; sheet.textContent = "Waiting to send. It will retry."; }
+        savedTimer = setTimeout(hideSaved, 2200);
+      }
+    }, 300);
+  }
   function finishSaleFn(msg) {
       var snap = clearSale();
       var u = document.createElement("button");
@@ -11246,9 +11307,11 @@ function findAlignmentPattern(matrix, alignmentPatternQuads, topRight, topLeft, 
       return;
     }
     rememberLoc();
-    sendToSheet(collectReceipt());
+    var rc = collectReceipt();
+    sendToSheet(rc);
     msg.textContent = "Sale saved.";
     finishSaleFn(msg);
+    showSaved(rc, false);
   });
   $("save-receipt").addEventListener("click", function () {
     var msg = $("save-msg");
@@ -11261,9 +11324,11 @@ function findAlignmentPattern(matrix, alignmentPatternQuads, topRight, topLeft, 
       return;
     }
     rememberLoc();
-    sendToSheet(collectReceipt());
+    var rc2 = collectReceipt();
+    sendToSheet(rc2);
     var name = receiptName();
     function finishSale() {
+      showSaved(rc2, true);
       var snap = clearSale();
       var u = document.createElement("button");
       u.type = "button"; u.className = "linkbtn"; u.textContent = "Undo clear";
@@ -11289,7 +11354,7 @@ function findAlignmentPattern(matrix, alignmentPatternQuads, topRight, topLeft, 
           msg.textContent = "Receipt shared.";
           finishSale();
         }, function (err) {
-          if (err && err.name === "AbortError") return;
+          if (err && err.name === "AbortError") { msg.textContent = "Receipt menu closed."; finishSale(); return; }
           fallback();
         });
       }
