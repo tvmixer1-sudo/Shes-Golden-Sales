@@ -283,6 +283,8 @@ label, .label {
 .sp-title { font: 700 1rem var(--font-body); letter-spacing: 0.16em; text-transform: uppercase; opacity: 0.9; }
 .sp-total { font: 700 2.6rem var(--font-display); font-variant-numeric: tabular-nums; }
 .sp-detail { font: 600 1rem var(--font-body); opacity: 0.95; overflow-wrap: anywhere; }
+.sp-cash { font: 700 1.25rem var(--font-body); margin-top: 6px; padding: 8px 14px; border-radius: 14px; background: var(--accent-fg); color: var(--accent); }
+.sp-cash[hidden] { display: none; }
 .sp-sheet { font: 600 0.95rem var(--font-body); margin-top: 8px; padding: 6px 12px; border-radius: 999px; background: rgba(255, 255, 255, 0.18); }
 .sp-sheet.bad { background: #fde8e8; color: #8a1c1c; }
 .sp-hint { font: 500 0.78rem var(--font-body); opacity: 0.7; margin-top: 10px; }
@@ -290,6 +292,12 @@ label, .label {
   .saved-pop.pop .sp-card { animation: sppop .22s ease-out; }
   @keyframes sppop { from { transform: scale(0.88); opacity: 0.3; } to { transform: scale(1); opacity: 1; } }
 }
+.cashbox { display: flex; flex-direction: column; gap: 8px; margin: -4px 0 4px; }
+.cashbox[hidden], .changebox[hidden] { display: none; }
+.changebox { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; padding: 12px 16px; border-radius: 14px; background: var(--accent); color: var(--accent-fg); }
+.changebox.short { background: #fde8e8; color: #8a1c1c; }
+.chg-label { font: 700 0.85rem var(--font-body); letter-spacing: 0.12em; text-transform: uppercase; }
+.chg-amt { font: 700 2rem var(--font-display); font-variant-numeric: tabular-nums; }
 .picker { position: fixed; inset: 0; z-index: 90; background: var(--bg); color: var(--fg); display: flex; flex-direction: column; gap: 10px; padding-top: calc(env(safe-area-inset-top, 0px) + 12px); padding-bottom: env(safe-area-inset-bottom, 0px); padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
 .picker[hidden] { display: none; }
 .picker-head { display: flex; align-items: center; gap: 12px; }
@@ -412,7 +420,7 @@ footer { color: var(--muted); font-size: 0.8rem; }
     </div>
 
     <div class="field compact">
-      <label for="a-pay">Payment</label>
+      <label for="a-pay">Payment type</label>
       <select id="a-pay" class="paysel">
         <option value="cash">Cash</option>
         <option value="credit">Credit</option>
@@ -420,6 +428,17 @@ footer { color: var(--muted); font-size: 0.8rem; }
         <option value="venmo">Venmo</option>
         <option value="zelle">Zelle</option>
       </select>
+    </div>
+
+    <div class="cashbox" id="cashbox" hidden>
+      <div class="field compact">
+        <label for="a-cash">Cash received</label>
+        <div class="input"><span>$</span><input id="a-cash" inputmode="decimal" autocomplete="off" placeholder="0.00" aria-label="Cash received"></div>
+      </div>
+      <div class="changebox" id="changebox" hidden role="status" aria-live="polite">
+        <span class="chg-label" id="chg-label">Change due</span>
+        <span class="chg-amt" id="chg-amt"></span>
+      </div>
     </div>
 
     <div class="field compact">
@@ -479,7 +498,7 @@ footer { color: var(--muted); font-size: 0.8rem; }
   </section>
 
 
-  <footer>Type a price, or tap Find item or Scan item, and add more items as needed. Each item's discounted price is rounded to the cent, and the total is the sum of those prices.<br><span id="app-ver">Version 2.23 (PDF clear fix)</span></footer>
+  <footer>Type a price, or tap Find item or Scan item, and add more items as needed. Each item's discounted price is rounded to the cent, and the total is the sum of those prices.<br><span id="app-ver">Version 2.26 (no quick amounts)</span></footer>
 </div>
 
 <div class="added-toast" id="added-toast" hidden role="status" aria-live="polite">
@@ -495,6 +514,7 @@ footer { color: var(--muted); font-size: 0.8rem; }
     <div class="sp-title" id="sp-title">Sale saved</div>
     <div class="sp-total" id="sp-total"></div>
     <div class="sp-detail" id="sp-detail"></div>
+    <div class="sp-cash" id="sp-cash" hidden></div>
     <div class="sp-sheet" id="sp-sheet"></div>
     <div class="sp-hint">Tap anywhere to close</div>
   </div>
@@ -10744,7 +10764,31 @@ function findAlignmentPattern(matrix, alignmentPatternQuads, topRight, topLeft, 
   }
 
   /* ---------- Percent off (many items) ---------- */
+  var totalCents = 0;
+  function cashInfo() {
+    if (payType() !== "cash" || totalCents <= 0) return null;
+    var g = num($("a-cash").value);
+    if (isNaN(g) || g <= 0) return null;
+    var given = Math.round(g * 100);
+    return { given: given / 100, change: (given - totalCents) / 100 };
+  }
+  function updateChange() {
+    var show = payType() === "cash";
+    $("cashbox").hidden = !show;
+    var box = $("changebox");
+    var info = show ? cashInfo() : null;
+    box.hidden = !info;
+    if (!info) return;
+    var short = info.change < 0;
+    box.className = "changebox" + (short ? " short" : "");
+    $("chg-label").textContent = short ? "Still owed" : "Change due";
+    $("chg-amt").textContent = money.format(Math.abs(info.change));
+  }
   function calcA() {
+    calcA2();
+    updateChange();
+  }
+  function calcA2() {
     var pct = num($("a-pct").value);
     var note = $("a-note");
     note.className = "note";
@@ -10785,6 +10829,7 @@ function findAlignmentPattern(matrix, alignmentPatternQuads, topRight, topLeft, 
 
     var label = withTax && withFee ? "Total with tax & card fee" : withTax ? "Total with tax" : withFee ? "Total with card fee" : "Total after discount";
     $("a-label").textContent = count > 1 ? label + " · " + count + " items" : label;
+    totalCents = count === 0 ? 0 : afterCents + taxCents + feeCents;
     if (count === 0) {
       $("a-result").textContent = "$0.00";
       $("a-was").textContent = "";
@@ -10808,7 +10853,9 @@ function findAlignmentPattern(matrix, alignmentPatternQuads, topRight, topLeft, 
   function clearSale() {
     var snap = { nodes: [], pay: $("a-pay").value, loc: $("a-loc").value };
     while (itemsEl.firstChild) { snap.nodes.push(itemsEl.firstChild); itemsEl.removeChild(itemsEl.firstChild); }
+    snap.cash = $("a-cash").value;
     $("a-pay").value = "cash";
+    $("a-cash").value = "";
     addRow("", true);
     calcA();
     return snap;
@@ -10817,6 +10864,7 @@ function findAlignmentPattern(matrix, alignmentPatternQuads, topRight, topLeft, 
     while (itemsEl.firstChild) itemsEl.removeChild(itemsEl.firstChild);
     snap.nodes.forEach(function (n) { itemsEl.appendChild(n); });
     $("a-pay").value = snap.pay;
+    $("a-cash").value = snap.cash || "";
     calcA();
   }
   $("clear-items").addEventListener("click", function () {
@@ -11116,6 +11164,8 @@ function findAlignmentPattern(matrix, alignmentPatternQuads, topRight, topLeft, 
   function payLabel() { var o = $("a-pay"); return o.options[o.selectedIndex].text; }
   function cardFee(afterCents, taxCents) { return payType() === "credit" ? Math.round((afterCents + taxCents) * CARD_FEE_PCT / 100) : 0; }
   $("a-pay").addEventListener("change", calcA);
+  $("a-cash").addEventListener("input", updateChange);
+  $("a-cash").addEventListener("focus", function () { var el = this; setTimeout(function () { try { el.select(); } catch (e) {} }, 0); });
 
   /* ---------- Location ---------- */
   var LOC_KEY = "last-location", LOC_RECENT = "recent-locations";
@@ -11258,7 +11308,7 @@ function findAlignmentPattern(matrix, alignmentPatternQuads, topRight, topLeft, 
     if (savedPoll) { clearInterval(savedPoll); savedPoll = null; }
   }
   $("saved-pop").addEventListener("click", hideSaved);
-  function showSaved(rc, withPdf) {
+  function showSaved(rc, withPdf, cash) {
     var pop = $("saved-pop"), sheet = $("sp-sheet");
     $("sp-title").textContent = withPdf ? "Sale saved + receipt" : "Sale saved";
     $("sp-total").textContent = money.format(rc.total);
@@ -11266,6 +11316,9 @@ function findAlignmentPattern(matrix, alignmentPatternQuads, topRight, topLeft, 
     var parts = [n + (n === 1 ? " item" : " items"), rc.payment];
     if (rc.location) parts.push(rc.location);
     $("sp-detail").textContent = parts.join(" \u00b7 ");
+    var cashEl = $("sp-cash");
+    cashEl.hidden = !cash;
+    if (cash) cashEl.textContent = cash.change < 0 ? "Still owed " + money.format(-cash.change) : "Change due " + money.format(cash.change) + " (received " + money.format(cash.given) + ")";
     function stillQueued() { return readQ().some(function (q) { return q.id === rc.id; }); }
     function setSheet() {
       if (!getCfg()) { sheet.className = "sp-sheet bad"; sheet.textContent = "Not sent: Google Sheet not connected"; return true; }
@@ -11308,10 +11361,11 @@ function findAlignmentPattern(matrix, alignmentPatternQuads, topRight, topLeft, 
     }
     rememberLoc();
     var rc = collectReceipt();
+    var cash1 = cashInfo();
     sendToSheet(rc);
     msg.textContent = "Sale saved.";
     finishSaleFn(msg);
-    showSaved(rc, false);
+    showSaved(rc, false, cash1);
   });
   $("save-receipt").addEventListener("click", function () {
     var msg = $("save-msg");
@@ -11325,10 +11379,11 @@ function findAlignmentPattern(matrix, alignmentPatternQuads, topRight, topLeft, 
     }
     rememberLoc();
     var rc2 = collectReceipt();
+    var cash2 = cashInfo();
     sendToSheet(rc2);
     var name = receiptName();
     function finishSale() {
-      showSaved(rc2, true);
+      showSaved(rc2, true, cash2);
       var snap = clearSale();
       var u = document.createElement("button");
       u.type = "button"; u.className = "linkbtn"; u.textContent = "Undo clear";
