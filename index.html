@@ -333,6 +333,14 @@ label, .label {
 .details .input span { font: 500 1rem var(--font-body); }
 .details .input:focus-within { background: var(--accent-soft); }
 .details .paysel { flex: 1; width: auto; height: 36px; min-height: 36px; border: 0; background: transparent; padding: 0 6px; text-align-last: right; }
+.notes summary { display: flex; align-items: center; justify-content: space-between; gap: 12px; min-height: 44px; cursor: pointer; list-style: none; }
+.notes summary::-webkit-details-marker { display: none; }
+.notes summary::after { content: "\203A"; color: var(--muted); font-size: 1.3rem; transform: rotate(90deg); transition: transform 0.15s; margin-left: 4px; }
+.notes[open] summary::after { transform: rotate(-90deg); }
+.notes summary .label { margin: 0; }
+.notes .notes-hint { flex: 1; text-align: right; font-size: 0.8rem; color: var(--muted); }
+.notes[open] summary { border-bottom: 1px solid var(--line); }
+.notes .drow:last-child { border-bottom: 0; }
 .cashbox { display: flex; flex-direction: column; margin: 0; padding: 0; }
 .cashbox[hidden], #cashrow[hidden] { display: none; }
 .cashbox .drow { border-bottom: 0; border-top: 0; }
@@ -548,6 +556,22 @@ footer { color: var(--muted); font-size: 0.8rem; }
       </div>
     </div>
 
+    <details class="details notes" id="notes">
+      <summary><span class="label">Customer notes</span><span class="notes-hint" id="notes-hint">Optional</span></summary>
+      <div class="drow">
+        <label for="n-name">Name</label>
+        <div class="input"><input id="n-name" type="text" autocomplete="off" autocapitalize="words" maxlength="60" placeholder="Customer name"></div>
+      </div>
+      <div class="drow">
+        <label for="n-email">Email</label>
+        <div class="input"><input id="n-email" type="email" inputmode="email" autocomplete="off" autocapitalize="off" spellcheck="false" maxlength="80" placeholder="name@email.com"></div>
+      </div>
+      <div class="drow">
+        <label for="n-phone">Phone</label>
+        <div class="input"><input id="n-phone" type="tel" inputmode="tel" autocomplete="off" maxlength="30" placeholder="(555) 555-1234"></div>
+      </div>
+    </details>
+
     <div class="foot">
       <div class="sheetbox">
         <div class="sheetrow">
@@ -565,7 +589,7 @@ footer { color: var(--muted); font-size: 0.8rem; }
           </div>
         </div>
       </div>
-      <div class="ver"><span id="app-ver">Version 3.27 (wider total card)</span></div>
+      <div class="ver"><span id="app-ver">Version 3.28 (customer notes)</span></div>
     </div>
 
     <div class="savebar" id="receipt-box" hidden>
@@ -10979,10 +11003,24 @@ function findAlignmentPattern(matrix, alignmentPatternQuads, topRight, topLeft, 
   }
 
   /* Clears the sale (items, payment). Location, tax and discount stay. Returns what was cleared, for Undo. */
+  function customer() {
+    return { name: $("n-name").value.trim(), email: $("n-email").value.trim(), phone: $("n-phone").value.trim() };
+  }
+  function syncNotesHint() {
+    var c = customer(), h = $("notes-hint");
+    h.textContent = c.name || c.email || c.phone ? (c.name || c.email || c.phone) : "Optional";
+  }
+  ["n-name", "n-email", "n-phone"].forEach(function (id) { $(id).addEventListener("input", syncNotesHint); });
+  function setCustomer(c) {
+    $("n-name").value = c.name || ""; $("n-email").value = c.email || ""; $("n-phone").value = c.phone || "";
+    syncNotesHint();
+  }
   function clearSale(noFocus) {
-    var snap = { nodes: [], pay: $("a-pay").value, loc: $("a-loc").value };
+    var snap = { nodes: [], pay: $("a-pay").value, loc: $("a-loc").value, cust: customer(), notesOpen: $("notes").open };
     while (itemsEl.firstChild) { snap.nodes.push(itemsEl.firstChild); itemsEl.removeChild(itemsEl.firstChild); }
     snap.cash = $("a-cash").value;
+    setCustomer({});
+    $("notes").open = false;
     $("a-pay").value = "cash";
     $("a-cash").value = "";
     addRow("", !noFocus);
@@ -10994,6 +11032,8 @@ function findAlignmentPattern(matrix, alignmentPatternQuads, topRight, topLeft, 
     snap.nodes.forEach(function (n) { itemsEl.appendChild(n); });
     syncRemoveButtons();
     $("a-pay").value = snap.pay;
+    setCustomer(snap.cust || {});
+    $("notes").open = !!snap.notesOpen;
     $("a-cash").value = snap.cash || "";
     calcA();
   }
@@ -11870,6 +11910,7 @@ function findAlignmentPattern(matrix, alignmentPatternQuads, topRight, topLeft, 
     return {
       location: currentLoc(),
       payment: payLabel(),
+      customer: customer(),
       surcharge: fee / 100,
       surchargePct: fee > 0 ? CARD_FEE_PCT : 0,
       id: "r" + Date.now().toString(36) + Math.random().toString(36).slice(2, 6),
