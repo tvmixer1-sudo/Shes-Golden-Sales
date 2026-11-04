@@ -548,7 +548,7 @@ footer { color: var(--muted); font-size: 0.8rem; }
           </div>
         </div>
       </div>
-      <div class="ver"><span id="app-ver">Version 3.16 (top 6 matches)</span></div>
+      <div class="ver"><span id="app-ver">Version 3.17 (no keyboard after save)</span></div>
     </div>
 
     <div class="savebar" id="receipt-box" hidden>
@@ -10954,13 +10954,13 @@ function findAlignmentPattern(matrix, alignmentPatternQuads, topRight, topLeft, 
   }
 
   /* Clears the sale (items, payment). Location, tax and discount stay. Returns what was cleared, for Undo. */
-  function clearSale() {
+  function clearSale(noFocus) {
     var snap = { nodes: [], pay: $("a-pay").value, loc: $("a-loc").value };
     while (itemsEl.firstChild) { snap.nodes.push(itemsEl.firstChild); itemsEl.removeChild(itemsEl.firstChild); }
     snap.cash = $("a-cash").value;
     $("a-pay").value = "cash";
     $("a-cash").value = "";
-    addRow("", true);
+    addRow("", !noFocus);
     calcA();
     return snap;
   }
@@ -11685,7 +11685,8 @@ function findAlignmentPattern(matrix, alignmentPatternQuads, topRight, topLeft, 
     }, 300);
   }
   function finishSaleFn(msg) {
-      var snap = clearSale();
+      try { if (document.activeElement && document.activeElement.blur) document.activeElement.blur(); } catch (e) {}
+      var snap = clearSale(true);
       var u = document.createElement("button");
       u.type = "button"; u.className = "linkbtn"; u.textContent = "Undo clear";
       msg.appendChild(document.createTextNode(" Sale cleared for the next customer. "));
@@ -11728,7 +11729,7 @@ function findAlignmentPattern(matrix, alignmentPatternQuads, topRight, topLeft, 
     var name = receiptName();
     function finishSale() {
       showSaved(rc2, true, cash2);
-      var snap = clearSale();
+      var snap = clearSale(true);
       var u = document.createElement("button");
       u.type = "button"; u.className = "linkbtn"; u.textContent = "Undo clear";
       msg.appendChild(document.createTextNode(" Sale cleared for the next customer. "));
