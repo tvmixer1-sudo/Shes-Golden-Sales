@@ -136,14 +136,15 @@ label, .label {
   outline: none;
   font-variant-numeric: tabular-nums;
 }
-.paysel { width: 140px; min-height: 44px; padding: 0 12px; background: var(--surface); color: var(--fg); border: 1.5px solid var(--line); border-radius: 10px; font: 500 1rem var(--font-body); }
+.paysel { box-sizing: border-box; width: 150px; height: 44px; min-height: 44px; padding: 0 12px; text-align-last: right; background: var(--surface); color: var(--fg); border: 1.5px solid var(--line); border-radius: 10px; font: 500 1rem var(--font-body); }
 .paysel:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-color: var(--accent); }
 .locin { padding: 0 12px; border-radius: 10px; }
 .locin input { font: 500 1rem var(--font-body); padding: 10px 0; }
 .compact { flex-direction: row; align-items: center; justify-content: space-between; gap: 12px; }
-.compact .input { width: 120px; padding: 0 10px; border-radius: 10px; }
-.compact .input input { font-size: 1.05rem; padding: 6px 0; }
-.compact .input span { font-size: 0.95rem; }
+.compact .input { box-sizing: border-box; width: 150px; height: 44px; padding: 0 12px; border-radius: 10px; }
+.compact .input input { font: 500 1rem var(--font-body); font-variant-numeric: tabular-nums; padding: 0; text-align: right; height: 100%; }
+.compact .input span { font: 500 1rem var(--font-body); }
+#a-cash { padding-right: 17px; }
 .discrow { display: flex; align-items: center; gap: 6px; flex-wrap: nowrap; }
 .pctin { width: 80px; flex: none; padding: 0 8px; border-radius: 10px; }
 .pctin input { font-size: 1.05rem; padding: 8px 0; }
@@ -498,7 +499,7 @@ footer { color: var(--muted); font-size: 0.8rem; }
   </section>
 
 
-  <footer>Type a price, or tap Find item or Scan item, and add more items as needed. Each item's discounted price is rounded to the cent, and the total is the sum of those prices.<br><span id="app-ver">Version 2.26 (no quick amounts)</span></footer>
+  <footer>Type a price, or tap Find item or Scan item, and add more items as needed. Each item's discounted price is rounded to the cent, and the total is the sum of those prices.<br><span id="app-ver">Version 2.27 (aligned fields)</span></footer>
 </div>
 
 <div class="added-toast" id="added-toast" hidden role="status" aria-live="polite">
