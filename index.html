@@ -341,6 +341,9 @@ label, .label {
 .notes .notes-hint { flex: 1; text-align: right; font-size: 0.8rem; color: var(--muted); }
 .notes[open] summary { border-bottom: 1px solid var(--line); }
 .notes .drow:last-child { border-bottom: 0; }
+.notes .descrow { flex-wrap: wrap; padding: 8px 0 10px; }
+.notes .descrow .input { flex: 1 1 100%; height: 40px; background: var(--accent-soft); }
+.notes .descrow .input input { text-align: left; font-size: 0.95rem; }
 .cashbox { display: flex; flex-direction: column; margin: 0; padding: 0; }
 .cashbox[hidden], #cashrow[hidden] { display: none; }
 .cashbox .drow { border-bottom: 0; border-top: 0; }
@@ -570,6 +573,10 @@ footer { color: var(--muted); font-size: 0.8rem; }
         <label for="n-phone">Phone</label>
         <div class="input"><input id="n-phone" type="tel" inputmode="tel" autocomplete="off" maxlength="30" placeholder="(555) 555-1234"></div>
       </div>
+      <div class="drow descrow">
+        <label for="n-desc">Description</label>
+        <div class="input"><input id="n-desc" type="text" autocomplete="off" autocapitalize="sentences" maxlength="200" placeholder="Anything to remember about this sale"></div>
+      </div>
     </details>
 
     <div class="foot">
@@ -589,7 +596,7 @@ footer { color: var(--muted); font-size: 0.8rem; }
           </div>
         </div>
       </div>
-      <div class="ver"><span id="app-ver">Version 3.28 (customer notes)</span></div>
+      <div class="ver"><span id="app-ver">Version 3.29 (description line)</span></div>
     </div>
 
     <div class="savebar" id="receipt-box" hidden>
@@ -11004,15 +11011,15 @@ function findAlignmentPattern(matrix, alignmentPatternQuads, topRight, topLeft, 
 
   /* Clears the sale (items, payment). Location, tax and discount stay. Returns what was cleared, for Undo. */
   function customer() {
-    return { name: $("n-name").value.trim(), email: $("n-email").value.trim(), phone: $("n-phone").value.trim() };
+    return { name: $("n-name").value.trim(), email: $("n-email").value.trim(), phone: $("n-phone").value.trim(), note: $("n-desc").value.trim() };
   }
   function syncNotesHint() {
     var c = customer(), h = $("notes-hint");
-    h.textContent = c.name || c.email || c.phone ? (c.name || c.email || c.phone) : "Optional";
+    h.textContent = c.name || c.email || c.phone || c.note || "Optional";
   }
-  ["n-name", "n-email", "n-phone"].forEach(function (id) { $(id).addEventListener("input", syncNotesHint); });
+  ["n-name", "n-email", "n-phone", "n-desc"].forEach(function (id) { $(id).addEventListener("input", syncNotesHint); });
   function setCustomer(c) {
-    $("n-name").value = c.name || ""; $("n-email").value = c.email || ""; $("n-phone").value = c.phone || "";
+    $("n-name").value = c.name || ""; $("n-email").value = c.email || ""; $("n-phone").value = c.phone || ""; $("n-desc").value = c.note || "";
     syncNotesHint();
   }
   function clearSale(noFocus) {
