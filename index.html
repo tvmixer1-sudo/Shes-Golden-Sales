@@ -187,7 +187,7 @@ label, .label {
 .items { display: flex; flex-direction: column; gap: 8px; }
 .item {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(0, 84px) minmax(54px, auto) auto;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 66px) minmax(46px, auto) auto;
   gap: 0 6px;
   align-items: center;
   background: var(--surface);
@@ -205,7 +205,7 @@ label, .label {
   border: 0;
   background: transparent;
   color: var(--fg);
-  font: 500 0.95rem var(--font-body);
+  font: 500 0.9rem var(--font-body);
   padding: 14px 0;
   outline: none;
 }
@@ -225,7 +225,7 @@ label, .label {
 .rm:hover:not(:disabled) { color: var(--save); background: var(--save-soft); }
 .rm:disabled { opacity: 0.35; cursor: default; }
 .pricebox { display: flex; align-items: center; gap: 4px; min-width: 0; }
-.pricebox span { font-family: var(--font-mono); color: var(--muted); font-size: 0.95rem; }
+.pricebox span { font-family: var(--font-mono); color: var(--muted); font-size: 0.85rem; }
 .pricebox input {
   text-align: right;
   flex: 1;
@@ -233,13 +233,13 @@ label, .label {
   border: 0;
   background: transparent;
   color: var(--fg);
-  font: 500 1.1rem var(--font-mono);
+  font: 500 0.9rem var(--font-mono);
   padding: 2px 0;
   outline: none;
   font-variant-numeric: tabular-nums;
 }
 .after {
-  font: 500 0.85rem var(--font-mono);
+  font: 500 0.78rem var(--font-mono);
   color: var(--accent);
   text-align: right;
   font-variant-numeric: tabular-nums;
@@ -301,6 +301,35 @@ label, .label {
 .changebox.short { background: #fde8e8; color: #8a1c1c; }
 .chg-label { font: 700 0.85rem var(--font-body); letter-spacing: 0.12em; text-transform: uppercase; }
 .chg-amt { font: 700 2rem var(--font-display); font-variant-numeric: tabular-nums; }
+
+/* ===== v3 layout ===== */
+.wrap { gap: 10px; }
+.panel { gap: 10px; }
+.tag { padding: 10px 14px; gap: 4px; }
+.big { font-size: clamp(1.9rem, 9vw, 2.3rem); }
+.taxline { font-size: 0.8rem; }
+.details { background: var(--surface); border: 1.5px solid var(--line); border-radius: 14px; padding: 2px 12px; display: flex; flex-direction: column; }
+.drow { display: flex; align-items: center; justify-content: space-between; gap: 12px; min-height: 44px; border-bottom: 1px solid var(--line); }
+.drow label { flex: none; }
+.details .input { flex: 1; box-sizing: border-box; width: auto; min-width: 0; height: 36px; padding: 0 6px; border: 0; border-radius: 8px; background: transparent; }
+.details .input input { font: 500 1rem var(--font-body); font-variant-numeric: tabular-nums; padding: 0; text-align: right; height: 100%; }
+.details .input span { font: 500 1rem var(--font-body); }
+.details .input:focus-within { background: var(--accent-soft); }
+.details .paysel { flex: 1; width: auto; height: 36px; min-height: 36px; border: 0; background: transparent; padding: 0 6px; text-align-last: right; }
+.cashbox { display: flex; flex-direction: column; gap: 6px; margin: 0; padding: 2px 0 4px; }
+.cashbox[hidden], #cashrow[hidden] { display: none; }
+.cashbox .drow { border-bottom: 0; border-top: 0; }
+.cashopen { align-self: flex-start; min-height: 36px; }
+.changebox { padding: 8px 14px; border-radius: 12px; }
+.chg-amt { font-size: 1.5rem; }
+.foot { display: flex; flex-direction: column; gap: 6px; color: var(--muted); font-size: 0.8rem; }
+.more summary { cursor: pointer; font-size: 0.85rem; color: var(--accent); min-height: 32px; display: flex; align-items: center; }
+.more[open] { display: flex; flex-direction: column; gap: 6px; }
+.helptext { margin: 0; font-size: 0.8rem; color: var(--muted); }
+.ver { font-size: 0.75rem; color: var(--muted); }
+.savebar { position: sticky; bottom: 0; z-index: 8; display: flex; flex-direction: column; gap: 6px; padding: 8px 0 calc(env(safe-area-inset-bottom, 0px) + 8px); background: var(--bg); box-shadow: 0 -10px 12px -6px var(--bg); }
+.savebar[hidden] { display: none; }
+.item .name { padding: 14px 0; text-overflow: ellipsis; }
 .picker { position: fixed; inset: 0; z-index: 90; background: var(--bg); color: var(--fg); display: flex; flex-direction: column; gap: 10px; padding-top: calc(env(safe-area-inset-top, 0px) + 12px); padding-bottom: env(safe-area-inset-bottom, 0px); padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
 .picker[hidden] { display: none; }
 .picker-head { display: flex; align-items: center; gap: 12px; }
@@ -417,39 +446,6 @@ footer { color: var(--muted); font-size: 0.8rem; }
     </div>
 
     <div class="field">
-      <label for="a-loc">Location</label>
-      <div class="input locin"><input id="a-loc" type="text" list="loc-list" autocomplete="off" maxlength="40" placeholder="Where are you selling today?"></div>
-      <datalist id="loc-list"></datalist>
-    </div>
-
-    <div class="field compact">
-      <label for="a-pay">Payment type</label>
-      <select id="a-pay" class="paysel">
-        <option value="cash">Cash</option>
-        <option value="credit">Credit</option>
-        <option value="debit">Debit</option>
-        <option value="venmo">Venmo</option>
-        <option value="zelle">Zelle</option>
-      </select>
-    </div>
-
-    <div class="cashbox" id="cashbox" hidden>
-      <div class="field compact">
-        <label for="a-cash">Cash received</label>
-        <div class="input"><span>$</span><input id="a-cash" inputmode="decimal" autocomplete="off" placeholder="0.00" aria-label="Cash received"></div>
-      </div>
-      <div class="changebox" id="changebox" hidden role="status" aria-live="polite">
-        <span class="chg-label" id="chg-label">Change due</span>
-        <span class="chg-amt" id="chg-amt"></span>
-      </div>
-    </div>
-
-    <div class="field compact">
-      <label for="a-tax">Sales tax</label>
-      <div class="input"><input id="a-tax" inputmode="decimal" autocomplete="off" value="0"><span>%</span></div>
-    </div>
-
-    <div class="field">
       <div class="labelrow"><span class="label" id="items-label">Original prices</span><button class="linkbtn clearbtn" type="button" id="clear-items">Clear sale</button></div>
       <div class="items" id="items" role="group" aria-labelledby="items-label"></div>
       <div class="addrow">
@@ -472,15 +468,39 @@ footer { color: var(--muted); font-size: 0.8rem; }
           <button class="chip" type="button" data-pct="30" aria-pressed="false">30%</button>
         </div>
       </div>
-      <button class="linkbtn" type="button" id="set-default">&#10003; 25% opens by default</button>
     </div>
 
-    <div class="field" id="receipt-box" hidden>
-      <div class="savepair">
-        <button class="savebtn" type="button" id="save-sale">Save sale</button>
-        <button class="savebtn alt" type="button" id="save-receipt">Save + PDF receipt</button>
+
+    <div class="details" id="details">
+      <div class="drow">
+        <label for="a-loc">Location</label>
+        <div class="input locin"><input id="a-loc" type="text" list="loc-list" autocomplete="off" maxlength="40" placeholder="Where are you selling today?"></div>
+        <datalist id="loc-list"></datalist>
       </div>
-      <p class="note" id="save-msg" role="status"></p>
+      <div class="drow">
+        <label for="a-pay">Payment type</label>
+        <select id="a-pay" class="paysel">
+          <option value="cash">Cash</option>
+          <option value="credit">Credit</option>
+          <option value="debit">Debit</option>
+          <option value="venmo">Venmo</option>
+          <option value="zelle">Zelle</option>
+        </select>
+      </div>
+      <div class="drow">
+        <label for="a-tax">Sales tax</label>
+        <div class="input"><input id="a-tax" inputmode="decimal" autocomplete="off" value="0"><span>%</span></div>
+      </div>
+      <div class="cashbox" id="cashbox" hidden>
+        <button class="linkbtn cashopen" type="button" id="cash-open">+ Cash received / change</button>
+        <div class="drow" id="cashrow" hidden>
+          <label for="a-cash">Cash received</label>
+          <div class="input"><span>$</span><input id="a-cash" inputmode="decimal" autocomplete="off" placeholder="0.00" aria-label="Cash received"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="foot">
       <div class="sheetbox">
         <div class="sheetrow">
           <span class="sheetstat" id="sheet-stat" role="status">Google Sheet: not connected</span>
@@ -497,11 +517,29 @@ footer { color: var(--muted); font-size: 0.8rem; }
           </div>
         </div>
       </div>
+      <details class="more">
+        <summary>More</summary>
+        <button class="linkbtn" type="button" id="set-default">&#10003; 25% opens by default</button>
+        <p class="helptext">Type a price, or tap Find item or Scan item, and add more items as needed. Each item's discounted price is rounded to the cent, and the total is the sum of those prices.</p>
+      </details>
+      <div class="ver"><span id="app-ver">Version 3.1 (single-line names)</span></div>
+    </div>
+
+    <div class="savebar" id="receipt-box" hidden>
+      <div class="changebox" id="changebox" hidden role="status" aria-live="polite">
+        <span class="chg-label" id="chg-label">Change due</span>
+        <span class="chg-amt" id="chg-amt"></span>
+      </div>
+      <p class="note" id="save-msg" role="status"></p>
+      <div class="savepair">
+        <button class="savebtn" type="button" id="save-sale">Save sale</button>
+        <button class="savebtn alt" type="button" id="save-receipt">Save + PDF receipt</button>
+      </div>
     </div>
   </section>
 
 
-  <footer>Type a price, or tap Find item or Scan item, and add more items as needed. Each item's discounted price is rounded to the cent, and the total is the sum of those prices.<br><span id="app-ver">Version 2.28 (compact)</span></footer>
+
 </div>
 
 <div class="added-toast" id="added-toast" hidden role="status" aria-live="polite">
@@ -10715,6 +10753,10 @@ function findAlignmentPattern(matrix, alignmentPatternQuads, topRight, topLeft, 
     var name = document.createElement("input");
     name.className = "name";
     name.type = "text";
+    name.setAttribute("enterkeyhint", "next");
+    name.addEventListener("keydown", function (e) {
+      if (e.key === "Enter") { e.preventDefault(); price.focus(); }
+    });
     name.id = "item-name-" + rowCount;
     name.autocomplete = "off";
 
@@ -10767,7 +10809,7 @@ function findAlignmentPattern(matrix, alignmentPatternQuads, topRight, topLeft, 
   }
 
   /* ---------- Percent off (many items) ---------- */
-  var totalCents = 0;
+  var totalCents = 0, cashOpen = false;
   function cashInfo() {
     if (payType() !== "cash" || totalCents <= 0) return null;
     var g = num($("a-cash").value);
@@ -10778,6 +10820,9 @@ function findAlignmentPattern(matrix, alignmentPatternQuads, topRight, topLeft, 
   function updateChange() {
     var show = payType() === "cash";
     $("cashbox").hidden = !show;
+    var opened = cashOpen || $("a-cash").value !== "";
+    $("cash-open").hidden = opened;
+    $("cashrow").hidden = !opened;
     var box = $("changebox");
     var info = show ? cashInfo() : null;
     box.hidden = !info;
@@ -10857,6 +10902,7 @@ function findAlignmentPattern(matrix, alignmentPatternQuads, topRight, topLeft, 
     var snap = { nodes: [], pay: $("a-pay").value, loc: $("a-loc").value };
     while (itemsEl.firstChild) { snap.nodes.push(itemsEl.firstChild); itemsEl.removeChild(itemsEl.firstChild); }
     snap.cash = $("a-cash").value;
+    cashOpen = false;
     $("a-pay").value = "cash";
     $("a-cash").value = "";
     addRow("", true);
@@ -11168,6 +11214,7 @@ function findAlignmentPattern(matrix, alignmentPatternQuads, topRight, topLeft, 
   function cardFee(afterCents, taxCents) { return payType() === "credit" ? Math.round((afterCents + taxCents) * CARD_FEE_PCT / 100) : 0; }
   $("a-pay").addEventListener("change", calcA);
   $("a-cash").addEventListener("input", updateChange);
+  $("cash-open").addEventListener("click", function () { cashOpen = true; updateChange(); $("a-cash").focus(); });
   $("a-cash").addEventListener("focus", function () { var el = this; setTimeout(function () { try { el.select(); } catch (e) {} }, 0); });
 
   /* ---------- Location ---------- */
