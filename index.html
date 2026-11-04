@@ -548,7 +548,7 @@ footer { color: var(--muted); font-size: 0.8rem; }
           </div>
         </div>
       </div>
-      <div class="ver"><span id="app-ver">Version 3.18 (no zoom on entry)</span></div>
+      <div class="ver"><span id="app-ver">Version 3.19 (no cursor after clear)</span></div>
     </div>
 
     <div class="savebar" id="receipt-box" hidden>
@@ -10973,7 +10973,8 @@ function findAlignmentPattern(matrix, alignmentPatternQuads, topRight, topLeft, 
   }
   $("clear-items").addEventListener("click", function () {
     $("save-msg").textContent = "";
-    clearSale();
+    try { if (document.activeElement && document.activeElement.blur) document.activeElement.blur(); } catch (e) {}
+    clearSale(true);
   });
 
   /* ---------- Item list (built-in copy, refreshed from the Google Sheet) ---------- */
