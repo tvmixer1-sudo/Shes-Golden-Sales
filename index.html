@@ -141,6 +141,10 @@ label, .label {
 .locin { padding: 0 12px; border-radius: 10px; }
 .locrow { flex-wrap: wrap; padding-bottom: 12px; }
 .locrow .locin { flex: 1 1 0; min-width: 0; }
+.locin { display: flex; align-items: center; gap: 6px; }
+.locin input { flex: 1 1 auto; min-width: 0; }
+.loc-clear { flex: none; width: 28px; height: 28px; border-radius: 50%; border: 0; background: var(--accent-soft); color: var(--accent); font: 500 1.1rem/1 var(--font-body); cursor: pointer; padding: 0; }
+.loc-clear[hidden] { display: none; }
 .locchips { display: flex; flex-wrap: wrap; gap: 8px; flex: 0 0 100%; margin-top: 2px; }
 .locchips[hidden] { display: none; }
 .locchip { display: inline-flex; align-items: center; min-height: 36px; border-radius: 999px; background: var(--accent-soft); color: var(--accent); overflow: hidden; }
@@ -557,7 +561,7 @@ footer { color: var(--muted); font-size: 0.8rem; }
           </div>
         </div>
       </div>
-      <div class="ver"><span id="app-ver">Version 3.21 (location layout fix)</span></div>
+      <div class="ver"><span id="app-ver">Version 3.22 (clear location)</span></div>
     </div>
 
     <div class="savebar" id="receipt-box" hidden>
@@ -582,7 +586,7 @@ footer { color: var(--muted); font-size: 0.8rem; }
     <div class="menuhead"><span class="label" id="menu-title">Sale settings</span><button class="linkbtn" type="button" id="menu-done">Done</button></div>
       <div class="drow locrow">
         <label for="a-loc">Location</label>
-        <div class="input locin"><input id="a-loc" type="text" list="loc-list" autocomplete="off" maxlength="40" placeholder="Where are you selling today?"></div>
+        <div class="input locin"><input id="a-loc" type="text" list="loc-list" autocomplete="off" maxlength="40" placeholder="Where are you selling today?"><button type="button" class="loc-clear" id="loc-clear" aria-label="Clear location" hidden>&times;</button></div>
         <datalist id="loc-list"></datalist>
         <div class="locchips" id="loc-chips" hidden></div>
       </div>
@@ -11537,7 +11541,7 @@ function findAlignmentPattern(matrix, alignmentPatternQuads, topRight, topLeft, 
     list.forEach(function (n) {
       var c = document.createElement("span"); c.className = "locchip" + (n.toLowerCase() === cur ? " on" : "");
       var u = document.createElement("button"); u.type = "button"; u.className = "lc-use"; u.textContent = n;
-      u.addEventListener("click", function () { $("a-loc").value = n; rememberLoc(); updateCtx(); });
+      u.addEventListener("click", function () { $("a-loc").value = n; rememberLoc(); updateCtx(); syncLocClear(); });
       var x = document.createElement("button"); x.type = "button"; x.className = "lc-x"; x.textContent = "\u00d7"; x.setAttribute("aria-label", "Remove " + n);
       x.addEventListener("click", function () {
         var l = recentLocs().filter(function (q) { return q !== n; });
@@ -11559,7 +11563,15 @@ function findAlignmentPattern(matrix, alignmentPatternQuads, topRight, topLeft, 
   }
   try { $("a-loc").value = localStorage.getItem(LOC_KEY) || ""; } catch (e) {}
   $("a-loc").addEventListener("change", rememberLoc);
-  $("a-loc").addEventListener("input", function () { updateCtx(); renderLocChips(); });
+  function syncLocClear() { $("loc-clear").hidden = !$("a-loc").value; }
+  $("a-loc").addEventListener("input", function () { updateCtx(); renderLocChips(); syncLocClear(); });
+  $("loc-clear").addEventListener("click", function () {
+    $("a-loc").value = "";
+    try { localStorage.setItem(LOC_KEY, ""); } catch (e) {}
+    updateCtx(); renderLocChips(); syncLocClear();
+  });
+  $("a-loc").addEventListener("change", syncLocClear);
+  syncLocClear();
   renderLocList();
 
   /* ---------- Receipt ---------- */
