@@ -200,25 +200,29 @@ label, .label {
 .items { display: flex; flex-direction: column; gap: 8px; }
 .item {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(0, 66px) minmax(46px, auto) auto;
+  grid-template-columns: 34px minmax(0, 1fr) minmax(0, 66px) minmax(46px, auto) auto;
   gap: 0 6px;
   align-items: center;
   background: var(--surface);
   border: 1.5px solid var(--line);
   border-radius: 10px;
-  padding: 0 2px 0 12px;
+  padding: 0 2px 0 4px;
 }
+.item .ins { order: 0; }
 .item .name { order: 1; }
 .item .pricebox { order: 2; }
 .item .after { order: 3; }
 .item .rm { order: 4; }
+.ins { width: 30px; height: 30px; display: grid; place-items: center; border: 0; border-radius: 50%; background: var(--accent-soft); color: var(--accent); font: 500 1.2rem/1 var(--font-body); cursor: pointer; padding: 0; }
+.ins.off { visibility: hidden; pointer-events: none; }
+.ins:active { background: var(--accent); color: var(--accent-fg); }
 .item:focus-within { border-color: var(--accent); }
 .item .name {
   min-width: 0;
   border: 0;
   background: transparent;
   color: var(--fg);
-  font: 500 0.9rem var(--font-body);
+  font: 500 0.82rem var(--font-body);
   padding: 14px 0;
   outline: none;
 }
@@ -279,8 +283,8 @@ label, .label {
 .sheetform .input input { font: 400 0.9rem var(--font-mono); padding: 10px 0; }
 .sheetbtns { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; }
 .savebtn.small { padding: 0 18px; min-height: 44px; font-size: 0.95rem; }
-.addrow { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
-.addrow .addbtn { font-size: 0.9rem; padding: 0 4px; }
+.addrow { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+.addrow .addbtn { font-size: 0.85rem; padding: 0 4px; }
 .added-toast { position: fixed; z-index: 200; left: 50%; top: 34%; transform: translate(-50%, -50%); width: min(86vw, 340px); box-sizing: border-box; padding: 20px 18px 18px; border-radius: 22px; background: var(--accent); color: var(--accent-fg); text-align: center; box-shadow: 0 14px 40px rgba(0, 0, 0, 0.35); pointer-events: none; display: flex; flex-direction: column; align-items: center; gap: 2px; }
 .added-toast[hidden] { display: none; }
 .at-check { width: 48px; height: 48px; border-radius: 50%; background: var(--accent-fg); color: var(--accent); font: 700 1.8rem/48px var(--font-body); margin-bottom: 4px; }
@@ -498,7 +502,6 @@ footer { color: var(--muted); font-size: 0.8rem; }
       <div class="labelrow"><span class="label" id="items-label">Original prices</span><button class="linkbtn clearbtn" type="button" id="clear-items">Clear sale</button></div>
       <div class="items" id="items" role="group" aria-labelledby="items-label"></div>
       <div class="addrow">
-        <button class="addbtn" type="button" id="add-item">+ Add item</button>
         <button class="addbtn" type="button" id="pick-open">Find item</button>
         <button class="addbtn scanbtn" type="button" id="scan-open">Scan item</button>
         <button class="addbtn photobtn" type="button" id="photo-open">Find by photo</button>
@@ -561,7 +564,7 @@ footer { color: var(--muted); font-size: 0.8rem; }
           </div>
         </div>
       </div>
-      <div class="ver"><span id="app-ver">Version 3.23 (renamed Sales)</span></div>
+      <div class="ver"><span id="app-ver">Version 3.24 (+ on last item)</span></div>
     </div>
 
     <div class="savebar" id="receipt-box" hidden>
@@ -10799,13 +10802,15 @@ function findAlignmentPattern(matrix, alignmentPatternQuads, topRight, topLeft, 
     var list = rows();
     for (var i = 0; i < list.length; i++) {
       list[i].querySelector(".rm").disabled = list.length === 1;
+      var isLast = i === list.length - 1, ib = list[i].querySelector(".ins");
+      ib.classList.toggle("off", !isLast); ib.disabled = !isLast; ib.tabIndex = isLast ? 0 : -1;
       list[i].querySelector(".name").placeholder = "Item " + (i + 1);
       list[i].querySelector(".name").setAttribute("aria-label", "Name of item " + (i + 1));
       list[i].querySelector(".price").setAttribute("aria-label", "Original price of item " + (i + 1));
     }
   }
 
-  function addRow(value, focus) {
+  function addRow(value, focus, afterRow) {
     rowCount++;
     var row = document.createElement("div");
     row.className = "item";
@@ -10819,6 +10824,10 @@ function findAlignmentPattern(matrix, alignmentPatternQuads, topRight, topLeft, 
     });
     name.id = "item-name-" + rowCount;
     name.autocomplete = "off";
+
+    var ins = document.createElement("button");
+    ins.className = "ins"; ins.type = "button"; ins.setAttribute("aria-label", "Add an item below"); ins.textContent = "+";
+    ins.addEventListener("click", function () { addRow("", true, row); });
 
     var rm = document.createElement("button");
     rm.className = "rm";
@@ -10842,15 +10851,16 @@ function findAlignmentPattern(matrix, alignmentPatternQuads, topRight, topLeft, 
     var after = document.createElement("div");
     after.className = "after";
 
+    row.appendChild(ins);
     row.appendChild(name);
     row.appendChild(rm);
     row.appendChild(pb);
     row.appendChild(after);
-    itemsEl.appendChild(row);
+    if (afterRow && afterRow.parentNode === itemsEl) itemsEl.insertBefore(row, afterRow.nextSibling); else itemsEl.appendChild(row);
 
     price.addEventListener("input", calcA);
     price.addEventListener("keydown", function (e) {
-      if (e.key === "Enter") { e.preventDefault(); addRow("", true); }
+      if (e.key === "Enter") { e.preventDefault(); addRow("", true, row); }
     });
     rm.addEventListener("click", function () {
       if (rows().length === 1) return;
@@ -10981,6 +10991,7 @@ function findAlignmentPattern(matrix, alignmentPatternQuads, topRight, topLeft, 
   function undoClear(snap) {
     while (itemsEl.firstChild) itemsEl.removeChild(itemsEl.firstChild);
     snap.nodes.forEach(function (n) { itemsEl.appendChild(n); });
+    syncRemoveButtons();
     $("a-pay").value = snap.pay;
     $("a-cash").value = snap.cash || "";
     calcA();
@@ -11961,7 +11972,6 @@ function findAlignmentPattern(matrix, alignmentPatternQuads, topRight, topLeft, 
     try { localStorage.setItem(TAX_KEY, $("a-tax").value); } catch (e) {}
     calcA();
   });
-  $("add-item").addEventListener("click", function () { addRow("", true); });
   $("a-pct").value = String(defaultPct);
   try {
     var savedTax = localStorage.getItem(TAX_KEY);
