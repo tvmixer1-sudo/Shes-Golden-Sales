@@ -342,8 +342,9 @@ label, .label {
 .notes[open] summary { border-bottom: 1px solid var(--line); }
 .notes .drow:last-child { border-bottom: 0; }
 .notes .descrow { flex-wrap: wrap; padding: 8px 0 10px; }
-.notes .descrow .input { flex: 1 1 100%; height: 40px; background: var(--accent-soft); }
-.notes .descrow .input input { text-align: left; font-size: 0.95rem; }
+.notes .descrow .input { flex: 1 1 100%; height: auto; padding: 6px 10px; background: var(--accent-soft); }
+.notes .descrow textarea { width: 100%; box-sizing: border-box; border: 0; background: transparent; color: var(--fg); font: 500 0.95rem/1.35 var(--font-body); text-align: left; resize: none; overflow: hidden; padding: 0; outline: none; display: block; min-height: 2.7em; }
+.notes .descrow textarea::placeholder { color: var(--muted); }
 .cashbox { display: flex; flex-direction: column; margin: 0; padding: 0; }
 .cashbox[hidden], #cashrow[hidden] { display: none; }
 .cashbox .drow { border-bottom: 0; border-top: 0; }
@@ -575,7 +576,7 @@ footer { color: var(--muted); font-size: 0.8rem; }
       </div>
       <div class="drow descrow">
         <label for="n-desc">Description</label>
-        <div class="input"><input id="n-desc" type="text" autocomplete="off" autocapitalize="sentences" maxlength="200" placeholder="Anything to remember about this sale"></div>
+        <div class="input"><textarea id="n-desc" rows="2" autocomplete="off" autocapitalize="sentences" maxlength="200" placeholder="Anything to remember about this sale"></textarea></div>
       </div>
     </details>
 
@@ -596,7 +597,7 @@ footer { color: var(--muted); font-size: 0.8rem; }
           </div>
         </div>
       </div>
-      <div class="ver"><span id="app-ver">Version 3.29 (description line)</span></div>
+      <div class="ver"><span id="app-ver">Version 3.30 (description wraps)</span></div>
     </div>
 
     <div class="savebar" id="receipt-box" hidden>
@@ -11011,8 +11012,11 @@ function findAlignmentPattern(matrix, alignmentPatternQuads, topRight, topLeft, 
 
   /* Clears the sale (items, payment). Location, tax and discount stay. Returns what was cleared, for Undo. */
   function customer() {
-    return { name: $("n-name").value.trim(), email: $("n-email").value.trim(), phone: $("n-phone").value.trim(), note: $("n-desc").value.trim() };
+    return { name: $("n-name").value.trim(), email: $("n-email").value.trim(), phone: $("n-phone").value.trim(), note: $("n-desc").value.replace(/\s+/g, " ").trim() };
   }
+  function growDesc() { var t = $("n-desc"); t.style.height = "auto"; t.style.height = t.scrollHeight + "px"; }
+  $("n-desc").addEventListener("input", growDesc);
+  $("notes").addEventListener("toggle", growDesc);
   function syncNotesHint() {
     var c = customer(), h = $("notes-hint");
     h.textContent = c.name || c.email || c.phone || c.note || "Optional";
@@ -11020,6 +11024,7 @@ function findAlignmentPattern(matrix, alignmentPatternQuads, topRight, topLeft, 
   ["n-name", "n-email", "n-phone", "n-desc"].forEach(function (id) { $(id).addEventListener("input", syncNotesHint); });
   function setCustomer(c) {
     $("n-name").value = c.name || ""; $("n-email").value = c.email || ""; $("n-phone").value = c.phone || ""; $("n-desc").value = c.note || "";
+    growDesc();
     syncNotesHint();
   }
   function clearSale(noFocus) {
