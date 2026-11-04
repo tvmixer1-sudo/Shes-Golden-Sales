@@ -200,20 +200,20 @@ label, .label {
 .items { display: flex; flex-direction: column; gap: 8px; }
 .item {
   display: grid;
-  grid-template-columns: 34px minmax(0, 1fr) minmax(0, 66px) minmax(46px, auto) auto;
-  gap: 0 6px;
+  grid-template-columns: 30px minmax(0, 1fr) minmax(0, 66px) minmax(40px, auto) auto;
+  gap: 0 3px;
   align-items: center;
   background: var(--surface);
   border: 1.5px solid var(--line);
   border-radius: 10px;
-  padding: 0 2px 0 4px;
+  padding: 0 0 0 3px;
 }
 .item .ins { order: 0; }
 .item .name { order: 1; }
 .item .pricebox { order: 2; }
 .item .after { order: 3; }
 .item .rm { order: 4; }
-.ins { width: 30px; height: 30px; display: grid; place-items: center; border: 0; border-radius: 50%; background: var(--accent-soft); color: var(--accent); font: 500 1.2rem/1 var(--font-body); cursor: pointer; padding: 0; }
+.ins { width: 28px; height: 28px; display: grid; place-items: center; border: 0; border-radius: 50%; background: var(--accent-soft); color: var(--accent); font: 500 1.2rem/1 var(--font-body); cursor: pointer; padding: 0; }
 .ins.off { visibility: hidden; pointer-events: none; }
 .ins:active { background: var(--accent); color: var(--accent-fg); }
 .item:focus-within { border-color: var(--accent); }
@@ -228,7 +228,7 @@ label, .label {
 }
 .item .name::placeholder { color: var(--muted); }
 .rm {
-  width: 40px;
+  width: 34px;
   height: 40px;
   display: grid;
   place-items: center;
@@ -564,7 +564,7 @@ footer { color: var(--muted); font-size: 0.8rem; }
           </div>
         </div>
       </div>
-      <div class="ver"><span id="app-ver">Version 3.24 (+ on last item)</span></div>
+      <div class="ver"><span id="app-ver">Version 3.25 (wider item names)</span></div>
     </div>
 
     <div class="savebar" id="receipt-box" hidden>
