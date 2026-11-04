@@ -139,6 +139,13 @@ label, .label {
 .paysel { box-sizing: border-box; width: 112px; height: 38px; min-height: 38px; padding: 0 10px; text-align-last: right; background: var(--surface); color: var(--fg); border: 1.5px solid var(--line); border-radius: 10px; font: 500 1rem var(--font-body); }
 .paysel:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-color: var(--accent); }
 .locin { padding: 0 12px; border-radius: 10px; }
+.locchips { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
+.locchips[hidden] { display: none; }
+.locchip { display: inline-flex; align-items: center; min-height: 36px; border-radius: 999px; background: var(--accent-soft); color: var(--accent); overflow: hidden; }
+.locchip button { font: 500 0.9rem var(--font-body); color: inherit; background: transparent; border: 0; cursor: pointer; min-height: 36px; }
+.locchip .lc-use { padding: 0 6px 0 12px; max-width: 14rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.locchip .lc-x { padding: 0 12px 0 4px; opacity: 0.7; }
+.locchip.on { background: var(--accent); color: var(--accent-fg); }
 .locin input { font: 500 1rem var(--font-body); padding: 10px 0; }
 .compact { flex-direction: row; align-items: center; justify-content: space-between; gap: 12px; }
 .compact .input { box-sizing: border-box; width: 112px; height: 38px; padding: 0 10px; border-radius: 10px; }
@@ -548,7 +555,7 @@ footer { color: var(--muted); font-size: 0.8rem; }
           </div>
         </div>
       </div>
-      <div class="ver"><span id="app-ver">Version 3.19 (no cursor after clear)</span></div>
+      <div class="ver"><span id="app-ver">Version 3.20 (saved locations)</span></div>
     </div>
 
     <div class="savebar" id="receipt-box" hidden>
@@ -575,6 +582,7 @@ footer { color: var(--muted); font-size: 0.8rem; }
         <label for="a-loc">Location</label>
         <div class="input locin"><input id="a-loc" type="text" list="loc-list" autocomplete="off" maxlength="40" placeholder="Where are you selling today?"></div>
         <datalist id="loc-list"></datalist>
+        <div class="locchips" id="loc-chips" hidden></div>
       </div>
   </div>
 </div>
@@ -11518,6 +11526,24 @@ function findAlignmentPattern(matrix, alignmentPatternQuads, topRight, topLeft, 
     var dl = $("loc-list");
     dl.innerHTML = "";
     recentLocs().forEach(function (n) { var o = document.createElement("option"); o.value = n; dl.appendChild(o); });
+    renderLocChips();
+  }
+  function renderLocChips() {
+    var box = $("loc-chips"), list = recentLocs(), cur = currentLoc().toLowerCase();
+    box.innerHTML = "";
+    box.hidden = !list.length;
+    list.forEach(function (n) {
+      var c = document.createElement("span"); c.className = "locchip" + (n.toLowerCase() === cur ? " on" : "");
+      var u = document.createElement("button"); u.type = "button"; u.className = "lc-use"; u.textContent = n;
+      u.addEventListener("click", function () { $("a-loc").value = n; rememberLoc(); updateCtx(); });
+      var x = document.createElement("button"); x.type = "button"; x.className = "lc-x"; x.textContent = "\u00d7"; x.setAttribute("aria-label", "Remove " + n);
+      x.addEventListener("click", function () {
+        var l = recentLocs().filter(function (q) { return q !== n; });
+        try { localStorage.setItem(LOC_RECENT, JSON.stringify(l)); } catch (e) {}
+        renderLocList();
+      });
+      c.appendChild(u); c.appendChild(x); box.appendChild(c);
+    });
   }
   function currentLoc() { return $("a-loc").value.trim().slice(0, 40); }
   function rememberLoc() {
@@ -11531,7 +11557,7 @@ function findAlignmentPattern(matrix, alignmentPatternQuads, topRight, topLeft, 
   }
   try { $("a-loc").value = localStorage.getItem(LOC_KEY) || ""; } catch (e) {}
   $("a-loc").addEventListener("change", rememberLoc);
-  $("a-loc").addEventListener("input", updateCtx);
+  $("a-loc").addEventListener("input", function () { updateCtx(); renderLocChips(); });
   renderLocList();
 
   /* ---------- Receipt ---------- */
