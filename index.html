@@ -339,6 +339,7 @@ label, .label {
 .menu { position: fixed; inset: 0; z-index: 250; display: flex; align-items: flex-start; justify-content: center; padding: calc(env(safe-area-inset-top, 0px) + 64px) 16px 16px; background: rgba(0, 0, 0, 0.4); }
 .menu[hidden] { display: none; }
 .menucard { width: min(100%, 420px); box-shadow: 0 14px 40px rgba(0, 0, 0, 0.35); }
+#photo-res .menucard { max-height: calc(100dvh - env(safe-area-inset-top, 0px) - 80px); overflow-y: auto; -webkit-overflow-scrolling: touch; }
 .menuhead { display: flex; align-items: center; justify-content: space-between; min-height: 44px; border-bottom: 1px solid var(--line); }
 .menucard .drow:last-child { border-bottom: 0; }
 .defbtn { min-height: 32px; padding: 0; font-size: 0.85rem; }
@@ -547,7 +548,7 @@ footer { color: var(--muted); font-size: 0.8rem; }
           </div>
         </div>
       </div>
-      <div class="ver"><span id="app-ver">Version 3.15 (all photos)</span></div>
+      <div class="ver"><span id="app-ver">Version 3.16 (top 6 matches)</span></div>
     </div>
 
     <div class="savebar" id="receipt-box" hidden>
@@ -11229,7 +11230,7 @@ function findAlignmentPattern(matrix, alignmentPatternQuads, topRight, topLeft, 
       sx.drawImage(src, (64 - sw * k) / 2, (64 - sh * k) / 2, sw * k, sh * k);
       if (!refs.length) { tip.textContent = "No product photos are loaded yet. Check your connection once and try again."; return; }
       var q = vsDescribe(src);
-      var ranked = refs.map(function (x) { return { it: x.it, dist: vsDist(q, x.d) }; }).sort(function (a, b) { return a.dist - b.dist; }).slice(0, 4);
+      var ranked = refs.map(function (x) { return { it: x.it, dist: vsDist(q, x.d) }; }).sort(function (a, b) { return a.dist - b.dist; }).slice(0, 6);
       tip.textContent = "Tap the one that matches. Tip: lay the piece flat on a plain surface and fill the frame.";
       ranked.forEach(function (x, i) {
         var li = document.createElement("li"), b = document.createElement("button");
