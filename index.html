@@ -662,7 +662,7 @@ footer { color: var(--muted); font-size: 0.8rem; }
           </div>
         </div>
       </div>
-      <div class="ver"><span id="app-ver">Version 3.55 (clear item)</span></div>
+      <div class="ver"><span id="app-ver">Version 3.56 (photo finder model)</span></div>
     </div>
 
     <div class="savebar" id="receipt-box" hidden>
@@ -11433,6 +11433,87 @@ function findAlignmentPattern(matrix, alignmentPatternQuads, topRight, topLeft, 
       i.src = u;
     });
   }
+  /* ---------- Photo finder model (DINOv2-small, runs on the phone). Falls back to the basic matcher if it can't load. ---------- */
+  var PM = { p: null, ok: false, err: "", sess: null, vecs: null, loadedAt: 0 };
+  var PM_WEAK = 0.75; /* best score below this = no close match */
+  function pmBase() { return new URL("ml/", location.href).href; }
+  function pmScript(src) {
+    return new Promise(function (res, rej) {
+      if (window.ort) { res(); return; }
+      var s = document.createElement("script"); s.src = src; s.onload = function () { res(); }; s.onerror = function () { rej(new Error("runtime script")); };
+      document.head.appendChild(s);
+    });
+  }
+  function pmInit() {
+    if (PM.p) return PM.p;
+    PM.p = (function () {
+      var base = pmBase();
+      return pmScript(base + "ort.wasm.min.js").then(function () {
+        ort.env.wasm.wasmPaths = base; ort.env.wasm.numThreads = 1;
+        return Promise.all([
+          ort.InferenceSession.create(base + "model_quantized.onnx", { executionProviders: ["wasm"] }),
+          fetch(base + "catalog-vectors.json").then(function (r) { return r.json(); })
+        ]);
+      }).then(function (r) { PM.sess = r[0]; PM.vecs = (r[1] && r[1].v) || {}; PM.ok = true; PM.loadedAt = Date.now(); return true; })
+        .catch(function (e) { PM.err = String(e && e.message || e); PM.ok = false; PM.p = null; return false; });
+    })();
+    return PM.p;
+  }
+  var PM_MEAN = [0.485, 0.456, 0.406], PM_STD = [0.229, 0.224, 0.225];
+  function pmPrep(src) {
+    var w = src.naturalWidth || src.videoWidth || src.width, h = src.naturalHeight || src.videoHeight || src.height;
+    var cv = vsCanvas(224, 224), cx = cv.getContext("2d", { willReadFrequently: true });
+    cx.imageSmoothingEnabled = true; cx.imageSmoothingQuality = "high";
+    cx.fillStyle = "#fff"; cx.fillRect(0, 0, 224, 224);
+    var sc = 256 / Math.min(w, h), rw = w * sc, rh = h * sc;
+    cx.drawImage(src, (224 - rw) / 2, (224 - rh) / 2, rw, rh);
+    var d = cx.getImageData(0, 0, 224, 224).data, out = new Float32Array(3 * 224 * 224);
+    for (var i = 0; i < 224 * 224; i++) for (var c = 0; c < 3; c++) out[c * 224 * 224 + i] = (d[i * 4 + c] / 255 - PM_MEAN[c]) / PM_STD[c];
+    return out;
+  }
+  function pmEmbed(src) {
+    var t = new ort.Tensor("float32", pmPrep(src), [1, 3, 224, 224]);
+    return PM.sess.run({ pixel_values: t }).then(function (o) {
+      var d = o.last_hidden_state.data, v = new Float32Array(384), s = 0, i;
+      for (i = 0; i < 384; i++) { v[i] = d[i]; s += d[i] * d[i]; }
+      s = Math.sqrt(s) || 1;
+      for (i = 0; i < 384; i++) v[i] /= s;
+      return v;
+    });
+  }
+  function pmDot(a, b) { var s = 0; for (var i = 0; i < a.length; i++) s += a[i] * b[i]; return s; }
+  /* Resolves to { ranked: [{it, score}], weak } or null if the model isn't available. */
+  function pmMatch(src) {
+    return pmInit().then(function (ok) {
+      if (!ok) return null;
+      return pmEmbed(src).then(function (q) {
+        var seen = {}, list = [];
+        catalog.forEach(function (it) { if (hasPhoto(it.id) && !seen[it.name.toLowerCase()]) { seen[it.name.toLowerCase()] = 1; list.push(it); } });
+        var jobs = list.map(function (it) {
+          var v = PM.vecs[it.id];
+          if (v && v.length === 384) return Promise.resolve({ it: it, score: pmDot(q, v) });
+          /* A new item that isn't in the precomputed list yet: work it out from its photo once. */
+          return vsLoad(photoUrl(it.id)).then(function (img) {
+            if (!img) return null;
+            return pmEmbed(img).then(function (e) { PM.vecs[it.id] = Array.prototype.slice.call(e); return { it: it, score: pmDot(q, e) }; });
+          }).catch(function () { return null; });
+        });
+        return Promise.all(jobs).then(function (rows) {
+          rows = rows.filter(Boolean).sort(function (a, b) { return b.score - a.score; });
+          var top = rows.slice(0, 6);
+          return { ranked: top, weak: !top.length || top[0].score < PM_WEAK };
+        });
+      });
+    }).catch(function () { return null; });
+  }
+  function vsBasicMatch(src) {
+    return vsBuildRefs().then(function (refs) {
+      if (!refs.length) return { ranked: [], weak: false, msg: "No product photos are loaded yet. Check your connection once and try again." };
+      var q = vsDescribe(src);
+      var ranked = refs.map(function (x) { return { it: x.it, dist: vsDist(q, x.d) }; }).sort(function (a, b) { return a.dist - b.dist; }).slice(0, 6);
+      return { ranked: ranked, weak: false, basic: true };
+    });
+  }
   function openPhotoRes() { $("photo-res").hidden = false; }
   function closePhotoRes() { $("photo-res").hidden = true; }
   $("photo-open").addEventListener("click", function () { $("photo-file").click(); });
@@ -11449,20 +11530,21 @@ function findAlignmentPattern(matrix, alignmentPatternQuads, topRight, topLeft, 
     var shot = $("pr-shot"), sx = shot.getContext("2d");
     sx.fillStyle = "#fff"; sx.fillRect(0, 0, 64, 64);
     openPhotoRes();
-    Promise.all([vsToSource(f), vsBuildRefs()]).then(function (r) {
-      var src = r[0], refs = r[1];
+    vsToSource(f).then(function (src) {
       var sw = src.naturalWidth || src.width, sh = src.naturalHeight || src.height, k = 64 / Math.max(sw, sh);
       sx.drawImage(src, (64 - sw * k) / 2, (64 - sh * k) / 2, sw * k, sh * k);
-      if (!refs.length) { tip.textContent = "No product photos are loaded yet. Check your connection once and try again."; return; }
-      var q = vsDescribe(src);
-      var ranked = refs.map(function (x) { return { it: x.it, dist: vsDist(q, x.d) }; }).sort(function (a, b) { return a.dist - b.dist; }).slice(0, 6);
-      tip.textContent = "Tap the one that matches. Tip: lay the piece flat on a plain surface and fill the frame.";
+      if (!PM.ok) tip.textContent = "Looking\u2026 (the first search loads the photo finder, it can take a few seconds)";
+      return pmMatch(src).then(function (res) { return res || vsBasicMatch(src); });
+    }).then(function (res) {
+      if (res.msg) { tip.textContent = res.msg; return; }
+      var ranked = res.ranked;
+      tip.textContent = res.weak ? "No close match. These are the closest guesses. Try laying the piece flat on a plain surface and filling the frame." : "Tap the one that matches. Tip: lay the piece flat on a plain surface and fill the frame.";
       ranked.forEach(function (x, i) {
         var li = document.createElement("li"), b = document.createElement("button");
-        b.type = "button"; b.className = "pr-item" + (i === 0 ? " best" : "");
+        b.type = "button"; b.className = "pr-item" + (i === 0 && !res.weak ? " best" : "");
         var n = document.createElement("span"); n.className = "pn"; n.textContent = x.it.name;
         var pr = document.createElement("span"); pr.className = "pp"; pr.textContent = money.format(x.it.price);
-        var m = document.createElement("span"); m.className = "pm"; m.textContent = (i === 0 ? "Best guess" : "Also close") + " \u00b7 " + x.it.id + (x.it.sold ? " \u00b7 Sold out" : "");
+        var m = document.createElement("span"); m.className = "pm"; m.textContent = (res.weak ? "Closest guess" : (i === 0 ? "Best guess" : "Also close")) + " \u00b7 " + x.it.id + (x.it.sold ? " \u00b7 Sold out" : "");
         b.appendChild(makeThumb(x.it.id)); b.appendChild(n); b.appendChild(pr); b.appendChild(m);
         b.addEventListener("click", function () {
           addScanned({ id: x.it.id, name: x.it.name, price: x.it.price.toFixed(2) });
@@ -11474,7 +11556,7 @@ function findAlignmentPattern(matrix, alignmentPatternQuads, topRight, topLeft, 
       });
     }).catch(function () { tip.textContent = "Couldn't read that photo. Try again."; });
   });
-  if (window.SG_TEST) window.__sg = { vsDescribe: vsDescribe, vsDist: vsDist, buildReceipt: function () { return buildReceipt(); } };
+  if (window.SG_TEST) window.__sg = { pmMatch: pmMatch, PM: PM, vsDescribe: vsDescribe, vsDist: vsDist, buildReceipt: function () { return buildReceipt(); } };
 
   var toastTimer = null;
   function showAdded(name, price, count, sold, id) {
