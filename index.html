@@ -662,7 +662,7 @@ footer { color: var(--muted); font-size: 0.8rem; }
           </div>
         </div>
       </div>
-      <div class="ver"><span id="app-ver">Version 3.54 (Items label)</span></div>
+      <div class="ver"><span id="app-ver">Version 3.55 (clear item)</span></div>
     </div>
 
     <div class="savebar" id="receipt-box" hidden>
@@ -10935,7 +10935,7 @@ function findAlignmentPattern(matrix, alignmentPatternQuads, topRight, topLeft, 
   function syncRemoveButtons() {
     var list = rows();
     for (var i = 0; i < list.length; i++) {
-      list[i].querySelector(".rm").disabled = list.length === 1;
+      list[i].querySelector(".rm").setAttribute("aria-label", list.length === 1 ? "Clear item" : "Remove item");
       var isLast = i === list.length - 1, ib = list[i].querySelector(".ins");
       ib.classList.toggle("off", !isLast); ib.disabled = !isLast; ib.tabIndex = isLast ? 0 : -1;
       list[i].querySelector(".name").placeholder = "Item " + (i + 1);
@@ -10997,7 +10997,16 @@ function findAlignmentPattern(matrix, alignmentPatternQuads, topRight, topLeft, 
       if (e.key === "Enter") { e.preventDefault(); addRow("", true, row); }
     });
     rm.addEventListener("click", function () {
-      if (rows().length === 1) return;
+      if (rows().length === 1) {
+        /* Only row left: clear it instead of removing it */
+        row.querySelector(".name").value = "";
+        row.querySelector(".price").value = "";
+        row.removeAttribute("data-id");
+        row.removeAttribute("data-sample");
+        row.querySelector(".after").textContent = "";
+        calcA();
+        return;
+      }
       var list = Array.prototype.slice.call(rows());
       var idx = list.indexOf(row);
       itemsEl.removeChild(row);
