@@ -611,7 +611,7 @@ footer { color: var(--muted); font-size: 0.8rem; }
           </div>
         </div>
       </div>
-      <div class="ver"><span id="app-ver">Version 3.33 (BOGO discount)</span></div>
+      <div class="ver"><span id="app-ver">Version 3.34 (website on receipt)</span></div>
     </div>
 
     <div class="savebar" id="receipt-box" hidden>
@@ -11779,7 +11779,8 @@ function findAlignmentPattern(matrix, alignmentPatternQuads, topRight, topLeft, 
       logoW = logo.w * k;
       logoH = logo.h * k;
     }
-    var h = Math.max(220, margin * 2 + lines.length * lh + (logo ? logoH + 14 : 0));
+    var SITE = "shesgolden.com", footH = 44;
+    var h = Math.max(220, margin * 2 + lines.length * lh + (logo ? logoH + 14 : 0) + footH);
     return P.PDFDocument.create().then(function (doc) {
       var page = doc.addPage([pageW, h]);
       return Promise.all([
@@ -11798,6 +11799,11 @@ function findAlignmentPattern(matrix, alignmentPatternQuads, topRight, topLeft, 
           page.drawText(ln, { x: margin, y: y, size: i === 0 ? 13 : 9, font: isBold ? bold : reg });
           y -= lh;
         });
+        y -= 8;
+        var thanks = "Thank you for shopping with us!";
+        page.drawText(thanks, { x: (pageW - reg.widthOfTextAtSize(thanks, 9)) / 2, y: y, size: 9, font: reg });
+        y -= 16;
+        page.drawText(SITE, { x: (pageW - bold.widthOfTextAtSize(SITE, 12)) / 2, y: y, size: 12, font: bold });
         return doc.save();
       });
     });
