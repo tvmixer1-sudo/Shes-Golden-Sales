@@ -441,7 +441,6 @@ label, .label {
 .zoom-btns { display: flex; gap: 8px; margin-top: 4px; }
 .zoom-btns button { flex: 1; min-height: 46px; border-radius: 12px; border: 0; font: 700 0.95rem var(--font-body); cursor: pointer; }
 .zoom-add { background: var(--accent); color: var(--accent-fg); }
-.zoom-close { background: var(--accent-soft); color: var(--accent); }
 .pick-item .pn { overflow-wrap: anywhere; }
 .pick-item .pp { font: 500 1rem var(--font-mono); font-variant-numeric: tabular-nums; }
 .pick-item .pm { grid-column: 1 / -1; font-size: 0.78rem; color: var(--muted); }
@@ -647,7 +646,7 @@ footer { color: var(--muted); font-size: 0.8rem; }
           </div>
         </div>
       </div>
-      <div class="ver"><span id="app-ver">Version 3.51 (tap to turn off)</span></div>
+      <div class="ver"><span id="app-ver">Version 3.52 (photo buttons)</span></div>
     </div>
 
     <div class="savebar" id="receipt-box" hidden>
@@ -716,8 +715,7 @@ footer { color: var(--muted); font-size: 0.8rem; }
     <div class="zoom-name" id="zoom-name"></div>
     <div class="zoom-price" id="zoom-price"></div>
     <div class="zoom-btns">
-      <button class="zoom-add" type="button" id="zoom-add">Add item</button>
-      <button class="zoom-close" type="button" id="zoom-close">Close</button>
+      <button class="zoom-add" type="button" id="zoom-add">Add Item</button>
     </div>
   </div>
 </div>
@@ -11508,8 +11506,7 @@ function findAlignmentPattern(matrix, alignmentPatternQuads, topRight, topLeft, 
     $("zoom").hidden = false;
   }
   function closeZoom() { $("zoom").hidden = true; $("zoom-img").removeAttribute("src"); zoomAdd = null; }
-  $("zoom-close").addEventListener("click", closeZoom);
-  $("zoom").addEventListener("click", function (e) { if (e.target === $("zoom") || e.target === $("zoom-img")) closeZoom(); });
+  $("zoom").addEventListener("click", function (e) { if (!e.target.closest("#zoom-add")) closeZoom(); });
   $("zoom-add").addEventListener("click", function () { var f = zoomAdd; closeZoom(); if (f) f(); });
   document.addEventListener("keydown", function (e) { if (e.key === "Escape" && !$("zoom").hidden) closeZoom(); });
   /* Tapping a photo in the item list or the photo-search results shows it larger. Tapping anywhere else on the row still adds the item. */
