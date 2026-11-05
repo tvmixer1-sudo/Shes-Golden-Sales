@@ -508,7 +508,7 @@ body::before {
   font-variant-numeric: tabular-nums;
 }
 .was { font: 400 1rem var(--font-mono); color: var(--muted); text-decoration: line-through; font-variant-numeric: tabular-nums; }
-.cloverline { font: 700 0.95rem var(--font-body); color: var(--accent); background: var(--accent-soft); border-radius: 10px; padding: 8px 12px; }
+.cloverline { margin-top: 8px; font: 700 0.95rem var(--font-body); color: var(--accent); background: var(--accent-soft); border-radius: 10px; padding: 8px 12px; }
 .cloverline[hidden] { display: none; }
 .taxline { font: 400 0.9rem var(--font-mono); color: var(--muted); font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
 .note { margin: 0; font-size: 0.9rem; color: var(--muted); }
@@ -533,12 +533,12 @@ footer { color: var(--muted); font-size: 0.8rem; }
     <div class="tag" aria-live="polite">
       <span class="label" id="a-label">Total after discount</span>
       <div class="big" id="a-result">$0.00</div>
+      <div class="cloverline" id="a-clover" hidden></div>
       <div class="row">
         <span class="was" id="a-was"></span>
         <span class="save" id="a-save"></span>
       </div>
       <div class="taxline" id="a-taxline" hidden></div>
-      <div class="cloverline" id="a-clover" hidden></div>
       <p class="note" id="a-note"></p>
     </div>
 
@@ -633,7 +633,7 @@ footer { color: var(--muted); font-size: 0.8rem; }
           </div>
         </div>
       </div>
-      <div class="ver"><span id="app-ver">Version 3.43 (Clover entry)</span></div>
+      <div class="ver"><span id="app-ver">Version 3.44 (Clover line)</span></div>
     </div>
 
     <div class="savebar" id="receipt-box" hidden>
