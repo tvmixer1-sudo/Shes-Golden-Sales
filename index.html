@@ -611,7 +611,7 @@ footer { color: var(--muted); font-size: 0.8rem; }
           </div>
         </div>
       </div>
-      <div class="ver"><span id="app-ver">Version 3.34 (website on receipt)</span></div>
+      <div class="ver"><span id="app-ver">Version 3.35 (website in messages)</span></div>
     </div>
 
     <div class="savebar" id="receipt-box" hidden>
@@ -11841,6 +11841,8 @@ function findAlignmentPattern(matrix, alignmentPatternQuads, topRight, topLeft, 
     out.push("Total: " + money.format(rc.total));
     out.push("Paid by: " + rc.payment);
     out.push(new Date(rc.time).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }));
+    out.push("");
+    out.push("shesgolden.com");
     return out.join("\n");
   }
   function setupShare(rc) {
