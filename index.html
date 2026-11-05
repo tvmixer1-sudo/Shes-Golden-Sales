@@ -282,9 +282,10 @@ label, .label {
   cursor: pointer;
 }
 .addbtn:hover { background: var(--accent-soft); }
-.bogobtn { width: 100%; margin-top: 8px; min-height: 40px; border-radius: 12px; border: 1.5px dashed var(--accent); background: transparent; color: var(--accent); font: 600 0.88rem var(--font-body); cursor: pointer; }
-.bogobtn[aria-pressed="true"] { background: var(--accent); color: var(--accent-fg); border-style: solid; }
-.bogo-on .discrow { opacity: 0.4; }
+.bogo-on .pctin, .bogo-on .chip:not(.bogochip) { opacity: 0.4; }
+.discacts { display: flex; align-items: center; gap: 14px; }
+.clearpct { min-height: 32px; padding: 0; font-size: 0.85rem; }
+.clearpct[hidden] { display: none; }
 .addbtn:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 .sheetbox { display: flex; flex-direction: column; gap: 8px; }
 .sheetrow { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
@@ -569,19 +570,18 @@ footer { color: var(--muted); font-size: 0.8rem; }
     </div>
 
     <div class="field">
-      <div class="labelrow"><label for="a-pct">Discount</label><button class="linkbtn defbtn" type="button" id="set-default">&#10003; 25% is default</button></div>
+      <div class="labelrow"><label for="a-pct">Discount</label><span class="discacts"><button class="linkbtn clearpct" type="button" id="clear-pct" hidden>&times; Clear</button><button class="linkbtn defbtn" type="button" id="set-default">&#10003; 0% is default</button></span></div>
       <div class="discrow">
-        <div class="input pctin"><input id="a-pct" inputmode="decimal" autocomplete="off" value="25" aria-label="Discount percent"><span>%</span></div>
+        <div class="input pctin"><input id="a-pct" inputmode="decimal" autocomplete="off" value="0" aria-label="Discount percent"><span>%</span></div>
         <div class="chips" id="chips" aria-label="Common discounts">
-          <button class="chip" type="button" data-pct="0" aria-pressed="false">0%</button>
           <button class="chip" type="button" data-pct="10" aria-pressed="false">10%</button>
           <button class="chip" type="button" data-pct="15" aria-pressed="false">15%</button>
           <button class="chip" type="button" data-pct="20" aria-pressed="false">20%</button>
-          <button class="chip" type="button" data-pct="25" aria-pressed="true">25%</button>
+          <button class="chip" type="button" data-pct="25" aria-pressed="false">25%</button>
           <button class="chip" type="button" data-pct="30" aria-pressed="false">30%</button>
+          <button class="chip bogochip" type="button" id="bogo-btn" aria-pressed="false" title="Buy one, get one 25% off the cheapest">BOGO</button>
         </div>
       </div>
-      <button class="bogobtn" type="button" id="bogo-btn" aria-pressed="false">Buy 1 get 1 &middot; 25% off the cheapest</button>
     </div>
 
 
@@ -649,7 +649,7 @@ footer { color: var(--muted); font-size: 0.8rem; }
           </div>
         </div>
       </div>
-      <div class="ver"><span id="app-ver">Version 3.49 (centered title)</span></div>
+      <div class="ver"><span id="app-ver">Version 3.50 (BOGO chip)</span></div>
     </div>
 
     <div class="savebar" id="receipt-box" hidden>
@@ -10869,9 +10869,9 @@ function findAlignmentPattern(matrix, alignmentPatternQuads, topRight, topLeft, 
 (function () {
   var money = new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" });
   function $(id) { return document.getElementById(id); }
-  var STORE_KEY = "discount-default-pct";
+  var STORE_KEY = "discount-default-pct-v2";
   var TAX_KEY = "discount-tax-pct";
-  var defaultPct = 25;
+  var defaultPct = 0;
   try {
     var saved = parseFloat(localStorage.getItem(STORE_KEY));
     if (isFinite(saved) && saved >= 0 && saved <= 100) defaultPct = saved;
@@ -11046,9 +11046,11 @@ function findAlignmentPattern(matrix, alignmentPatternQuads, topRight, topLeft, 
 
     var chips = document.querySelectorAll(".chip");
     for (var i = 0; i < chips.length; i++) {
-      chips[i].setAttribute("aria-pressed", String(Number(chips[i].dataset.pct) === pct));
+      if (chips[i].id === "bogo-btn") continue;
+      chips[i].setAttribute("aria-pressed", String(!bogo && Number(chips[i].dataset.pct) === pct));
     }
     updateDefaultUI(pct);
+    $("clear-pct").hidden = !(bogo || (isFinite(pct) && pct !== 0));
 
     if (pct > 100) {
       note.className = "note warn";
@@ -12227,10 +12229,11 @@ function findAlignmentPattern(matrix, alignmentPatternQuads, topRight, topLeft, 
   idleStatus();
   flushQueue();
 
-  document.querySelectorAll(".chip").forEach(function (c) {
-    c.addEventListener("click", function () { $("a-pct").value = c.dataset.pct; calcA(); });
+  document.querySelectorAll(".chip[data-pct]").forEach(function (c) {
+    c.addEventListener("click", function () { setBogo(false); $("a-pct").value = c.dataset.pct; calcA(); });
   });
-  $("a-pct").addEventListener("input", calcA);
+  $("a-pct").addEventListener("input", function () { setBogo(false); calcA(); });
+  $("clear-pct").addEventListener("click", function () { setBogo(false); $("a-pct").value = "0"; calcA(); });
   $("a-tax").addEventListener("input", function () {
     try { localStorage.setItem(TAX_KEY, $("a-tax").value); } catch (e) {}
     calcA();
