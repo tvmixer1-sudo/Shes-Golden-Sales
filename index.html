@@ -633,7 +633,7 @@ footer { color: var(--muted); font-size: 0.8rem; }
           </div>
         </div>
       </div>
-      <div class="ver"><span id="app-ver">Version 3.41 (card surcharge)</span></div>
+      <div class="ver"><span id="app-ver">Version 3.42 (Clover rounding)</span></div>
     </div>
 
     <div class="savebar" id="receipt-box" hidden>
@@ -10868,17 +10868,19 @@ function findAlignmentPattern(matrix, alignmentPatternQuads, topRight, topLeft, 
   }
   $("bogo-btn").addEventListener("click", function () { setBogo(!bogo); calcA(); });
   /* After-discount cents for each price (in cents). BOGO takes BOGO_PCT off the single cheapest item and needs two or more items. */
+  // Clover rounds sub-cent amounts half-up; the epsilon absorbs float error like 478.49999999999994
+  function roundHalfUp(x) { return Math.floor(x + 0.5 + 1e-7); }
   function computeAfters(cs, pct) {
     if (bogo) {
       var out = cs.slice();
       if (cs.length >= 2) {
         var mi = 0;
         for (var i = 1; i < cs.length; i++) if (cs[i] < cs[mi]) mi = i;
-        out[mi] = Math.round(cs[mi] * (100 - BOGO_PCT) / 100);
+        out[mi] = roundHalfUp(cs[mi] * (100 - BOGO_PCT) / 100);
       }
       return out;
     }
-    return cs.map(function (c) { return Math.round(c * (100 - pct) / 100); });
+    return cs.map(function (c) { return roundHalfUp(c * (100 - pct) / 100); });
   }
   function updateDefaultUI(pct) {
     var b = $("set-default");
@@ -11061,8 +11063,8 @@ function findAlignmentPattern(matrix, alignmentPatternQuads, topRight, topLeft, 
 
     var taxPct = num($("a-tax").value);
     if (isNaN(taxPct)) taxPct = 0;
-    var taxCents = Math.round(afterCents * taxPct / 100);
-    var feeCents = payType() === "credit" ? Math.round((afterCents + taxCents) * CARD_FEE_PCT / 100) : 0;
+    var taxCents = roundHalfUp(afterCents * taxPct / 100);
+    var feeCents = payType() === "credit" ? roundHalfUp((afterCents + taxCents) * CARD_FEE_PCT / 100) : 0;
     var taxLine = $("a-taxline");
     var withTax = taxCents > 0, withFee = feeCents > 0;
 
@@ -11724,7 +11726,7 @@ function findAlignmentPattern(matrix, alignmentPatternQuads, topRight, topLeft, 
   var CARD_FEE_PCT = 3;   /* surcharge % added when the customer pays by credit (0 = none). Clover applies the same 3% after tax. */
   function payType() { return $("a-pay").value; }
   function payLabel() { var o = $("a-pay"); return o.options[o.selectedIndex].text; }
-  function cardFee(afterCents, taxCents) { return payType() === "credit" ? Math.round((afterCents + taxCents) * CARD_FEE_PCT / 100) : 0; }
+  function cardFee(afterCents, taxCents) { return payType() === "credit" ? roundHalfUp((afterCents + taxCents) * CARD_FEE_PCT / 100) : 0; }
   $("a-pay").addEventListener("change", calcA);
   $("a-cash").addEventListener("input", updateChange);
   $("a-cash").addEventListener("focus", function () { var el = this; setTimeout(function () { try { el.select(); } catch (e) {} }, 0); });
@@ -11808,7 +11810,7 @@ function findAlignmentPattern(matrix, alignmentPatternQuads, topRight, topLeft, 
     var afs = computeAfters(items.map(function (it) { return it.c; }), pct);
     items.forEach(function (it, i) { it.a = afs[i]; after += it.a; });
     var offLabel = bogo ? "BOGO " + pctText(BOGO_PCT) : pctText(pct);
-    var tax = Math.round(after * taxPct / 100);
+    var tax = roundHalfUp(after * taxPct / 100);
     var fee = cardFee(after, tax);
 
     var when = new Date().toLocaleString("en-US", { weekday: "short", year: "numeric", month: "short", day: "numeric", hour: "numeric", minute: "2-digit" });
@@ -12103,7 +12105,7 @@ function findAlignmentPattern(matrix, alignmentPatternQuads, topRight, topLeft, 
       it.discPct = cs[i] ? Math.round((cs[i] - afs[i]) / cs[i] * 10000) / 100 : 0;
       after += afs[i];
     });
-    var tax = Math.round(after * taxPct / 100);
+    var tax = roundHalfUp(after * taxPct / 100);
     var fee = cardFee(after, tax);
     return {
       location: currentLoc(),
