@@ -272,6 +272,9 @@ label, .label {
   cursor: pointer;
 }
 .addbtn:hover { background: var(--accent-soft); }
+.bogobtn { width: 100%; margin-top: 8px; min-height: 40px; border-radius: 12px; border: 1.5px dashed var(--accent); background: transparent; color: var(--accent); font: 600 0.88rem var(--font-body); cursor: pointer; }
+.bogobtn[aria-pressed="true"] { background: var(--accent); color: var(--accent-fg); border-style: solid; }
+.bogo-on .discrow { opacity: 0.4; }
 .addbtn:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 .sheetbox { display: flex; flex-direction: column; gap: 8px; }
 .sheetrow { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
@@ -540,6 +543,7 @@ footer { color: var(--muted); font-size: 0.8rem; }
           <button class="chip" type="button" data-pct="30" aria-pressed="false">30%</button>
         </div>
       </div>
+      <button class="bogobtn" type="button" id="bogo-btn" aria-pressed="false">Buy 1 get 1 &middot; 25% off the cheapest</button>
     </div>
 
 
@@ -607,7 +611,7 @@ footer { color: var(--muted); font-size: 0.8rem; }
           </div>
         </div>
       </div>
-      <div class="ver"><span id="app-ver">Version 3.32 (offers checkbox, phone dashes)</span></div>
+      <div class="ver"><span id="app-ver">Version 3.33 (BOGO discount)</span></div>
     </div>
 
     <div class="savebar" id="receipt-box" hidden>
@@ -10823,6 +10827,26 @@ function findAlignmentPattern(matrix, alignmentPatternQuads, topRight, topLeft, 
     var saved = parseFloat(localStorage.getItem(STORE_KEY));
     if (isFinite(saved) && saved >= 0 && saved <= 100) defaultPct = saved;
   } catch (e) {}
+  var BOGO_PCT = 25, bogo = false;
+  function setBogo(on) {
+    bogo = !!on;
+    $("bogo-btn").setAttribute("aria-pressed", String(bogo));
+    document.body.classList.toggle("bogo-on", bogo);
+  }
+  $("bogo-btn").addEventListener("click", function () { setBogo(!bogo); calcA(); });
+  /* After-discount cents for each price (in cents). BOGO takes BOGO_PCT off the single cheapest item and needs two or more items. */
+  function computeAfters(cs, pct) {
+    if (bogo) {
+      var out = cs.slice();
+      if (cs.length >= 2) {
+        var mi = 0;
+        for (var i = 1; i < cs.length; i++) if (cs[i] < cs[mi]) mi = i;
+        out[mi] = Math.round(cs[mi] * (100 - BOGO_PCT) / 100);
+      }
+      return out;
+    }
+    return cs.map(function (c) { return Math.round(c * (100 - pct) / 100); });
+  }
   function updateDefaultUI(pct) {
     var b = $("set-default");
     var ok = isFinite(pct) && pct >= 0 && pct <= 100;
@@ -10983,16 +11007,23 @@ function findAlignmentPattern(matrix, alignmentPatternQuads, topRight, topLeft, 
 
     var list = rows();
     var beforeCents = 0, afterCents = 0, count = 0;
+    var valid = [];
     for (var r = 0; r < list.length; r++) {
       var p = num(list[r].querySelector(".price").value);
       var afterEl = list[r].querySelector(".after");
-      if (isNaN(p) || isNaN(pct)) { afterEl.textContent = ""; continue; }
-      var c = Math.round(p * 100);
-      var a = Math.round(c * (100 - pct) / 100);
-      beforeCents += c;
-      afterCents += a;
+      if (isNaN(p) || (isNaN(pct) && !bogo)) { afterEl.textContent = ""; continue; }
+      valid.push({ el: afterEl, c: Math.round(p * 100) });
+    }
+    var afs = computeAfters(valid.map(function (v) { return v.c; }), pct);
+    valid.forEach(function (v, i) {
+      beforeCents += v.c;
+      afterCents += afs[i];
       count++;
-      afterEl.textContent = "→ " + money.format(a / 100);
+      v.el.textContent = "→ " + money.format(afs[i] / 100);
+    });
+    if (bogo && !note.textContent) {
+      note.className = "note";
+      note.textContent = count >= 2 ? "BOGO: " + pctText(BOGO_PCT) + " off the cheapest item." : "BOGO needs two or more items.";
     }
 
     var taxPct = num($("a-tax").value);
@@ -11058,10 +11089,11 @@ function findAlignmentPattern(matrix, alignmentPatternQuads, topRight, topLeft, 
     syncNotesHint();
   }
   function clearSale(noFocus) {
-    var snap = { nodes: [], pay: $("a-pay").value, loc: $("a-loc").value, cust: customer(), notesOpen: $("notes").open };
+    var snap = { nodes: [], pay: $("a-pay").value, loc: $("a-loc").value, cust: customer(), notesOpen: $("notes").open, bogo: bogo };
     while (itemsEl.firstChild) { snap.nodes.push(itemsEl.firstChild); itemsEl.removeChild(itemsEl.firstChild); }
     snap.cash = $("a-cash").value;
     setCustomer({});
+    setBogo(false);
     $("notes").open = false;
     $("a-pay").value = "cash";
     $("a-cash").value = "";
@@ -11075,6 +11107,7 @@ function findAlignmentPattern(matrix, alignmentPatternQuads, topRight, topLeft, 
     syncRemoveButtons();
     $("a-pay").value = snap.pay;
     setCustomer(snap.cust || {});
+    setBogo(snap.bogo);
     $("notes").open = !!snap.notesOpen;
     $("a-cash").value = snap.cash || "";
     calcA();
@@ -11358,7 +11391,7 @@ function findAlignmentPattern(matrix, alignmentPatternQuads, topRight, topLeft, 
       });
     }).catch(function () { tip.textContent = "Couldn't read that photo. Try again."; });
   });
-  if (window.SG_TEST) window.__sg = { vsDescribe: vsDescribe, vsDist: vsDist };
+  if (window.SG_TEST) window.__sg = { vsDescribe: vsDescribe, vsDist: vsDist, buildReceipt: function () { return buildReceipt(); } };
 
   var toastTimer = null;
   function showAdded(name, price, count, sold, id) {
@@ -11678,7 +11711,7 @@ function findAlignmentPattern(matrix, alignmentPatternQuads, topRight, topLeft, 
   function rule(ch) { return new Array(RW + 1).join(ch); }
 
   function buildReceipt() {
-    var pct = num($("a-pct").value);
+    var pct = bogo ? 0 : num($("a-pct").value);
     if (isNaN(pct)) return null;
     if (pct > 100) pct = 100;
     var taxPct = num($("a-tax").value);
@@ -11689,14 +11722,15 @@ function findAlignmentPattern(matrix, alignmentPatternQuads, topRight, topLeft, 
       var p = num(list[r].querySelector(".price").value);
       if (isNaN(p)) continue;
       var c = Math.round(p * 100);
-      var a = Math.round(c * (100 - pct) / 100);
       var name = list[r].querySelector(".name").value.trim() || ("Item " + (r + 1));
       if (name.length > RW - 12) name = name.slice(0, RW - 15) + "...";
-      items.push({ name: name, c: c, a: a });
+      items.push({ name: name, c: c, a: c });
       before += c;
-      after += a;
     }
     if (!items.length) return null;
+    var afs = computeAfters(items.map(function (it) { return it.c; }), pct);
+    items.forEach(function (it, i) { it.a = afs[i]; after += it.a; });
+    var offLabel = bogo ? "BOGO " + pctText(BOGO_PCT) : pctText(pct);
     var tax = Math.round(after * taxPct / 100);
     var fee = cardFee(after, tax);
 
@@ -11708,19 +11742,19 @@ function findAlignmentPattern(matrix, alignmentPatternQuads, topRight, topLeft, 
     out.push(rule("="), "");
     items.forEach(function (it) {
       out.push(line(it.name, money.format(it.c / 100)));
-      if (pct > 0) out.push(line("  after " + pctText(pct) + " off", money.format(it.a / 100)));
+      if (it.a !== it.c) out.push(line("  after " + offLabel + " off", money.format(it.a / 100)));
     });
     out.push("", rule("-"));
     out.push(line("Subtotal", money.format(before / 100)));
-    if (pct > 0) {
-      out.push(line("Discount (" + pctText(pct) + ")", "-" + money.format((before - after) / 100)));
+    if (before !== after) {
+      out.push(line("Discount (" + offLabel + (bogo ? ", cheapest" : "") + ")", "-" + money.format((before - after) / 100)));
       out.push(line("Subtotal after discount", money.format(after / 100)));
     }
     if (tax > 0) out.push(line("Sales tax (" + pctText(taxPct) + ")", money.format(tax / 100)));
     if (fee > 0) out.push(line("Card surcharge (" + pctText(CARD_FEE_PCT) + ")", money.format(fee / 100)));
     out.push(rule("="));
     out.push(line("TOTAL", money.format((after + tax + fee) / 100)));
-    if (pct > 0) out.push(line("You saved", money.format((before - after) / 100)));
+    if (before !== after) out.push(line("You saved", money.format((before - after) / 100)));
     out.push("");
     return out.join("\n");
   }
@@ -11792,10 +11826,10 @@ function findAlignmentPattern(matrix, alignmentPatternQuads, topRight, topLeft, 
     out.push((c.name ? "Hi " + c.name.split(" ")[0] + ", thank" : "Thank") + " you for shopping with She's Golden!");
     out.push("");
     rc.items.forEach(function (it) {
-      out.push(it.name + ": " + money.format(it.price) + (rc.discountPct > 0 ? " \u2192 " + money.format(it.after) : ""));
+      out.push(it.name + ": " + money.format(it.price) + (it.after !== it.price ? " \u2192 " + money.format(it.after) : ""));
     });
     out.push("");
-    if (rc.discountPct > 0) out.push("Discount (" + pctText(rc.discountPct) + "): -" + money.format(rc.discountAmt));
+    if (rc.discountAmt > 0) out.push("Discount (" + (rc.promo || pctText(rc.discountPct)) + "): -" + money.format(rc.discountAmt));
     if (rc.tax > 0) out.push("Sales tax (" + pctText(rc.taxPct) + "): " + money.format(rc.tax));
     if (rc.surcharge > 0) out.push("Card surcharge: " + money.format(rc.surcharge));
     out.push("Total: " + money.format(rc.total));
@@ -11963,22 +11997,27 @@ function findAlignmentPattern(matrix, alignmentPatternQuads, topRight, topLeft, 
   }
 
   function collectReceipt() {
-    var pct = num($("a-pct").value);
+    var pct = bogo ? 0 : num($("a-pct").value);
     if (isNaN(pct)) return null;
     if (pct > 100) pct = 100;
     var taxPct = num($("a-tax").value);
     if (isNaN(taxPct)) taxPct = 0;
-    var list = rows(), items = [], before = 0, after = 0;
+    var list = rows(), items = [], cs = [], before = 0, after = 0;
     for (var r = 0; r < list.length; r++) {
       var p = num(list[r].querySelector(".price").value);
       if (isNaN(p)) continue;
       var c = Math.round(p * 100);
-      var a = Math.round(c * (100 - pct) / 100);
-      items.push({ name: list[r].querySelector(".name").value.trim() || ("Item " + (r + 1)), price: c / 100, after: a / 100, id: list[r].getAttribute("data-id") || "" });
+      items.push({ name: list[r].querySelector(".name").value.trim() || ("Item " + (r + 1)), price: c / 100, after: c / 100, id: list[r].getAttribute("data-id") || "" });
+      cs.push(c);
       before += c;
-      after += a;
     }
     if (!items.length) return null;
+    var afs = computeAfters(cs, pct);
+    items.forEach(function (it, i) {
+      it.after = afs[i] / 100;
+      it.discPct = cs[i] ? Math.round((cs[i] - afs[i]) / cs[i] * 10000) / 100 : 0;
+      after += afs[i];
+    });
     var tax = Math.round(after * taxPct / 100);
     var fee = cardFee(after, tax);
     return {
@@ -11991,7 +12030,8 @@ function findAlignmentPattern(matrix, alignmentPatternQuads, topRight, topLeft, 
       time: new Date().toISOString(),
       items: items,
       subtotal: before / 100,
-      discountPct: pct,
+      discountPct: bogo ? (before ? Math.round((before - after) / before * 10000) / 100 : 0) : pct,
+      promo: bogo ? "BOGO " + pctText(BOGO_PCT) + " off cheapest" : "",
       discountAmt: (before - after) / 100,
       taxPct: taxPct,
       tax: tax / 100,
