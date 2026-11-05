@@ -415,6 +415,18 @@ label, .label {
 .picker-list { list-style: none; margin: 0; padding: 0; flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 6px; overscroll-behavior: contain; }
 .pick-item { width: 100%; display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 2px 12px; align-items: center; text-align: left; background: var(--surface); color: var(--fg); border: 1.5px solid var(--line); border-radius: 12px; padding: 10px 14px; min-height: 56px; font: 500 1rem var(--font-body); cursor: pointer; }
 .pick-item:active { border-color: var(--accent); }
+.thumb, .zoom img { -webkit-touch-callout: none; -webkit-user-select: none; user-select: none; }
+.pick-item .thumb:not(.none), .pr-item .thumb:not(.none) { cursor: zoom-in; }
+.zoom { position: fixed; inset: 0; z-index: 350; display: flex; align-items: center; justify-content: center; padding: 16px; background: rgba(0, 0, 0, 0.75); }
+.zoom[hidden] { display: none; }
+.zoom-card { width: min(100%, 420px); box-sizing: border-box; padding: 12px; border-radius: 20px; background: var(--surface); display: flex; flex-direction: column; gap: 8px; align-items: stretch; text-align: center; }
+.zoom-card img { width: 100%; max-height: 58vh; object-fit: contain; background: #fff; border-radius: 12px; display: block; }
+.zoom-name { font: 700 1.05rem var(--font-body); color: var(--fg); overflow-wrap: anywhere; }
+.zoom-price { font: 500 1rem var(--font-mono); color: var(--muted); }
+.zoom-btns { display: flex; gap: 8px; margin-top: 4px; }
+.zoom-btns button { flex: 1; min-height: 46px; border-radius: 12px; border: 0; font: 700 0.95rem var(--font-body); cursor: pointer; }
+.zoom-add { background: var(--accent); color: var(--accent-fg); }
+.zoom-close { background: var(--accent-soft); color: var(--accent); }
 .pick-item .pn { overflow-wrap: anywhere; }
 .pick-item .pp { font: 500 1rem var(--font-mono); font-variant-numeric: tabular-nums; }
 .pick-item .pm { grid-column: 1 / -1; font-size: 0.78rem; color: var(--muted); }
@@ -612,7 +624,7 @@ footer { color: var(--muted); font-size: 0.8rem; }
           </div>
         </div>
       </div>
-      <div class="ver"><span id="app-ver">Version 3.37 (button colors)</span></div>
+      <div class="ver"><span id="app-ver">Version 3.38 (photo close-up)</span></div>
     </div>
 
     <div class="savebar" id="receipt-box" hidden>
@@ -673,6 +685,17 @@ footer { color: var(--muted); font-size: 0.8rem; }
       <a class="sp-sbtn" id="sp-mail" href="#">Email receipt</a>
     </div>
     <div class="sp-hint" id="sp-hint">Tap anywhere to close</div>
+  </div>
+</div>
+<div class="zoom" id="zoom" hidden role="dialog" aria-modal="true" aria-label="Photo">
+  <div class="zoom-card" id="zoom-card">
+    <img id="zoom-img" alt="" draggable="false">
+    <div class="zoom-name" id="zoom-name"></div>
+    <div class="zoom-price" id="zoom-price"></div>
+    <div class="zoom-btns">
+      <button class="zoom-add" type="button" id="zoom-add">Add item</button>
+      <button class="zoom-close" type="button" id="zoom-close">Close</button>
+    </div>
   </div>
 </div>
 <div class="picker" id="picker" hidden role="dialog" aria-modal="true" aria-label="Find an item">
@@ -11172,6 +11195,8 @@ function findAlignmentPattern(matrix, alignmentPatternQuads, topRight, topLeft, 
     var im = document.createElement("img");
     im.className = "thumb";
     im.alt = "";
+    im.draggable = false;
+    im.dataset.id = id;
     im.loading = "lazy";
     im.decoding = "async";
     if (hasPhoto(id)) {
@@ -11436,6 +11461,35 @@ function findAlignmentPattern(matrix, alignmentPatternQuads, topRight, topLeft, 
       box.appendChild(b);
     });
   }
+  /* ---------- Close-up photo ---------- */
+  function largeUrl(id) { return "img/large/" + id + ".webp"; }
+  var zoomAdd = null;
+  function openZoom(it, addFn) {
+    var im = $("zoom-img");
+    im.onerror = function () { im.onerror = null; im.src = photoUrl(it.id); };
+    im.src = largeUrl(it.id);
+    $("zoom-name").textContent = it.name;
+    $("zoom-price").textContent = money.format(it.price) + (it.sold ? " \u00b7 Sold out" : "");
+    zoomAdd = addFn;
+    $("zoom").hidden = false;
+  }
+  function closeZoom() { $("zoom").hidden = true; $("zoom-img").removeAttribute("src"); zoomAdd = null; }
+  $("zoom-close").addEventListener("click", closeZoom);
+  $("zoom").addEventListener("click", function (e) { if (e.target === $("zoom") || e.target === $("zoom-img")) closeZoom(); });
+  $("zoom-add").addEventListener("click", function () { var f = zoomAdd; closeZoom(); if (f) f(); });
+  document.addEventListener("keydown", function (e) { if (e.key === "Escape" && !$("zoom").hidden) closeZoom(); });
+  /* Tapping a photo in the item list or the photo-search results shows it larger. Tapping anywhere else on the row still adds the item. */
+  document.addEventListener("click", function (e) {
+    var t = e.target;
+    if (!t || !t.classList || !t.classList.contains("thumb") || t.classList.contains("none")) return;
+    var btn = t.closest ? t.closest(".pick-item, .pr-item") : null;
+    if (!btn) return;
+    var id = t.dataset.id, it = null;
+    for (var i = 0; i < catalog.length; i++) if (catalog[i].id === id) { it = catalog[i]; break; }
+    if (!it) return;
+    e.stopPropagation(); e.preventDefault();
+    openZoom(it, function () { btn.click(); });
+  }, true);
   function renderPicker() {
     var q = $("pick-q").value.trim().toLowerCase();
     var list = $("pick-list");
@@ -11478,7 +11532,7 @@ function findAlignmentPattern(matrix, alignmentPatternQuads, topRight, topLeft, 
     pickCount = 0;
     pickCat = "All";
     $("pick-q").value = "";
-    $("pick-msg").textContent = "Tap an item to add it to the sale.";
+    $("pick-msg").textContent = "Tap an item to add it. Tap its photo to see it larger.";
     renderCats();
     renderPicker();
     $("picker").hidden = false;
