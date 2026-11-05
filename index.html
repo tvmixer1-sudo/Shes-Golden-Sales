@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,viewport-fit=cover">
-<meta name="theme-color" content="#8f6a12">
+<meta name="theme-color" content="#3c606f">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="She's Golden">
@@ -12,48 +12,57 @@
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
 <style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style>
 <title>She's Golden Sales</title>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@600;700&family=DM+Sans:wght@400;500;600&family=DM+Mono:wght@400;500&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&family=Jost:wght@400;500;600&family=DM+Mono:wght@400;500&display=swap">
 <style>
 /* Layout: one narrow centered tool column. Mode switch on top, a sticky price-tag result, then a list of item prices and the discount. */
 :root {
-  --bg: #f8f4ea;
-  --surface: #fffdf8;
-  --fg: #2a2216;
-  --muted: #6e6248;
-  --line: #e4dac3;
-  --accent: #8f6a12;
+  --bg: #f9f7f2;
+  --surface: #ffffff;
+  --fg: #1f3239;
+  --muted: #667a82;
+  --line: #e6dfcf;
+  --accent: #3c606f;
   --accent-fg: #ffffff;
-  --accent-soft: #f3e8c8;
+  --accent-soft: #e6eef1;
+  --gold: #c3a665;
+  --gold-fg: #1f3239;
   --save: #b3261e;
   --save-soft: #fbe6e4;
-  --font-display: "Bricolage Grotesque", "Avenir Next", "Segoe UI", sans-serif;
-  --font-body: "DM Sans", "Segoe UI", system-ui, sans-serif;
-  --font-mono: "DM Mono", ui-monospace, "SF Mono", Menlo, monospace;
+  --font-display: "Cormorant Garamond", "Iowan Old Style", Georgia, serif;
+  --font-body: "Jost", "Avenir Next", "Segoe UI", system-ui, sans-serif;
+  --font-mono: "Jost", "Avenir Next", "Segoe UI", system-ui, sans-serif;
+  --price-ink: #4a4a4a;
 }
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
-    --bg: #17130b;
-    --surface: #221c10;
-    --fg: #f3ead6;
-    --muted: #b3a583;
-    --line: #3a3020;
-    --accent: #e0b84f;
-    --accent-fg: #1d1606;
-    --accent-soft: #3a2f14;
+    --bg: #101b20;
+    --surface: #172730;
+    --fg: #eef1ea;
+    --muted: #9fb2b9;
+    --price-ink: #eef1ea;
+    --line: #27424c;
+    --accent: #7fb3c4;
+    --accent-fg: #0d1a1f;
+    --accent-soft: #1d3944;
+    --gold: #c3a665;
+    --gold-fg: #1f3239;
     --save: #ff8a80;
     --save-soft: #3a1f1d;
     color-scheme: dark;
   }
 }
 :root[data-theme="dark"] {
-  --bg: #17130b;
-  --surface: #221c10;
-  --fg: #f3ead6;
-  --muted: #b3a583;
-  --line: #3a3020;
-  --accent: #e0b84f;
-  --accent-fg: #1d1606;
-  --accent-soft: #3a2f14;
+  --bg: #101b20;
+  --surface: #172730;
+  --fg: #eef1ea;
+  --muted: #9fb2b9;
+  --price-ink: #eef1ea;
+  --line: #27424c;
+  --accent: #7fb3c4;
+  --accent-fg: #0d1a1f;
+  --accent-soft: #1d3944;
+  --gold: #c3a665;
+  --gold-fg: #1f3239;
   --save: #ff8a80;
   --save-soft: #3a1f1d;
   color-scheme: dark;
@@ -490,12 +499,13 @@ body::before {
   background: var(--bg);
 }
 .big {
-  font-family: var(--font-display);
-  font-weight: 700;
+  font-family: var(--font-body);
+  color: var(--price-ink);
+  font-weight: 500;
   font-size: clamp(2rem, 10vw, 2.6rem);
-  letter-spacing: -0.03em;
+  letter-spacing: -0.01em;
   line-height: 1;
-  font-variant-numeric: tabular-nums;
+  font-variant-numeric: lining-nums tabular-nums;
   overflow-wrap: anywhere;
 }
 .row { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; flex-wrap: wrap; }
@@ -508,12 +518,12 @@ body::before {
   font-variant-numeric: tabular-nums;
 }
 .was { font: 400 1rem var(--font-mono); color: var(--muted); text-decoration: line-through; font-variant-numeric: tabular-nums; }
-.cloverline { margin-top: 4px; display: flex; align-items: center; gap: 10px; color: #2a1d02; background: #d4a82a; border-radius: 12px; padding: 8px 12px; }
-.cloverline .cl-amt { font-family: var(--font-display); font-weight: 700; font-size: clamp(2rem, 10vw, 2.6rem); letter-spacing: -0.03em; line-height: 1; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.cloverline { margin-top: 4px; display: flex; align-items: center; gap: 10px; color: var(--gold-fg); background: var(--gold); border-radius: 12px; padding: 8px 12px; }
+.cloverline .cl-amt { font-family: var(--font-body); font-weight: 500; font-variant-numeric: lining-nums tabular-nums; font-size: clamp(2rem, 10vw, 2.6rem); letter-spacing: -0.01em; line-height: 1; font-variant-numeric: tabular-nums; white-space: nowrap; }
 .cloverline .cl-txt { font: 600 0.85rem/1.25 var(--font-body); }
 .cloverline .cl-txt b { display: block; font-weight: 700; font-size: 0.95rem; }
-@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .cloverline { color: #1d1606; background: #e0b84f; } }
-:root[data-theme="dark"] .cloverline { color: #1d1606; background: #e0b84f; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .cloverline { color: var(--gold-fg); background: var(--gold); } }
+:root[data-theme="dark"] .cloverline { color: var(--gold-fg); background: var(--gold); }
 .cloverline[hidden] { display: none; }
 .taxline { font: 400 0.9rem var(--font-mono); color: var(--muted); font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
 .note { margin: 0; font-size: 0.9rem; color: var(--muted); }
@@ -638,7 +648,7 @@ footer { color: var(--muted); font-size: 0.8rem; }
           </div>
         </div>
       </div>
-      <div class="ver"><span id="app-ver">Version 3.47 (tax line fix)</span></div>
+      <div class="ver"><span id="app-ver">Version 3.48 (website colors)</span></div>
     </div>
 
     <div class="savebar" id="receipt-box" hidden>
