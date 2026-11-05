@@ -611,7 +611,7 @@ footer { color: var(--muted); font-size: 0.8rem; }
           </div>
         </div>
       </div>
-      <div class="ver"><span id="app-ver">Version 3.35 (website in messages)</span></div>
+      <div class="ver"><span id="app-ver">Version 3.36 (auto-update)</span></div>
     </div>
 
     <div class="savebar" id="receipt-box" hidden>
@@ -12153,6 +12153,31 @@ function findAlignmentPattern(matrix, alignmentPatternQuads, topRight, topLeft, 
   calcA();
 })();
 </script>
-<script>if ("serviceWorker" in navigator && /^https?:/.test(location.protocol)) { window.addEventListener("load", function () { navigator.serviceWorker.register("sw.js").catch(function () {}); }); }</script>
+<script>
+if ("serviceWorker" in navigator && /^https?:/.test(location.protocol)) {
+  var hadController = !!navigator.serviceWorker.controller;
+  /* A new version took over. Reload at once if no sale is being entered, otherwise offer a banner so nothing typed is lost. */
+  navigator.serviceWorker.addEventListener("controllerchange", function () {
+    if (!hadController) { hadController = true; return; }
+    var busy = false, ps = document.querySelectorAll(".item .price");
+    for (var i = 0; i < ps.length; i++) if (ps[i].value) busy = true;
+    if (!busy) { location.reload(); return; }
+    if (document.getElementById("upd-bar")) return;
+    var b = document.createElement("button");
+    b.id = "upd-bar"; b.type = "button";
+    b.textContent = "New version ready. Tap to update";
+    b.style.cssText = "position:fixed;left:12px;right:12px;top:calc(env(safe-area-inset-top,0px) + 8px);z-index:400;min-height:44px;border:0;border-radius:12px;background:var(--accent);color:var(--accent-fg);font:700 0.95rem var(--font-body);box-shadow:0 6px 20px rgba(0,0,0,.3)";
+    b.addEventListener("click", function () { location.reload(); });
+    document.body.appendChild(b);
+  });
+  window.addEventListener("load", function () {
+    navigator.serviceWorker.register("sw.js").then(function (reg) {
+      /* iPhone apps resume without reloading, so look for a new version whenever the app comes back to the front. */
+      document.addEventListener("visibilitychange", function () { if (!document.hidden) reg.update().catch(function () {}); });
+      setInterval(function () { reg.update().catch(function () {}); }, 300000);
+    }).catch(function () {});
+  });
+}
+</script>
 </body>
 </html>
