@@ -548,6 +548,14 @@ footer { color: var(--muted); font-size: 0.8rem; }
   .discrow .chip { min-height: 48px; font-size: 0.95rem; }
   .addbtn { min-height: 54px; }
 }
+.pcam { position: fixed; inset: 0; z-index: 100; background: #000; color: #fff; display: flex; align-items: center; justify-content: center; }
+.pcam[hidden] { display: none; }
+.pcam video { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+.pcam-frame { position: relative; width: min(78vw, 340px); aspect-ratio: 1; border: 3px solid var(--gold, #c3a665); border-radius: 18px; box-shadow: 0 0 0 100vmax rgba(0,0,0,.5); }
+.pcam-msg { position: absolute; left: 16px; right: 16px; top: calc(env(safe-area-inset-top, 0px) + 18px); margin: 0; text-align: center; font: 600 1rem var(--font-body); text-shadow: 0 1px 3px rgba(0,0,0,.8); }
+.pcam-bar { position: absolute; left: 16px; right: 16px; bottom: calc(env(safe-area-inset-bottom, 0px) + 18px); display: flex; gap: 10px; align-items: center; }
+.pcam-snap { flex: 0 0 auto; width: 72px; height: 72px; border-radius: 50%; border: 4px solid #fff; background: var(--gold, #c3a665); cursor: pointer; }
+.pcam-snap:disabled { opacity: .5; }
 </style>
 </head>
 <body>
@@ -662,7 +670,7 @@ footer { color: var(--muted); font-size: 0.8rem; }
           </div>
         </div>
       </div>
-      <div class="ver"><span id="app-ver">Version 3.56 (photo finder model)</span></div>
+      <div class="ver"><span id="app-ver">Version 3.59 (photo guide box, tap to enlarge)</span></div>
     </div>
 
     <div class="savebar" id="receipt-box" hidden>
@@ -744,6 +752,16 @@ footer { color: var(--muted); font-size: 0.8rem; }
   <p class="picker-msg" id="pick-msg" role="status">Tap an item to add it to the sale.</p>
   <ul class="picker-list" id="pick-list"></ul>
   <p class="picker-foot" id="pick-foot"></p>
+</div>
+<div class="pcam" id="pcam" hidden role="dialog" aria-modal="true" aria-label="Take a photo of a piece">
+  <video id="pcam-video" playsinline muted></video>
+  <div class="pcam-frame" id="pcam-frame" aria-hidden="true"></div>
+  <p class="pcam-msg" id="pcam-msg" role="status">Put one piece inside the box.</p>
+  <div class="pcam-bar">
+    <button class="scan-btn" type="button" id="pcam-pick">Choose a photo</button>
+    <button class="pcam-snap" type="button" id="pcam-snap" aria-label="Take photo"></button>
+    <button class="scan-btn scan-done" type="button" id="pcam-done">Cancel</button>
+  </div>
 </div>
 <div class="scanner" id="scanner" hidden role="dialog" aria-modal="true" aria-label="Scan an item QR code">
   <video id="scan-video" playsinline muted></video>
@@ -11434,7 +11452,7 @@ function findAlignmentPattern(matrix, alignmentPatternQuads, topRight, topLeft, 
     });
   }
   /* ---------- Photo finder model (DINOv2-small, runs on the phone). Falls back to the basic matcher if it can't load. ---------- */
-  var PM = { p: null, ok: false, err: "", sess: null, vecs: null, loadedAt: 0 };
+  var PM = { p: null, ok: false, err: "", status: "", sess: null, vecs: null, loadedAt: 0 };
   var PM_WEAK = 0.75; /* best score below this = no close match */
   function pmBase() { return new URL("ml/", location.href).href; }
   function pmScript(src) {
@@ -11444,18 +11462,39 @@ function findAlignmentPattern(matrix, alignmentPatternQuads, topRight, topLeft, 
       document.head.appendChild(s);
     });
   }
+  function pmFetchBytes(url, label) {
+    return fetch(url).then(function (r) {
+      if (!r.ok) throw new Error(label + " " + r.status);
+      var total = Number(r.headers.get("content-length")) || 0;
+      if (!r.body || !r.body.getReader) return r.arrayBuffer().then(function (b) { return new Uint8Array(b); });
+      var rd = r.body.getReader(), chunks = [], got = 0;
+      function pump() {
+        return rd.read().then(function (x) {
+          if (x.done) { var out = new Uint8Array(got), o = 0; chunks.forEach(function (c) { out.set(c, o); o += c.length; }); return out; }
+          chunks.push(x.value); got += x.value.length;
+          PM.status = "Downloading the photo finder: " + (got / 1048576).toFixed(0) + (total ? " of " + (total / 1048576).toFixed(0) : "") + " MB";
+          return pump();
+        });
+      }
+      return pump();
+    });
+  }
   function pmInit() {
     if (PM.p) return PM.p;
     PM.p = (function () {
       var base = pmBase();
+      PM.status = "Loading the photo finder\u2026";
       return pmScript(base + "ort.wasm.min.js").then(function () {
         ort.env.wasm.wasmPaths = base; ort.env.wasm.numThreads = 1;
         return Promise.all([
-          ort.InferenceSession.create(base + "model_quantized.onnx", { executionProviders: ["wasm"] }),
+          pmFetchBytes(base + "model_quantized.onnx", "model"),
           fetch(base + "catalog-vectors.json").then(function (r) { return r.json(); })
         ]);
-      }).then(function (r) { PM.sess = r[0]; PM.vecs = (r[1] && r[1].v) || {}; PM.ok = true; PM.loadedAt = Date.now(); return true; })
-        .catch(function (e) { PM.err = String(e && e.message || e); PM.ok = false; PM.p = null; return false; });
+      }).then(function (r) {
+        PM.status = "Starting the photo finder\u2026";
+        return ort.InferenceSession.create(r[0], { executionProviders: ["wasm"] }).then(function (sess) { return [sess, r[1]]; });
+      }).then(function (r) { PM.sess = r[0]; PM.vecs = (r[1] && r[1].v) || {}; PM.ok = true; PM.status = ""; PM.loadedAt = Date.now(); return true; })
+        .catch(function (e) { PM.err = String(e && e.message || e).slice(0, 120); PM.ok = false; PM.p = null; PM.status = ""; return false; });
     })();
     return PM.p;
   }
@@ -11484,7 +11523,10 @@ function findAlignmentPattern(matrix, alignmentPatternQuads, topRight, topLeft, 
   function pmDot(a, b) { var s = 0; for (var i = 0; i < a.length; i++) s += a[i] * b[i]; return s; }
   /* Resolves to { ranked: [{it, score}], weak } or null if the model isn't available. */
   function pmMatch(src) {
-    return pmInit().then(function (ok) {
+    var timer = null, slow = new Promise(function (res) { timer = setTimeout(function () { res("slow"); }, 20000); });
+    return Promise.race([pmInit(), slow]).then(function (ok) {
+      clearTimeout(timer);
+      if (ok === "slow") return { slow: true };
       if (!ok) return null;
       return pmEmbed(src).then(function (q) {
         var seen = {}, list = [];
@@ -11516,29 +11558,90 @@ function findAlignmentPattern(matrix, alignmentPatternQuads, topRight, topLeft, 
   }
   function openPhotoRes() { $("photo-res").hidden = false; }
   function closePhotoRes() { $("photo-res").hidden = true; }
-  $("photo-open").addEventListener("click", function () { $("photo-file").click(); });
-  $("pr-retake").addEventListener("click", function () { $("photo-file").click(); });
+  var pcam = $("pcam"), pcamVideo = $("pcam-video"), pcamStream = null;
+  function pcamStop() {
+    if (pcamStream) { pcamStream.getTracks().forEach(function (t) { t.stop(); }); pcamStream = null; }
+    pcamVideo.srcObject = null;
+  }
+  function pcamClose() { pcamStop(); pcam.hidden = true; document.body.style.overflow = ""; }
+  function pcamOpen() {
+    closePhotoRes();
+    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) { $("photo-file").click(); return; }
+    $("pcam-msg").textContent = "Put one piece inside the box.";
+    $("pcam-snap").disabled = true;
+    pcam.hidden = false;
+    document.body.style.overflow = "hidden";
+    navigator.mediaDevices.getUserMedia({ video: { facingMode: { ideal: "environment" }, width: { ideal: 1920 } }, audio: false })
+      .then(function (stream) {
+        if (pcam.hidden) { stream.getTracks().forEach(function (t) { t.stop(); }); return; }
+        pcamStream = stream;
+        pcamVideo.srcObject = stream;
+        var pl = pcamVideo.play(); if (pl && pl.catch) pl.catch(function () {});
+        $("pcam-snap").disabled = false;
+      }, function () {
+        pcamClose();
+        $("photo-file").click();
+      });
+  }
+  function pcamCrop() {
+    var vw = pcamVideo.videoWidth, vh = pcamVideo.videoHeight;
+    if (!vw || !vh) return null;
+    var vr = pcamVideo.getBoundingClientRect(), fr = $("pcam-frame").getBoundingClientRect();
+    var sc = Math.max(vr.width / vw, vr.height / vh);
+    var offX = (vr.width - vw * sc) / 2, offY = (vr.height - vh * sc) / 2;
+    var sx = (fr.left - vr.left - offX) / sc, sy = (fr.top - vr.top - offY) / sc, sz = fr.width / sc;
+    sx = Math.max(0, Math.min(vw - 1, sx)); sy = Math.max(0, Math.min(vh - 1, sy));
+    sz = Math.max(1, Math.min(sz, vw - sx, vh - sy));
+    var out = Math.min(640, Math.round(sz));
+    var c = document.createElement("canvas"); c.width = out; c.height = out;
+    c.getContext("2d").drawImage(pcamVideo, sx, sy, sz, sz, 0, 0, out, out);
+    return c;
+  }
+  $("photo-open").addEventListener("click", pcamOpen);
+  $("pr-retake").addEventListener("click", pcamOpen);
+  $("pcam-done").addEventListener("click", pcamClose);
+  $("pcam-pick").addEventListener("click", function () { pcamClose(); $("photo-file").click(); });
+  $("pcam-snap").addEventListener("click", function () {
+    var c = pcamCrop();
+    if (!c) return;
+    pcamClose();
+    runPhoto(Promise.resolve(c));
+  });
+  document.addEventListener("keydown", function (e) { if (e.key === "Escape" && !pcam.hidden) pcamClose(); });
   $("pr-close").addEventListener("click", closePhotoRes);
   $("photo-res").addEventListener("click", function (e) { if (e.target === this) closePhotoRes(); });
   $("photo-file").addEventListener("change", function () {
     var f = $("photo-file").files && $("photo-file").files[0];
     $("photo-file").value = "";
     if (!f) return;
+    runPhoto(vsToSource(f));
+  });
+  function runPhoto(srcP) {
     var tip = $("pr-tip"), list = $("pr-list");
     list.innerHTML = "";
     tip.textContent = "Looking\u2026";
     var shot = $("pr-shot"), sx = shot.getContext("2d");
     sx.fillStyle = "#fff"; sx.fillRect(0, 0, 64, 64);
     openPhotoRes();
-    vsToSource(f).then(function (src) {
+    srcP.then(function (src) {
       var sw = src.naturalWidth || src.width, sh = src.naturalHeight || src.height, k = 64 / Math.max(sw, sh);
       sx.drawImage(src, (64 - sw * k) / 2, (64 - sh * k) / 2, sw * k, sh * k);
-      if (!PM.ok) tip.textContent = "Looking\u2026 (the first search loads the photo finder, it can take a few seconds)";
-      return pmMatch(src).then(function (res) { return res || vsBasicMatch(src); });
+      var tick = null;
+      if (!PM.ok) {
+        tip.textContent = "Looking\u2026 (the first search loads the photo finder)";
+        tick = setInterval(function () { if (PM.status) tip.textContent = PM.status; }, 300);
+      }
+      function done() { if (tick) clearInterval(tick); }
+      return pmMatch(src).then(function (res) {
+        done();
+        if (res && res.slow) return vsBasicMatch(src).then(function (r2) { r2.note = "The photo finder is still loading, so this used the basic matcher. Try again in a minute."; return r2; });
+        if (res) return res;
+        return vsBasicMatch(src).then(function (r2) { r2.note = "The photo finder couldn\u2019t start" + (PM.err ? " (" + PM.err + ")" : "") + ", so this used the basic matcher."; return r2; });
+      }, function (e) { done(); throw e; });
     }).then(function (res) {
       if (res.msg) { tip.textContent = res.msg; return; }
       var ranked = res.ranked;
-      tip.textContent = res.weak ? "No close match. These are the closest guesses. Try laying the piece flat on a plain surface and filling the frame." : "Tap the one that matches. Tip: lay the piece flat on a plain surface and fill the frame.";
+      tip.textContent = res.note ? res.note + " Tap one to see it bigger." : res.weak ? "No close match. These are the closest guesses. Try laying the piece flat on a plain surface and filling the frame." : "Tap one to see it bigger. Tip: lay the piece flat on a plain surface and fill the frame.";
       ranked.forEach(function (x, i) {
         var li = document.createElement("li"), b = document.createElement("button");
         b.type = "button"; b.className = "pr-item" + (i === 0 && !res.weak ? " best" : "");
@@ -11547,15 +11650,17 @@ function findAlignmentPattern(matrix, alignmentPatternQuads, topRight, topLeft, 
         var m = document.createElement("span"); m.className = "pm"; m.textContent = (res.weak ? "Closest guess" : (i === 0 ? "Best guess" : "Also close")) + " \u00b7 " + x.it.id + (x.it.sold ? " \u00b7 Sold out" : "");
         b.appendChild(makeThumb(x.it.id)); b.appendChild(n); b.appendChild(pr); b.appendChild(m);
         b.addEventListener("click", function () {
-          addScanned({ id: x.it.id, name: x.it.name, price: x.it.price.toFixed(2) });
-          showAdded(x.it.name, x.it.price, 1, x.it.sold, x.it.id);
-          try { if (navigator.vibrate) navigator.vibrate(40); } catch (e) {}
-          closePhotoRes();
+          openZoom(x.it, function () {
+            addScanned({ id: x.it.id, name: x.it.name, price: x.it.price.toFixed(2) });
+            showAdded(x.it.name, x.it.price, 1, x.it.sold, x.it.id);
+            try { if (navigator.vibrate) navigator.vibrate(40); } catch (e) {}
+            closePhotoRes();
+          });
         });
         li.appendChild(b); list.appendChild(li);
       });
     }).catch(function () { tip.textContent = "Couldn't read that photo. Try again."; });
-  });
+  }
   if (window.SG_TEST) window.__sg = { pmMatch: pmMatch, PM: PM, vsDescribe: vsDescribe, vsDist: vsDist, buildReceipt: function () { return buildReceipt(); } };
 
   var toastTimer = null;
