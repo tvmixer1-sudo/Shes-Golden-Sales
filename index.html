@@ -157,6 +157,7 @@ label, .label {
 .loc-clear[hidden] { display: none; }
 .locchips { display: flex; flex-wrap: wrap; gap: 8px; flex: 0 0 100%; margin-top: 2px; }
 .locchips[hidden] { display: none; }
+#pick-recent { flex: none; margin: 0; align-content: flex-start; }
 .locchip { display: inline-flex; align-items: center; min-height: 36px; border-radius: 999px; background: var(--accent-soft); color: var(--accent); overflow: hidden; }
 .locchip button { font: 500 0.9rem var(--font-body); color: inherit; background: transparent; border: 0; cursor: pointer; min-height: 36px; }
 .locchip .lc-use { padding: 0 6px 0 12px; max-width: 14rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
@@ -686,7 +687,7 @@ footer { color: var(--muted); font-size: 0.8rem; }
       </div>
       <div class="statrow">
         <span class="sheetstat" id="sheet-stat" role="status">Google Sheet: not connected</span>
-        <span class="ver"><span id="app-ver">Version 3.62 (status in footer)</span></span>
+        <span class="ver"><span id="app-ver">Version 3.63 (recent searches)</span></span>
       </div>
     </div>
   </section>
@@ -754,6 +755,7 @@ footer { color: var(--muted); font-size: 0.8rem; }
     <div class="input picker-search"><input id="pick-q" type="search" placeholder="Search items" autocomplete="off" autocapitalize="off" spellcheck="false" aria-label="Search items"></div>
     <button class="picker-done" type="button" id="pick-done">Done</button>
   </div>
+  <div class="locchips" id="pick-recent" hidden aria-label="Recent searches"></div>
   <div class="picker-cats" id="pick-cats" role="group" aria-label="Category"></div>
   <p class="picker-msg" id="pick-msg" role="status">Tap an item to add it to the sale.</p>
   <ul class="picker-list" id="pick-list"></ul>
@@ -11781,7 +11783,29 @@ function findAlignmentPattern(matrix, alignmentPatternQuads, topRight, topLeft, 
     }
     $("pick-foot").textContent = catalog.length + " items. " + catalogSource + ".";
   }
+  var SRCH_KEY = "recent-searches";
+  function recentSearches() { try { var a = JSON.parse(localStorage.getItem(SRCH_KEY) || "[]"); return Array.isArray(a) ? a : []; } catch (e) { return []; } }
+  function saveSearches(l) { try { localStorage.setItem(SRCH_KEY, JSON.stringify(l.slice(0, 8))); } catch (e) {} }
+  function rememberSearch() {
+    var n = $("pick-q").value.trim().slice(0, 40);
+    if (n.length < 2) return;
+    saveSearches([n].concat(recentSearches().filter(function (x) { return x.toLowerCase() !== n.toLowerCase(); })));
+  }
+  function renderRecent() {
+    var box = $("pick-recent"), list = recentSearches();
+    box.innerHTML = "";
+    box.hidden = !list.length || !!$("pick-q").value.trim();
+    list.forEach(function (n) {
+      var c = document.createElement("span"); c.className = "locchip";
+      var u = document.createElement("button"); u.type = "button"; u.className = "lc-use"; u.textContent = n;
+      u.addEventListener("click", function () { $("pick-q").value = n; renderPicker(); renderRecent(); });
+      var x = document.createElement("button"); x.type = "button"; x.className = "lc-x"; x.textContent = "\u00d7"; x.setAttribute("aria-label", "Remove " + n);
+      x.addEventListener("click", function () { saveSearches(recentSearches().filter(function (q) { return q !== n; })); renderRecent(); });
+      c.appendChild(u); c.appendChild(x); box.appendChild(c);
+    });
+  }
   function pickItem(it) {
+    rememberSearch();
     addScanned({ id: it.id, name: it.name, price: it.price.toFixed(2) });
     pickCount++;
     showAdded(it.name, it.price, pickCount, it.sold, it.id);
@@ -11795,6 +11819,7 @@ function findAlignmentPattern(matrix, alignmentPatternQuads, topRight, topLeft, 
     $("pick-msg").textContent = "Tap + to add an item. Tap the row to see its photo.";
     renderCats();
     renderPicker();
+    renderRecent();
     $("picker").hidden = false;
     document.body.style.overflow = "hidden";
     refreshCatalog();
@@ -11807,7 +11832,7 @@ function findAlignmentPattern(matrix, alignmentPatternQuads, topRight, topLeft, 
   }
   $("pick-open").addEventListener("click", openPicker);
   $("pick-done").addEventListener("click", closePicker);
-  $("pick-q").addEventListener("input", renderPicker);
+  $("pick-q").addEventListener("input", function () { renderPicker(); renderRecent(); });
   document.addEventListener("keydown", function (e) { if (e.key === "Escape" && !$("picker").hidden) closePicker(); });
 
   /* ---------- Scan an item QR code ---------- */
