@@ -508,7 +508,12 @@ body::before {
   font-variant-numeric: tabular-nums;
 }
 .was { font: 400 1rem var(--font-mono); color: var(--muted); text-decoration: line-through; font-variant-numeric: tabular-nums; }
-.cloverline { margin-top: 8px; font: 700 0.95rem var(--font-body); color: var(--accent); background: var(--accent-soft); border-radius: 10px; padding: 8px 12px; }
+.cloverline { margin-top: 4px; display: flex; align-items: center; gap: 10px; color: #2a1d02; background: #d4a82a; border-radius: 12px; padding: 8px 12px; }
+.cloverline .cl-amt { font-family: var(--font-display); font-weight: 700; font-size: clamp(2rem, 10vw, 2.6rem); letter-spacing: -0.03em; line-height: 1; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.cloverline .cl-txt { font: 600 0.85rem/1.25 var(--font-body); }
+.cloverline .cl-txt b { display: block; font-weight: 700; font-size: 0.95rem; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .cloverline { color: #1d1606; background: #e0b84f; } }
+:root[data-theme="dark"] .cloverline { color: #1d1606; background: #e0b84f; }
 .cloverline[hidden] { display: none; }
 .taxline { font: 400 0.9rem var(--font-mono); color: var(--muted); font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
 .note { margin: 0; font-size: 0.9rem; color: var(--muted); }
@@ -633,7 +638,7 @@ footer { color: var(--muted); font-size: 0.8rem; }
           </div>
         </div>
       </div>
-      <div class="ver"><span id="app-ver">Version 3.44 (Clover line)</span></div>
+      <div class="ver"><span id="app-ver">Version 3.46 (Clover gold)</span></div>
     </div>
 
     <div class="savebar" id="receipt-box" hidden>
@@ -11085,7 +11090,7 @@ function findAlignmentPattern(matrix, alignmentPatternQuads, topRight, topLeft, 
     taxLine.hidden = !(withTax || withFee);
     var cl = $("a-clover");
     cl.hidden = !withFee;
-    if (withFee) cl.textContent = "Enter in Clover: " + money.format(afterCents / 100) + " (before tax; Clover adds tax + " + pctText(CARD_FEE_PCT) + ")";
+    if (withFee) cl.innerHTML = '<span class="cl-amt"></span><span class="cl-txt"><b>Enter in Clover</b><span></span></span>'; cl.querySelector(".cl-amt").textContent = money.format(afterCents / 100); cl.querySelector(".cl-txt span").textContent = "(before tax; Clover adds tax + " + pctText(CARD_FEE_PCT) + ")";
     if (withTax || withFee) {
       var txt = money.format(afterCents / 100);
       if (withTax) txt += " + " + money.format(taxCents / 100) + " tax (" + pctText(taxPct) + ")";
