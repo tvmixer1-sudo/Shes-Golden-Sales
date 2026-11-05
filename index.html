@@ -532,6 +532,22 @@ footer { color: var(--muted); font-size: 0.8rem; }
 @media (prefers-reduced-motion: no-preference) {
   .tab, .chip, .addbtn, .rm { transition: background .15s, color .15s; }
 }
+/* Phone held sideways: same single column, stretched to the full width, with a compact total bar and bigger tap targets. Portrait is unchanged. */
+@media (orientation: landscape) and (max-height: 520px) {
+  .wrap { max-width: none; }
+  .tag { display: grid; grid-template-columns: 1fr auto; grid-template-areas: "label clover" "big clover" "row clover" "tax tax" "note note"; column-gap: 20px; row-gap: 4px; align-items: center; padding: 10px 18px; }
+  .tag > .label { grid-area: label; }
+  .tag > .big { grid-area: big; font-size: clamp(2.2rem, 6vw, 3rem); }
+  .tag > .row { grid-area: row; justify-content: flex-start; gap: 16px; }
+  .tag > .cloverline { grid-area: clover; margin-top: 0; align-self: center; }
+  .tag > .cloverline[hidden] { display: none; }
+  .tag > .taxline { grid-area: tax; font-size: 0.95rem; }
+  .tag > .note { grid-area: note; }
+  .cloverline .cl-amt { font-size: clamp(2.2rem, 6vw, 3rem); }
+  .items .item { min-height: 54px; }
+  .discrow .chip { min-height: 48px; font-size: 0.95rem; }
+  .addbtn { min-height: 54px; }
+}
 </style>
 </head>
 <body>
@@ -646,7 +662,7 @@ footer { color: var(--muted); font-size: 0.8rem; }
           </div>
         </div>
       </div>
-      <div class="ver"><span id="app-ver">Version 3.52 (photo buttons)</span></div>
+      <div class="ver"><span id="app-ver">Version 3.53 (landscape)</span></div>
     </div>
 
     <div class="savebar" id="receipt-box" hidden>
