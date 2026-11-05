@@ -670,7 +670,7 @@ footer { color: var(--muted); font-size: 0.8rem; }
           </div>
         </div>
       </div>
-      <div class="ver"><span id="app-ver">Version 3.59 (photo guide box, tap to enlarge)</span></div>
+      <div class="ver"><span id="app-ver">Version 3.60 (photo library fix)</span></div>
     </div>
 
     <div class="savebar" id="receipt-box" hidden>
@@ -702,6 +702,7 @@ footer { color: var(--muted); font-size: 0.8rem; }
   </div>
 </div>
 <input type="file" id="photo-file" accept="image/*" capture="environment" hidden>
+<input type="file" id="photo-lib" accept="image/*" hidden>
 <div class="menu" id="photo-res" hidden>
     <div class="menucard details" role="dialog" aria-modal="true" aria-labelledby="pr-title">
       <div class="menuhead"><span class="label" id="pr-title">Closest matches</span><button class="linkbtn" type="button" id="pr-close">Close</button></div>
@@ -11600,7 +11601,7 @@ function findAlignmentPattern(matrix, alignmentPatternQuads, topRight, topLeft, 
   $("photo-open").addEventListener("click", pcamOpen);
   $("pr-retake").addEventListener("click", pcamOpen);
   $("pcam-done").addEventListener("click", pcamClose);
-  $("pcam-pick").addEventListener("click", function () { pcamClose(); $("photo-file").click(); });
+  $("pcam-pick").addEventListener("click", function () { pcamClose(); $("photo-lib").click(); });
   $("pcam-snap").addEventListener("click", function () {
     var c = pcamCrop();
     if (!c) return;
@@ -11610,11 +11611,13 @@ function findAlignmentPattern(matrix, alignmentPatternQuads, topRight, topLeft, 
   document.addEventListener("keydown", function (e) { if (e.key === "Escape" && !pcam.hidden) pcamClose(); });
   $("pr-close").addEventListener("click", closePhotoRes);
   $("photo-res").addEventListener("click", function (e) { if (e.target === this) closePhotoRes(); });
-  $("photo-file").addEventListener("change", function () {
-    var f = $("photo-file").files && $("photo-file").files[0];
-    $("photo-file").value = "";
-    if (!f) return;
-    runPhoto(vsToSource(f));
+  ["photo-file", "photo-lib"].forEach(function (id) {
+    $(id).addEventListener("change", function () {
+      var f = $(id).files && $(id).files[0];
+      $(id).value = "";
+      if (!f) return;
+      runPhoto(vsToSource(f));
+    });
   });
   function runPhoto(srcP) {
     var tip = $("pr-tip"), list = $("pr-list");
