@@ -688,7 +688,7 @@ footer { color: var(--muted); font-size: 0.8rem; }
       </div>
       <div class="statrow">
         <span class="sheetstat" id="sheet-stat" role="status">Google Sheet: not connected</span>
-        <span class="ver"><span id="app-ver">Version 3.64 (hide You save at 0%)</span></span>
+        <span class="ver"><span id="app-ver">Version 3.65 (price format)</span></span>
       </div>
     </div>
   </section>
@@ -11019,9 +11019,18 @@ function findAlignmentPattern(matrix, alignmentPatternQuads, topRight, topLeft, 
     row.appendChild(after);
     if (afterRow && afterRow.parentNode === itemsEl) itemsEl.insertBefore(row, afterRow.nextSibling); else itemsEl.appendChild(row);
 
+    function fmtPrice() {
+      var t = price.value.trim();
+      if (!t) return;
+      var n = num(t);
+      if (isNaN(n) || n < 0) return;
+      var f = (Math.round(n * 100) / 100).toFixed(2);
+      if (price.value !== f) { price.value = f; calcA(); }
+    }
     price.addEventListener("input", calcA);
+    price.addEventListener("blur", fmtPrice);
     price.addEventListener("keydown", function (e) {
-      if (e.key === "Enter") { e.preventDefault(); addRow("", true, row); }
+      if (e.key === "Enter") { e.preventDefault(); fmtPrice(); addRow("", true, row); }
     });
     rm.addEventListener("click", function () {
       if (rows().length === 1) {
