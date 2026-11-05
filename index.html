@@ -307,6 +307,10 @@ label, .label {
 .sp-cash[hidden] { display: none; }
 .sp-sheet { font: 600 0.95rem var(--font-body); margin-top: 8px; padding: 6px 12px; border-radius: 999px; background: rgba(255, 255, 255, 0.18); }
 .sp-sheet.bad { background: #fde8e8; color: #8a1c1c; }
+.sp-share { display: flex; gap: 8px; margin-top: 12px; }
+.sp-share[hidden] { display: none; }
+.sp-sbtn { flex: 1; display: flex; align-items: center; justify-content: center; min-height: 48px; border-radius: 14px; background: var(--accent-fg); color: var(--accent); font: 700 0.88rem var(--font-body); text-decoration: none; white-space: nowrap; padding: 0 4px; }
+.sp-sbtn[hidden] { display: none; }
 .sp-hint { font: 500 0.78rem var(--font-body); opacity: 0.7; margin-top: 10px; }
 @media (prefers-reduced-motion: no-preference) {
   .saved-pop.pop .sp-card { animation: sppop .22s ease-out; }
@@ -597,7 +601,7 @@ footer { color: var(--muted); font-size: 0.8rem; }
           </div>
         </div>
       </div>
-      <div class="ver"><span id="app-ver">Version 3.30 (description wraps)</span></div>
+      <div class="ver"><span id="app-ver">Version 3.31 (text and email buttons)</span></div>
     </div>
 
     <div class="savebar" id="receipt-box" hidden>
@@ -653,7 +657,11 @@ footer { color: var(--muted); font-size: 0.8rem; }
     <div class="sp-detail" id="sp-detail"></div>
     <div class="sp-cash" id="sp-cash" hidden></div>
     <div class="sp-sheet" id="sp-sheet"></div>
-    <div class="sp-hint">Tap anywhere to close</div>
+    <div class="sp-share" id="sp-share" hidden>
+      <a class="sp-sbtn" id="sp-text" href="#">Text receipt</a>
+      <a class="sp-sbtn" id="sp-mail" href="#">Email receipt</a>
+    </div>
+    <div class="sp-hint" id="sp-hint">Tap anywhere to close</div>
   </div>
 </div>
 <div class="picker" id="picker" hidden role="dialog" aria-modal="true" aria-label="Find an item">
@@ -11757,6 +11765,37 @@ function findAlignmentPattern(matrix, alignmentPatternQuads, topRight, topLeft, 
     if (savedPoll) { clearInterval(savedPoll); savedPoll = null; }
   }
   $("saved-pop").addEventListener("click", hideSaved);
+  function plainReceipt(rc) {
+    var c = rc.customer || {}, out = [];
+    out.push((c.name ? "Hi " + c.name.split(" ")[0] + ", thank" : "Thank") + " you for shopping with She's Golden!");
+    out.push("");
+    rc.items.forEach(function (it) {
+      out.push(it.name + ": " + money.format(it.price) + (rc.discountPct > 0 ? " \u2192 " + money.format(it.after) : ""));
+    });
+    out.push("");
+    if (rc.discountPct > 0) out.push("Discount (" + pctText(rc.discountPct) + "): -" + money.format(rc.discountAmt));
+    if (rc.tax > 0) out.push("Sales tax (" + pctText(rc.taxPct) + "): " + money.format(rc.tax));
+    if (rc.surcharge > 0) out.push("Card surcharge: " + money.format(rc.surcharge));
+    out.push("Total: " + money.format(rc.total));
+    out.push("Paid by: " + rc.payment);
+    out.push(new Date(rc.time).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }));
+    return out.join("\n");
+  }
+  function setupShare(rc) {
+    var c = rc.customer || {}, box = $("sp-share"), tb = $("sp-text"), mb = $("sp-mail");
+    var digits = (c.phone || "").replace(/[^\d+]/g, "");
+    var okPhone = digits.replace(/\D/g, "").length >= 7;
+    var okMail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(c.email || "");
+    var body = plainReceipt(rc);
+    var ios = /iPhone|iPad|iPod/.test(navigator.userAgent) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
+    tb.hidden = !okPhone; mb.hidden = !okMail;
+    if (okPhone) tb.href = "sms:" + digits + (ios ? "&" : "?") + "body=" + encodeURIComponent(body);
+    if (okMail) mb.href = "mailto:" + encodeURIComponent(c.email) + "?subject=" + encodeURIComponent("Your She's Golden receipt") + "&body=" + encodeURIComponent(body);
+    box.hidden = !(okPhone || okMail);
+    $("sp-hint").textContent = box.hidden ? "Tap anywhere to close" : "Tap outside the buttons to close";
+    return !box.hidden;
+  }
+  $("sp-share").addEventListener("click", function (e) { e.stopPropagation(); });
   function showSaved(rc, withPdf, cash) {
     var pop = $("saved-pop"), sheet = $("sp-sheet");
     $("sp-title").textContent = withPdf ? "Sale saved + receipt" : "Sale saved";
@@ -11775,6 +11814,7 @@ function findAlignmentPattern(matrix, alignmentPatternQuads, topRight, topLeft, 
       sheet.className = "sp-sheet"; sheet.textContent = "\u2713 Saved to Google Sheet"; return true;
     }
     var done = setSheet();
+    var keepOpen = setupShare(rc);
     pop.hidden = false; pop.classList.remove("pop"); void pop.offsetWidth; pop.classList.add("pop");
     if (savedTimer) clearTimeout(savedTimer);
     if (savedPoll) clearInterval(savedPoll);
@@ -11785,7 +11825,7 @@ function findAlignmentPattern(matrix, alignmentPatternQuads, topRight, topLeft, 
       if (d || waited >= 6000) {
         clearInterval(savedPoll); savedPoll = null;
         if (!d) { sheet.className = "sp-sheet bad"; sheet.textContent = "Waiting to send. It will retry."; }
-        savedTimer = setTimeout(hideSaved, 2200);
+        if (!keepOpen) savedTimer = setTimeout(hideSaved, 2200);
       }
     }, 300);
   }
