@@ -633,7 +633,7 @@ footer { color: var(--muted); font-size: 0.8rem; }
           </div>
         </div>
       </div>
-      <div class="ver"><span id="app-ver">Version 3.42 (Clover rounding)</span></div>
+      <div class="ver"><span id="app-ver">Version 3.43 (Clover entry)</span></div>
     </div>
 
     <div class="savebar" id="receipt-box" hidden>
@@ -11085,7 +11085,7 @@ function findAlignmentPattern(matrix, alignmentPatternQuads, topRight, topLeft, 
     taxLine.hidden = !(withTax || withFee);
     var cl = $("a-clover");
     cl.hidden = !withFee;
-    if (withFee) cl.textContent = "Enter in Clover: " + money.format((afterCents + taxCents) / 100) + " (it adds " + pctText(CARD_FEE_PCT) + ")";
+    if (withFee) cl.textContent = "Enter in Clover: " + money.format(afterCents / 100) + " (before tax; Clover adds tax + " + pctText(CARD_FEE_PCT) + ")";
     if (withTax || withFee) {
       var txt = money.format(afterCents / 100);
       if (withTax) txt += " + " + money.format(taxCents / 100) + " tax (" + pctText(taxPct) + ")";
