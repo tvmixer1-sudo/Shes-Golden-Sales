@@ -385,7 +385,11 @@ label, .label {
 .thumb.none { background: var(--accent-soft); }
 .at-photo { width: 120px; height: 120px; border-radius: 16px; background: #fff; object-fit: contain; margin-bottom: 4px; }
 .at-photo[hidden] { display: none; }
-#pick-list .pick-item { grid-template-columns: 56px minmax(0, 1fr) auto; column-gap: 12px; }
+#pick-list li { position: relative; }
+#pick-list .pick-item { grid-template-columns: 56px minmax(0, 1fr) auto; column-gap: 12px; padding-right: 62px; }
+.pick-plus { position: absolute; right: 8px; top: 50%; transform: translateY(-50%); width: 44px; height: 44px; border-radius: 50%; border: 0; background: var(--accent); color: var(--accent-fg); font: 600 1.7rem/1 var(--font-body); cursor: pointer; padding: 0; display: grid; place-items: center; }
+.pick-plus:active { filter: brightness(1.15); }
+.pick-plus.ok { background: var(--accent-soft); color: var(--accent); }
 #pick-list .pick-item .thumb { grid-row: 1 / span 2; grid-column: 1; }
 #pick-list .pick-item .pn { grid-column: 2; grid-row: 1; }
 #pick-list .pick-item .pp { grid-column: 3; grid-row: 1; }
@@ -416,7 +420,7 @@ label, .label {
 .pick-item { width: 100%; display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 2px 12px; align-items: center; text-align: left; background: var(--surface); color: var(--fg); border: 1.5px solid var(--line); border-radius: 12px; padding: 10px 14px; min-height: 56px; font: 500 1rem var(--font-body); cursor: pointer; }
 .pick-item:active { border-color: var(--accent); }
 .thumb, .zoom img { -webkit-touch-callout: none; -webkit-user-select: none; user-select: none; }
-.pick-item .thumb:not(.none), .pr-item .thumb:not(.none) { cursor: zoom-in; }
+.pr-item .thumb:not(.none) { cursor: zoom-in; }
 .zoom { position: fixed; inset: 0; z-index: 350; display: flex; align-items: center; justify-content: center; padding: 16px; background: rgba(0, 0, 0, 0.75); }
 .zoom[hidden] { display: none; }
 .zoom-card { width: min(100%, 420px); box-sizing: border-box; padding: 12px; border-radius: 20px; background: var(--surface); display: flex; flex-direction: column; gap: 8px; align-items: stretch; text-align: center; }
@@ -624,7 +628,7 @@ footer { color: var(--muted); font-size: 0.8rem; }
           </div>
         </div>
       </div>
-      <div class="ver"><span id="app-ver">Version 3.38 (photo close-up)</span></div>
+      <div class="ver"><span id="app-ver">Version 3.39 (add + in item list)</span></div>
     </div>
 
     <div class="savebar" id="receipt-box" hidden>
@@ -11482,7 +11486,7 @@ function findAlignmentPattern(matrix, alignmentPatternQuads, topRight, topLeft, 
   document.addEventListener("click", function (e) {
     var t = e.target;
     if (!t || !t.classList || !t.classList.contains("thumb") || t.classList.contains("none")) return;
-    var btn = t.closest ? t.closest(".pick-item, .pr-item") : null;
+    var btn = t.closest ? t.closest(".pr-item") : null;
     if (!btn) return;
     var id = t.dataset.id, it = null;
     for (var i = 0; i < catalog.length; i++) if (catalog[i].id === id) { it = catalog[i]; break; }
@@ -11509,8 +11513,17 @@ function findAlignmentPattern(matrix, alignmentPatternQuads, topRight, topLeft, 
       m.textContent = it.cat + " · " + it.id;
       if (it.sold) { var t = document.createElement("span"); t.className = "tagsold"; t.textContent = " · Sold out"; m.appendChild(t); }
       b.appendChild(makeThumb(it.id)); b.appendChild(n); b.appendChild(pr); b.appendChild(m);
-      b.addEventListener("click", function () { pickItem(it); });
+      b.addEventListener("click", function () { openZoom(it, function () { pickItem(it); }); });
+      var plus = document.createElement("button");
+      plus.type = "button"; plus.className = "pick-plus"; plus.textContent = "+";
+      plus.setAttribute("aria-label", "Add " + it.name);
+      plus.addEventListener("click", function () {
+        pickItem(it);
+        plus.textContent = "\u2713"; plus.classList.add("ok");
+        setTimeout(function () { plus.textContent = "+"; plus.classList.remove("ok"); }, 700);
+      });
       li.appendChild(b);
+      li.appendChild(plus);
       list.appendChild(li);
     });
     if (!shown) {
@@ -11532,7 +11545,7 @@ function findAlignmentPattern(matrix, alignmentPatternQuads, topRight, topLeft, 
     pickCount = 0;
     pickCat = "All";
     $("pick-q").value = "";
-    $("pick-msg").textContent = "Tap an item to add it. Tap its photo to see it larger.";
+    $("pick-msg").textContent = "Tap + to add an item. Tap the row to see its photo.";
     renderCats();
     renderPicker();
     $("picker").hidden = false;
