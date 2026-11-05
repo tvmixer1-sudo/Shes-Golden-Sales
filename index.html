@@ -286,7 +286,7 @@ label, .label {
 .discacts { display: flex; align-items: center; gap: 14px; }
 .addbtn:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 .sheetbox { display: flex; flex-direction: column; gap: 8px; }
-.sheetrow { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+.sheetrow { display: flex; align-items: center; justify-content: flex-end; gap: 12px; flex-wrap: wrap; }
 .sheetstat { font-size: 0.85rem; color: var(--muted); min-width: 0; overflow-wrap: anywhere; }
 .sheetstat.ok { color: var(--accent); }
 .sheetstat.bad { color: var(--save); }
@@ -376,6 +376,9 @@ label, .label {
 .ver { font-size: 0.75rem; color: var(--muted); }
 .savebar { position: sticky; bottom: 0; z-index: 8; display: flex; flex-direction: column; gap: 6px; padding: 8px 0 calc(env(safe-area-inset-bottom, 0px) + 8px); background: var(--bg); box-shadow: 0 -10px 12px -6px var(--bg); }
 .savebar[hidden] { display: none; }
+.statrow { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; }
+.statrow .sheetstat { font-size: 0.75rem; }
+.statrow .ver { flex: none; text-align: right; }
 .item .name { padding: 14px 0; text-overflow: ellipsis; }
 
 .menubtn { justify-self: end; flex: none; width: 44px; height: 44px; border: 0; border-radius: 12px; background: transparent; color: var(--fg); font-size: 1.4rem; line-height: 1; cursor: pointer; -webkit-tap-highlight-color: transparent; }
@@ -656,7 +659,6 @@ footer { color: var(--muted); font-size: 0.8rem; }
     <div class="foot">
       <div class="sheetbox">
         <div class="sheetrow">
-          <span class="sheetstat" id="sheet-stat" role="status">Google Sheet: not connected</span>
           <button class="linkbtn" type="button" id="sheet-toggle" aria-expanded="false" aria-controls="sheet-form">Set up</button>
         </div>
         <div class="sheetform" id="sheet-form" hidden>
@@ -670,7 +672,6 @@ footer { color: var(--muted); font-size: 0.8rem; }
           </div>
         </div>
       </div>
-      <div class="ver"><span id="app-ver">Version 3.61 (menu button)</span></div>
     </div>
 
     <div class="savebar" id="receipt-box" hidden>
@@ -680,8 +681,12 @@ footer { color: var(--muted); font-size: 0.8rem; }
       </div>
       <p class="note" id="save-msg" role="status"></p>
       <div class="savepair">
-        <button class="savebtn" type="button" id="save-sale">Save sale</button>
+        <button class="savebtn" type="button" id="save-sale">Save Sale</button>
         <button class="savebtn alt" type="button" id="save-receipt">Save + PDF receipt</button>
+      </div>
+      <div class="statrow">
+        <span class="sheetstat" id="sheet-stat" role="status">Google Sheet: not connected</span>
+        <span class="ver"><span id="app-ver">Version 3.62 (status in footer)</span></span>
       </div>
     </div>
   </section>
