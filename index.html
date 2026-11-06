@@ -627,6 +627,10 @@ footer { color: var(--muted); font-size: 0.8rem; }
         <label for="a-tax">Sales tax</label>
         <div class="input"><input id="a-tax" inputmode="decimal" autocomplete="off" value="0"><span>%</span></div>
       </div>
+      <div class="drow">
+        <label for="a-ship">Shipping</label>
+        <div class="input"><span>$</span><input id="a-ship" inputmode="decimal" autocomplete="off" placeholder="0.00" aria-label="Shipping"></div>
+      </div>
       <div class="cashbox" id="cashbox" hidden>
         <div class="drow" id="cashrow">
           <label for="a-cash">Cash received</label>
@@ -689,7 +693,7 @@ footer { color: var(--muted); font-size: 0.8rem; }
       </div>
       <div class="statrow">
         <span class="sheetstat" id="sheet-stat" role="status">Google Sheet: not connected</span>
-        <span class="ver"><span id="app-ver">Version 3.67 (no tax on cash, Venmo, Zelle)</span></span>
+        <span class="ver"><span id="app-ver">Version 3.68 (shipping)</span></span>
       </div>
     </div>
   </section>
@@ -11139,13 +11143,18 @@ function findAlignmentPattern(matrix, alignmentPatternQuads, topRight, topLeft, 
     var taxPct = num($("a-tax").value);
     if (isNaN(taxPct)) taxPct = 0;
     var taxCents = roundHalfUp(afterCents * taxPct / 100);
-    var feeCents = payType() === "credit" ? roundHalfUp((afterCents + taxCents) * CARD_FEE_PCT / 100) : 0;
+    var shipC = shipCents();
+    var feeCents = payType() === "credit" ? roundHalfUp((afterCents + taxCents + shipC) * CARD_FEE_PCT / 100) : 0;
     var taxLine = $("a-taxline");
-    var withTax = taxCents > 0, withFee = feeCents > 0;
+    var withTax = taxCents > 0, withFee = feeCents > 0, withShip = shipC > 0;
 
-    var label = withTax && withFee ? "Total with tax & card fee" : withTax ? "Total with tax" : withFee ? "Total with card fee" : "Total after discount";
+    var extras = [];
+    if (withTax) extras.push("tax");
+    if (withShip) extras.push("shipping");
+    if (withFee) extras.push("card fee");
+    var label = extras.length ? "Total with " + (extras.length > 1 ? extras.slice(0, -1).join(", ") + " & " + extras[extras.length - 1] : extras[0]) : "Total after discount";
     $("a-label").textContent = count > 1 ? label + " · " + count + " items" : label;
-    totalCents = count === 0 ? 0 : afterCents + taxCents + feeCents;
+    totalCents = count === 0 ? 0 : afterCents + taxCents + shipC + feeCents;
     if (count === 0) {
       $("a-result").textContent = "$0.00";
       $("a-was").textContent = "";
@@ -11155,22 +11164,23 @@ function findAlignmentPattern(matrix, alignmentPatternQuads, topRight, topLeft, 
       $("a-clover").hidden = true;
       return;
     }
-    $("a-result").textContent = money.format((afterCents + taxCents + feeCents) / 100);
+    $("a-result").textContent = money.format((afterCents + taxCents + shipC + feeCents) / 100);
     var hasDisc = beforeCents !== afterCents;
     $("a-was").textContent = hasDisc ? money.format(beforeCents / 100) : "";
     $("a-save").hidden = !hasDisc;
     $("a-save").textContent = hasDisc ? "You save " + money.format((beforeCents - afterCents) / 100) : "";
-    taxLine.hidden = !(withTax || withFee);
+    taxLine.hidden = !(withTax || withFee || withShip);
     var cl = $("a-clover");
     cl.hidden = !withFee;
     if (withFee) {
       cl.innerHTML = '<span class="cl-amt"></span><span class="cl-txt"><b>Enter in Clover</b><span></span></span>';
       cl.querySelector(".cl-amt").textContent = money.format(afterCents / 100);
-      cl.querySelector(".cl-txt span").textContent = "(before tax; Clover adds tax + " + pctText(CARD_FEE_PCT) + ")";
+      cl.querySelector(".cl-txt span").textContent = "(before tax; Clover adds tax + " + pctText(CARD_FEE_PCT) + ")" + (withShip ? " Shipping " + money.format(shipC / 100) + " is extra, with no tax." : "");
     }
-    if (withTax || withFee) {
+    if (withTax || withFee || withShip) {
       var txt = money.format(afterCents / 100);
       if (withTax) txt += " + " + money.format(taxCents / 100) + " tax (" + pctText(taxPct) + ")";
+      if (withShip) txt += " + " + money.format(shipC / 100) + " shipping";
       if (withFee) txt += " + " + money.format(feeCents / 100) + " card fee (" + pctText(CARD_FEE_PCT) + ")";
       taxLine.textContent = txt;
     }
@@ -11210,13 +11220,14 @@ function findAlignmentPattern(matrix, alignmentPatternQuads, topRight, topLeft, 
     syncNotesHint();
   }
   function clearSale(noFocus) {
-    var snap = { nodes: [], pay: $("a-pay").value, loc: $("a-loc").value, cust: customer(), notesOpen: $("notes").open, bogo: bogo };
+    var snap = { ship: $("a-ship").value, nodes: [], pay: $("a-pay").value, loc: $("a-loc").value, cust: customer(), notesOpen: $("notes").open, bogo: bogo };
     while (itemsEl.firstChild) { snap.nodes.push(itemsEl.firstChild); itemsEl.removeChild(itemsEl.firstChild); }
     snap.cash = $("a-cash").value;
     setCustomer({});
     setBogo(false);
     $("notes").open = false;
     $("a-pay").value = "cash";
+    $("a-ship").value = "";
     applyTaxMode();
     $("a-cash").value = "";
     addRow("", !noFocus);
@@ -11228,6 +11239,7 @@ function findAlignmentPattern(matrix, alignmentPatternQuads, topRight, topLeft, 
     snap.nodes.forEach(function (n) { itemsEl.appendChild(n); });
     syncRemoveButtons();
     $("a-pay").value = snap.pay;
+    $("a-ship").value = snap.ship || "";
     applyTaxMode();
     setCustomer(snap.cust || {});
     setBogo(snap.bogo);
@@ -11992,7 +12004,7 @@ function findAlignmentPattern(matrix, alignmentPatternQuads, topRight, topLeft, 
   document.addEventListener("focusin", function (e) {
     var t = e.target;
     if (!t || !t.classList) return;
-    if (t.classList.contains("price") || t.id === "a-pct" || t.id === "a-tax") {
+    if (t.classList.contains("price") || t.id === "a-pct" || t.id === "a-tax" || t.id === "a-ship") {
       setTimeout(function () {
         try { t.select(); t.setSelectionRange(0, String(t.value).length); } catch (err) {}
       }, 0);
@@ -12011,8 +12023,15 @@ function findAlignmentPattern(matrix, alignmentPatternQuads, topRight, topLeft, 
   }
   function payType() { return $("a-pay").value; }
   function payLabel() { var o = $("a-pay"); return o.options[o.selectedIndex].text; }
-  function cardFee(afterCents, taxCents) { return payType() === "credit" ? roundHalfUp((afterCents + taxCents) * CARD_FEE_PCT / 100) : 0; }
+  // Shipping is added after tax (it is not taxed or discounted). The card fee covers the whole card charge.
+  function shipCents() { var n = num($("a-ship").value); return isNaN(n) || n <= 0 ? 0 : Math.round(n * 100); }
+  function cardFee(afterCents, taxCents, shipC) { return payType() === "credit" ? roundHalfUp((afterCents + taxCents + (shipC || 0)) * CARD_FEE_PCT / 100) : 0; }
   $("a-pay").addEventListener("change", function () { applyTaxMode(); calcA(); });
+  $("a-ship").addEventListener("input", calcA);
+  $("a-ship").addEventListener("blur", function () {
+    var n = num(this.value);
+    if (this.value.trim() && !isNaN(n) && n >= 0) { var f = (Math.round(n * 100) / 100).toFixed(2); if (this.value !== f) { this.value = f; calcA(); } }
+  });
   $("a-cash").addEventListener("input", updateChange);
   $("a-cash").addEventListener("focus", function () { var el = this; setTimeout(function () { try { el.select(); } catch (e) {} }, 0); });
 
@@ -12096,7 +12115,8 @@ function findAlignmentPattern(matrix, alignmentPatternQuads, topRight, topLeft, 
     items.forEach(function (it, i) { it.a = afs[i]; after += it.a; });
     var offLabel = bogo ? "BOGO " + pctText(BOGO_PCT) : pctText(pct);
     var tax = roundHalfUp(after * taxPct / 100);
-    var fee = cardFee(after, tax);
+    var shipC = shipCents();
+    var fee = cardFee(after, tax, shipC);
 
     var when = new Date().toLocaleString("en-US", { weekday: "short", year: "numeric", month: "short", day: "numeric", hour: "numeric", minute: "2-digit" });
     var loc = currentLoc();
@@ -12115,9 +12135,10 @@ function findAlignmentPattern(matrix, alignmentPatternQuads, topRight, topLeft, 
       out.push(line("Subtotal after discount", money.format(after / 100)));
     }
     if (tax > 0) out.push(line("Sales tax (" + pctText(taxPct) + ")", money.format(tax / 100)));
+    if (shipC > 0) out.push(line("Shipping", money.format(shipC / 100)));
     if (fee > 0) out.push(line("Card surcharge (" + pctText(CARD_FEE_PCT) + ")", money.format(fee / 100)));
     out.push(rule("="));
-    out.push(line("TOTAL", money.format((after + tax + fee) / 100)));
+    out.push(line("TOTAL", money.format((after + tax + shipC + fee) / 100)));
     if (before !== after) out.push(line("You saved", money.format((before - after) / 100)));
     out.push("");
     return out.join("\n");
@@ -12391,7 +12412,8 @@ function findAlignmentPattern(matrix, alignmentPatternQuads, topRight, topLeft, 
       after += afs[i];
     });
     var tax = roundHalfUp(after * taxPct / 100);
-    var fee = cardFee(after, tax);
+    var shipC = shipCents();
+    var fee = cardFee(after, tax, shipC);
     return {
       location: currentLoc(),
       payment: payLabel(),
@@ -12407,7 +12429,8 @@ function findAlignmentPattern(matrix, alignmentPatternQuads, topRight, topLeft, 
       discountAmt: (before - after) / 100,
       taxPct: taxPct,
       tax: tax / 100,
-      total: (after + tax + fee) / 100
+      shipping: shipC / 100,
+      total: (after + tax + shipC + fee) / 100
     };
   }
 
