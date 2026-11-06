@@ -135,6 +135,7 @@ label, .label {
 }
 .input:focus-within { border-color: var(--accent); }
 .input span { font-family: var(--font-mono); color: var(--muted); font-size: 1.1rem; }
+#a-tax:disabled { opacity: 0.45; -webkit-text-fill-color: currentColor; }
 .input input {
   flex: 1;
   min-width: 0;
@@ -688,7 +689,7 @@ footer { color: var(--muted); font-size: 0.8rem; }
       </div>
       <div class="statrow">
         <span class="sheetstat" id="sheet-stat" role="status">Google Sheet: not connected</span>
-        <span class="ver"><span id="app-ver">Version 3.66 (share PDF only)</span></span>
+        <span class="ver"><span id="app-ver">Version 3.67 (no tax on cash, Venmo, Zelle)</span></span>
       </div>
     </div>
   </section>
@@ -11216,6 +11217,7 @@ function findAlignmentPattern(matrix, alignmentPatternQuads, topRight, topLeft, 
     setBogo(false);
     $("notes").open = false;
     $("a-pay").value = "cash";
+    applyTaxMode();
     $("a-cash").value = "";
     addRow("", !noFocus);
     calcA();
@@ -11226,6 +11228,7 @@ function findAlignmentPattern(matrix, alignmentPatternQuads, topRight, topLeft, 
     snap.nodes.forEach(function (n) { itemsEl.appendChild(n); });
     syncRemoveButtons();
     $("a-pay").value = snap.pay;
+    applyTaxMode();
     setCustomer(snap.cust || {});
     setBogo(snap.bogo);
     $("notes").open = !!snap.notesOpen;
@@ -11998,10 +12001,18 @@ function findAlignmentPattern(matrix, alignmentPatternQuads, topRight, topLeft, 
 
   /* ---------- Payment type ---------- */
   var CARD_FEE_PCT = 3;   /* surcharge % added when the customer pays by credit (0 = none). Clover applies the same 3% after tax. */
+  // Cash, Venmo and Zelle sales carry no sales tax; Credit and Debit use the saved rate.
+  var NO_TAX = { cash: 1, venmo: 1, zelle: 1 };
+  var taxRate = "0";
+  function applyTaxMode() {
+    var t = $("a-tax"), off = !!NO_TAX[$("a-pay").value];
+    if (off) { if (!t.disabled) { t.disabled = true; } t.value = "0"; }
+    else if (t.disabled) { t.disabled = false; t.value = taxRate; }
+  }
   function payType() { return $("a-pay").value; }
   function payLabel() { var o = $("a-pay"); return o.options[o.selectedIndex].text; }
   function cardFee(afterCents, taxCents) { return payType() === "credit" ? roundHalfUp((afterCents + taxCents) * CARD_FEE_PCT / 100) : 0; }
-  $("a-pay").addEventListener("change", calcA);
+  $("a-pay").addEventListener("change", function () { applyTaxMode(); calcA(); });
   $("a-cash").addEventListener("input", updateChange);
   $("a-cash").addEventListener("focus", function () { var el = this; setTimeout(function () { try { el.select(); } catch (e) {} }, 0); });
 
@@ -12491,14 +12502,16 @@ function findAlignmentPattern(matrix, alignmentPatternQuads, topRight, topLeft, 
   });
   $("a-pct").addEventListener("input", function () { setBogo(false); calcA(); });
   $("a-tax").addEventListener("input", function () {
+    taxRate = $("a-tax").value;
     try { localStorage.setItem(TAX_KEY, $("a-tax").value); } catch (e) {}
     calcA();
   });
   $("a-pct").value = String(defaultPct);
   try {
     var savedTax = localStorage.getItem(TAX_KEY);
-    if (savedTax !== null && isFinite(parseFloat(savedTax))) $("a-tax").value = savedTax;
+    if (savedTax !== null && isFinite(parseFloat(savedTax))) { $("a-tax").value = savedTax; taxRate = savedTax; }
   } catch (e) {}
+  applyTaxMode();
   $("set-default").addEventListener("click", function () {
     var p = num($("a-pct").value);
     if (!(p >= 0 && p <= 100)) return;
