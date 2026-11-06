@@ -688,7 +688,7 @@ footer { color: var(--muted); font-size: 0.8rem; }
       </div>
       <div class="statrow">
         <span class="sheetstat" id="sheet-stat" role="status">Google Sheet: not connected</span>
-        <span class="ver"><span id="app-ver">Version 3.66B (Beta, receipt link)</span></span>
+        <span class="ver"><span id="app-ver">Version 3.66 (share PDF only)</span></span>
       </div>
     </div>
   </section>
@@ -12194,8 +12194,6 @@ function findAlignmentPattern(matrix, alignmentPatternQuads, topRight, topLeft, 
     out.push("Total: " + money.format(rc.total));
     out.push("Paid by: " + rc.payment);
     out.push(new Date(rc.time).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }));
-    var lk = receiptLink(rc);
-    if (lk) { out.push(""); out.push("Download your receipt (PDF):"); out.push(lk); }
     out.push("");
     out.push("shesgolden.com");
     return out.join("\n");
@@ -12359,17 +12357,6 @@ function findAlignmentPattern(matrix, alignmentPatternQuads, topRight, topLeft, 
     else sheetStatus("Google Sheet: connected", "ok");
   }
 
-  function newToken() {
-    var abc = "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz23456789", out = "";
-    var a = new Uint8Array(16);
-    try { (window.crypto || window.msCrypto).getRandomValues(a); } catch (e) { for (var i = 0; i < 16; i++) a[i] = Math.floor(Math.random() * 256); }
-    for (var j = 0; j < 16; j++) out += abc.charAt(a[j] % abc.length);
-    return out;
-  }
-  function receiptLink(rc) {
-    if (!rc || !rc.token || !getCfg()) return "";
-    try { return new URL("r.html", location.href).href.split("#")[0] + "?t=" + rc.token; } catch (e) { return ""; }
-  }
   function collectReceipt() {
     var pct = bogo ? 0 : num($("a-pct").value);
     if (isNaN(pct)) return null;
@@ -12401,8 +12388,6 @@ function findAlignmentPattern(matrix, alignmentPatternQuads, topRight, topLeft, 
       surcharge: fee / 100,
       surchargePct: fee > 0 ? CARD_FEE_PCT : 0,
       id: "r" + Date.now().toString(36) + Math.random().toString(36).slice(2, 6),
-      token: newToken(),
-      text: buildReceipt() || "",
       time: new Date().toISOString(),
       items: items,
       subtotal: before / 100,
