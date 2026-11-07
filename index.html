@@ -714,7 +714,7 @@ footer { color: var(--muted); font-size: 0.8rem; }
       </div>
       <div class="statrow">
         <span class="sheetstat" id="sheet-stat" role="status">Google Sheet: not connected</span>
-        <span class="ver"><span id="app-ver">Version 3.72 (Popup above keyboard)</span></span>
+        <span class="ver"><span id="app-ver">Version 3.73 (No AutoFill bar)</span></span>
       </div>
     </div>
   </section>
@@ -10992,7 +10992,7 @@ function findAlignmentPattern(matrix, alignmentPatternQuads, topRight, topLeft, 
       var isLast = i === list.length - 1, ib = list[i].querySelector(".ins");
       ib.classList.toggle("off", !isLast); ib.disabled = !isLast; ib.tabIndex = isLast ? 0 : -1;
       list[i].querySelector(".name").placeholder = "Item " + (i + 1);
-      list[i].querySelector(".name").setAttribute("aria-label", "Name of item " + (i + 1));
+      list[i].querySelector(".name").setAttribute("aria-label", "Item " + (i + 1) + " description");
       list[i].querySelector(".price").setAttribute("aria-label", "Original price of item " + (i + 1));
     }
   }
@@ -11009,8 +11009,12 @@ function findAlignmentPattern(matrix, alignmentPatternQuads, topRight, topLeft, 
     name.addEventListener("keydown", function (e) {
       if (e.key === "Enter") { e.preventDefault(); price.focus(); }
     });
-    name.id = "item-name-" + rowCount;
+    name.id = "item-text-" + rowCount;
     name.autocomplete = "off";
+    /* Keep iPhone from offering contact AutoFill or changing item names ("Hugg" to "High") */
+    name.setAttribute("autocorrect", "off");
+    name.setAttribute("autocapitalize", "off");
+    name.setAttribute("spellcheck", "false");
 
     var ins = document.createElement("button");
     ins.className = "ins"; ins.type = "button"; ins.setAttribute("aria-label", "Add an item below"); ins.textContent = "+";
@@ -11124,6 +11128,7 @@ function findAlignmentPattern(matrix, alignmentPatternQuads, topRight, topLeft, 
       document.body.classList.add("sugg-open");
       placeSugg(true);
       setTimeout(function () { placeSugg(true); }, 350);
+      setTimeout(function () { placeSugg(true); }, 800);
     }
     name.addEventListener("input", function () {
       if (row._pick && name.value !== row._pick) { row.removeAttribute("data-id"); row._pick = null; }
