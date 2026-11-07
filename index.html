@@ -711,7 +711,7 @@ footer { color: var(--muted); font-size: 0.8rem; }
       </div>
       <div class="statrow">
         <span class="sheetstat" id="sheet-stat" role="status">Google Sheet: not connected</span>
-        <span class="ver"><span id="app-ver">Version 3.79 (Tax in menu)</span></span>
+        <span class="ver"><span id="app-ver">Version 3.80 (Cursor starts in item name)</span></span>
       </div>
     </div>
   </section>
@@ -11178,11 +11178,11 @@ function findAlignmentPattern(matrix, alignmentPatternQuads, topRight, topLeft, 
       syncRemoveButtons();
       calcA();
       var next = rows()[Math.min(idx, rows().length - 1)];
-      if (next) next.querySelector(".price").focus();
+      if (next) next.querySelector(".name").focus();
     });
 
     syncRemoveButtons();
-    if (focus) price.focus();
+    if (focus) name.focus();
     calcA();
   }
 
