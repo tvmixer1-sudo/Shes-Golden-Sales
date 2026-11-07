@@ -711,7 +711,7 @@ footer { color: var(--muted); font-size: 0.8rem; }
       </div>
       <div class="statrow">
         <span class="sheetstat" id="sheet-stat" role="status">Google Sheet: not connected</span>
-        <span class="ver"><span id="app-ver">Version 3.80 (Cursor starts in item name)</span></span>
+        <span class="ver"><span id="app-ver">Version 3.81 (Clover box for Debit)</span></span>
       </div>
     </div>
   </section>
@@ -11297,11 +11297,12 @@ function findAlignmentPattern(matrix, alignmentPatternQuads, topRight, topLeft, 
     $("a-save").textContent = hasDisc ? "You save " + money.format((beforeCents - afterCents) / 100) : "";
     taxLine.hidden = !(withTax || withFee || withShip);
     var cl = $("a-clover");
-    cl.hidden = !withFee;
-    if (withFee) {
+    var inClover = payType() === "credit" || payType() === "debit";
+    cl.hidden = !inClover;
+    if (inClover) {
       cl.innerHTML = '<span class="cl-amt"></span><span class="cl-txt"><b>Enter in Clover</b><span></span></span>';
       cl.querySelector(".cl-amt").textContent = money.format(afterCents / 100);
-      cl.querySelector(".cl-txt span").textContent = "(before tax; Clover adds tax + " + pctText(CARD_FEE_PCT) + ")" + (withShip ? " Shipping " + money.format(shipC / 100) + " is extra, with no tax." : "");
+      cl.querySelector(".cl-txt span").textContent = "(before tax; Clover adds tax" + (withFee ? " + " + pctText(CARD_FEE_PCT) : "") + ")" + (withShip ? " Shipping " + money.format(shipC / 100) + " is extra, with no tax." : "");
     }
     if (withTax || withFee || withShip) {
       var txt = money.format(afterCents / 100);
