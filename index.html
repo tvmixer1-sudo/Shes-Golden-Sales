@@ -514,6 +514,7 @@ body::before {
 }
 .row { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; flex-wrap: wrap; }
 .save[hidden] { display: none; }
+.save.save-empty { background: none; padding: 0; border-radius: 0; font-size: 1rem; }
 .save {
   font: 500 1.05rem var(--font-mono);
   color: var(--save);
@@ -693,7 +694,7 @@ footer { color: var(--muted); font-size: 0.8rem; }
       </div>
       <div class="statrow">
         <span class="sheetstat" id="sheet-stat" role="status">Google Sheet: not connected</span>
-        <span class="ver"><span id="app-ver">Version 3.68 (shipping)</span></span>
+        <span class="ver"><span id="app-ver">Version 3.69 (empty-state text)</span></span>
       </div>
     </div>
   </section>
@@ -11158,7 +11159,8 @@ function findAlignmentPattern(matrix, alignmentPatternQuads, topRight, topLeft, 
     if (count === 0) {
       $("a-result").textContent = "$0.00";
       $("a-was").textContent = "";
-      $("a-save").textContent = "Enter a price and a discount";
+      $("a-save").textContent = "Add items to see totals";
+      $("a-save").classList.add("save-empty");
       $("a-save").hidden = false;
       taxLine.hidden = true;
       $("a-clover").hidden = true;
@@ -11167,6 +11169,7 @@ function findAlignmentPattern(matrix, alignmentPatternQuads, topRight, topLeft, 
     $("a-result").textContent = money.format((afterCents + taxCents + shipC + feeCents) / 100);
     var hasDisc = beforeCents !== afterCents;
     $("a-was").textContent = hasDisc ? money.format(beforeCents / 100) : "";
+    $("a-save").classList.remove("save-empty");
     $("a-save").hidden = !hasDisc;
     $("a-save").textContent = hasDisc ? "You save " + money.format((beforeCents - afterCents) / 100) : "";
     taxLine.hidden = !(withTax || withFee || withShip);
