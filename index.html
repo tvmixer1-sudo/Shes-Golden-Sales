@@ -361,6 +361,8 @@ label, .label {
 .notes .drow:last-child { border-bottom: 0; }
 .notes .descrow { flex-wrap: wrap; padding: 8px 0 10px; border-bottom: 1px solid var(--line); }
 .notes .optrow label { flex: 1; }
+.notes .custrow { gap: 12px; padding: 10px 0 4px; }
+.notes .custrow .note { flex: 1; text-align: left; }
 .optbox { width: 26px; height: 26px; margin: 0 6px 0 0; accent-color: var(--accent); flex: none; }
 .notes .descrow .input { flex: 1 1 100%; height: auto; padding: 6px 10px; background: var(--accent-soft); }
 .notes .descrow textarea { width: 100%; box-sizing: border-box; border: 0; background: transparent; color: var(--fg); font: 500 0.95rem/1.35 var(--font-body); text-align: left; resize: none; overflow: hidden; padding: 0; outline: none; display: block; min-height: 2.7em; }
@@ -662,6 +664,10 @@ footer { color: var(--muted); font-size: 0.8rem; }
         <label for="n-offers">OK to send offers</label>
         <input id="n-offers" type="checkbox" class="optbox">
       </div>
+      <div class="drow custrow">
+        <button class="savebtn alt small" type="button" id="save-cust">Save Customer</button>
+        <p class="note" id="cust-msg" role="status"></p>
+      </div>
     </details>
 
     <div class="foot">
@@ -694,7 +700,7 @@ footer { color: var(--muted); font-size: 0.8rem; }
       </div>
       <div class="statrow">
         <span class="sheetstat" id="sheet-stat" role="status">Google Sheet: not connected</span>
-        <span class="ver"><span id="app-ver">Version 3.69 (empty-state text)</span></span>
+        <span class="ver"><span id="app-ver">Version 3.70 (Save Customer)</span></span>
       </div>
     </div>
   </section>
@@ -12308,6 +12314,27 @@ function findAlignmentPattern(matrix, alignmentPatternQuads, topRight, topLeft, 
     msg.textContent = "Sale saved.";
     finishSaleFn(msg);
     showSaved(rc, false, cash1);
+  });
+  $("save-cust").addEventListener("click", function () {
+    var m = $("cust-msg");
+    m.className = "note";
+    var c = customer();
+    var digits = c.phone.replace(/\D/g, "");
+    if (!c.email && digits.length < 7) {
+      m.className = "note warn";
+      m.textContent = "Add an email or phone number first.";
+      return;
+    }
+    if (!getCfg()) {
+      m.className = "note warn";
+      m.textContent = "Google Sheet isn't connected.";
+      return;
+    }
+    rememberLoc();
+    sendToSheet({ id: "c" + Date.now().toString(36) + Math.random().toString(36).slice(2, 6), time: new Date().toISOString(), customerOnly: true, location: currentLoc(), customer: c, items: [] });
+    m.textContent = "Customer saved.";
+    if (!buildReceipt()) setCustomer({});
+    setTimeout(function () { if (m.textContent === "Customer saved.") m.textContent = ""; }, 4000);
   });
   $("save-receipt").addEventListener("click", function () {
     var msg = $("save-msg");
