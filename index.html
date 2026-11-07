@@ -220,6 +220,19 @@ label, .label {
   border-radius: 10px;
   padding: 0 0 0 3px;
 }
+.item { position: relative; }
+.sugg { position: absolute; left: -1.5px; right: -1.5px; top: 100%; margin-top: 4px; z-index: 30; background: var(--surface); border: 1.5px solid var(--accent); border-radius: 12px; box-shadow: 0 8px 24px rgba(0,0,0,0.18); max-height: 330px; overflow-y: auto; -webkit-overflow-scrolling: touch; overscroll-behavior: contain; }
+.sugg .sh { position: sticky; top: 0; z-index: 1; background: var(--accent-soft); color: var(--muted); font: 600 0.7rem var(--font-body); letter-spacing: 0.08em; text-transform: uppercase; padding: 6px 14px; border-bottom: 1px solid var(--line); }
+.sugg button { display: grid; grid-template-columns: 44px minmax(0, 1fr) auto; gap: 2px 10px; align-items: center; width: 100%; text-align: left; background: transparent; border: 0; border-bottom: 1px solid var(--line); color: var(--fg); padding: 7px 14px 7px 10px; min-height: 58px; font: 500 0.9rem var(--font-body); cursor: pointer; }
+.sugg button:last-child { border-bottom: 0; }
+.sugg button:active { background: var(--accent-soft); }
+.sugg .sn { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.sugg .sn.dim { opacity: 0.6; }
+.sugg .sp { font: 500 0.9rem var(--font-mono); font-variant-numeric: tabular-nums; }
+.sugg .thumb { width: 44px; height: 44px; border-radius: 8px; grid-row: 1; grid-column: 1; }
+.sugg .sn { grid-column: 2; }
+.sugg .sp { grid-column: 3; }
+.sugg .ss { grid-column: 2 / -1; font-size: 0.75rem; color: var(--save); font-weight: 600; }
 .item .ins { order: 0; }
 .item .name { order: 1; }
 .item .pricebox { order: 2; }
@@ -700,7 +713,7 @@ footer { color: var(--muted); font-size: 0.8rem; }
       </div>
       <div class="statrow">
         <span class="sheetstat" id="sheet-stat" role="status">Google Sheet: not connected</span>
-        <span class="ver"><span id="app-ver">Version 3.70 (Save Customer)</span></span>
+        <span class="ver"><span id="app-ver">Version 3.71 (Type to find items)</span></span>
       </div>
     </div>
   </section>
@@ -11039,6 +11052,69 @@ function findAlignmentPattern(matrix, alignmentPatternQuads, topRight, topLeft, 
       var f = (Math.round(n * 100) / 100).toFixed(2);
       if (price.value !== f) { price.value = f; calcA(); }
     }
+    /* Type a name and pick a match from the item list. Anything typed stays a manual item. */
+    var sg = null;
+    function hideSugg() { if (sg && sg.parentNode) sg.parentNode.removeChild(sg); sg = null; }
+    function chooseSugg(it) {
+      hideSugg();
+      name.value = it.name;
+      price.value = Number(it.price).toFixed(2);
+      row.setAttribute("data-id", it.id || "");
+      row.removeAttribute("data-sample");
+      row._pick = it.name;
+      calcA();
+      try { name.blur(); } catch (e) {}
+    }
+    function showSugg() {
+      var q = name.value.trim().toLowerCase();
+      hideSugg();
+      if (q.length < 2 || document.activeElement !== name) return;
+      var toks = q.split(/\s+/), hits = [];
+      catalog.forEach(function (it, i) {
+        var hay = (it.name + " " + it.id + " " + (it.cat || "")).toLowerCase();
+        for (var t = 0; t < toks.length; t++) if (hay.indexOf(toks[t]) === -1) return;
+        var at = hay.indexOf(toks[0]);
+        hits.push({ it: it, k: (it.sold ? 10 : 0) + (at === 0 ? 0 : (hay.charAt(at - 1) === " " ? 1 : 2)), i: i });
+      });
+      if (!hits.length) return;
+      hits.sort(function (a, b) { return a.k - b.k || a.i - b.i; });
+      sg = document.createElement("div");
+      sg.className = "sugg";
+      sg.setAttribute("role", "listbox");
+      hits = hits.slice(0, 30);
+      var cats = (typeof CATEGORY_ORDER !== "undefined" ? CATEGORY_ORDER.slice() : []);
+      hits.forEach(function (h) { if (cats.indexOf(h.it.cat || "Other") === -1) cats.push(h.it.cat || "Other"); });
+      cats.forEach(function (c) {
+        var grp = hits.filter(function (h) { return (h.it.cat || "Other") === c; });
+        if (!grp.length) return;
+        var hd = document.createElement("div"); hd.className = "sh"; hd.textContent = c;
+        sg.appendChild(hd);
+        grp.forEach(function (h) {
+          var b = document.createElement("button");
+          b.type = "button";
+          var n = document.createElement("span"); n.className = "sn"; n.textContent = h.it.name;
+          var p = document.createElement("span"); p.className = "sp"; p.textContent = money.format(h.it.price);
+          b.appendChild(makeThumb(h.it.id)); b.appendChild(n); b.appendChild(p);
+          if (h.it.sold) { n.textContent += " \u00b7 Sold out"; n.classList.add("dim"); }
+          b.addEventListener("click", function (e) {
+            var tg = e.target;
+            if (tg && tg.classList && tg.classList.contains("thumb") && !tg.classList.contains("none")) { e.preventDefault(); openZoom(h.it, function () { chooseSugg(h.it); }); return; }
+            chooseSugg(h.it);
+          });
+          sg.appendChild(b);
+        });
+      });
+      sg.addEventListener("mousedown", function (e) { e.preventDefault(); });
+      row.appendChild(sg);
+      try { sg.scrollIntoView({ block: "nearest" }); } catch (e) {}
+    }
+    name.addEventListener("input", function () {
+      if (row._pick && name.value !== row._pick) { row.removeAttribute("data-id"); row._pick = null; }
+      showSugg();
+    });
+    name.addEventListener("focus", showSugg);
+    name.addEventListener("blur", function () { setTimeout(hideSugg, 200); });
+    name.addEventListener("keydown", function (e) { if (e.key === "Escape") hideSugg(); });
     price.addEventListener("input", calcA);
     price.addEventListener("blur", fmtPrice);
     price.addEventListener("keydown", function (e) {
