@@ -221,7 +221,7 @@ label, .label {
   padding: 0 0 0 3px;
 }
 .item { position: relative; }
-body.sugg-open { padding-bottom: 70vh; }
+body.sugg-open { padding-bottom: 100vh; }
 body.sugg-open .tag { visibility: hidden; }
 .sugg { position: absolute; left: -1.5px; right: -1.5px; top: 100%; margin-top: 4px; z-index: 30; background: var(--surface); border: 1.5px solid var(--accent); border-radius: 12px; box-shadow: 0 8px 24px rgba(0,0,0,0.18); max-height: 330px; overflow-y: auto; -webkit-overflow-scrolling: touch; overscroll-behavior: contain; }
 .sugg .sh { position: sticky; top: 0; z-index: 1; background: var(--accent-soft); color: var(--muted); font: 600 0.7rem var(--font-body); letter-spacing: 0.08em; text-transform: uppercase; padding: 6px 14px; border-bottom: 1px solid var(--line); }
@@ -715,7 +715,7 @@ footer { color: var(--muted); font-size: 0.8rem; }
       </div>
       <div class="statrow">
         <span class="sheetstat" id="sheet-stat" role="status">Google Sheet: not connected</span>
-        <span class="ver"><span id="app-ver">Version 3.75 (Smoother list)</span></span>
+        <span class="ver"><span id="app-ver">Version 3.76 (List sits at top)</span></span>
       </div>
     </div>
   </section>
@@ -11070,7 +11070,7 @@ function findAlignmentPattern(matrix, alignmentPatternQuads, topRight, topLeft, 
         var tg = document.querySelector(".tag");
         if (!tg) return;
         var tb = tg.getBoundingClientRect().bottom, rt = row.getBoundingClientRect().top;
-        if (rt < tb + 4) { try { window.scrollBy({ top: rt - tb - 8, behavior: "smooth" }); } catch (e) { window.scrollBy(0, rt - tb - 8); } }
+        if (rt < tb + 4) window.scrollBy(0, rt - tb - 8);
       });
     }
     /* With the phone keyboard up, lift this row to the top of the visible area and size the list to the space left. */
@@ -11081,14 +11081,23 @@ function findAlignmentPattern(matrix, alignmentPatternQuads, topRight, topLeft, 
       var pin = parseFloat(getComputedStyle(document.body, "::before").height) || 0;
       var rr = row.getBoundingClientRect();
       var want = pin + 8;
-      /* Size the list for where the row will be once it is at the top */
-      sg.style.maxHeight = Math.max(130, Math.min(330, vh - (want + rr.height) - 12)) + "px";
+      /* Size the list for where the row will be once it is at the top (leave room for the keyboard's arrow bar) */
+      sg.style.maxHeight = Math.max(130, Math.min(480, vh - (want + rr.height) - 70)) + "px";
       if (scroll) {
         var dy = rr.top - top - want;
-        if (Math.abs(dy) > 24) { try { window.scrollBy({ top: dy, behavior: "smooth" }); } catch (e) { window.scrollBy(0, dy); } }
+        if (Math.abs(dy) > 12) window.scrollBy(0, dy);
       }
     }
-    function placeLater() { clearTimeout(placeTimer); placeTimer = setTimeout(function () { placeSugg(true); }, 280); }
+    /* The phone keyboard slides up and moves the page on its own; keep nudging the row to the top until it settles. */
+    function placeLoop() {
+      clearTimeout(placeTimer);
+      var n = 0;
+      (function step() {
+        if (!sg) return;
+        placeSugg(true);
+        if (++n < 9) placeTimer = setTimeout(step, 130);
+      })();
+    }
     function chooseSugg(it) {
       hideSugg();
       name.value = it.name;
@@ -11143,14 +11152,13 @@ function findAlignmentPattern(matrix, alignmentPatternQuads, topRight, topLeft, 
       row.appendChild(sg);
       document.body.classList.add("sugg-open");
       placeSugg(true);
-      placeLater();
     }
     name.addEventListener("input", function () {
       if (row._pick && name.value !== row._pick) { row.removeAttribute("data-id"); row._pick = null; }
       showSugg();
     });
-    name.addEventListener("focus", showSugg);
-    if (window.visualViewport) window.visualViewport.addEventListener("resize", function () { if (sg) placeLater(); });
+    name.addEventListener("focus", function () { showSugg(); placeLoop(); });
+    if (window.visualViewport) window.visualViewport.addEventListener("resize", function () { if (sg) placeLoop(); });
     name.addEventListener("blur", function () { setTimeout(function () { hideSugg(); }, 200); });
     name.addEventListener("keydown", function (e) { if (e.key === "Escape") hideSugg(); });
     price.addEventListener("input", calcA);
