@@ -149,12 +149,28 @@ label, .label {
   font-variant-numeric: tabular-nums;
 }
 .payblock { display: flex; flex-direction: column; gap: 8px; padding: 10px 0 12px; border-bottom: 1px solid var(--line); }
+.tag #a-label { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+.topsplit { display: flex; justify-content: space-between; align-items: flex-start; gap: 10px; }
+.leftcol { display: flex; flex-direction: column; gap: 6px; flex: 0 0 auto; min-width: 0; }
+.leftcol:has(.cloverline:not([hidden])) { flex-basis: 47%; }
+.leftcol .cloverline { flex-direction: column; align-items: flex-start; gap: 4px; margin-top: 2px; padding: 10px 12px; border-radius: 14px; }
+.leftcol .cloverline .cl-amt { font-size: clamp(1.7rem, 8vw, 2.1rem); }
+.leftcol .cloverline .cl-txt { font-size: 0.62rem; line-height: 1.2; }
+.leftcol .cloverline .cl-txt b { font-size: 0.85rem; }
+.topsplit .big { padding-top: 2px; white-space: nowrap; flex: none; font-size: clamp(1.8rem, 8.6vw, 2.2rem); }
+.bd { display: grid; grid-template-columns: auto auto; column-gap: 12px; row-gap: 1px; margin-top: 30px; font: 400 0.8rem/1.35 var(--font-body); color: var(--muted); font-variant-numeric: tabular-nums; text-align: right; white-space: nowrap; min-width: 0; }
+.bd:empty { display: none; }
+.topsplit:has(.cloverline:not([hidden])) .bd { margin-top: 62px; }
+.bd span:nth-child(odd) { text-align: right; }
+.bd .bd-neg { color: var(--save); }
+.tag .row, .tag .taxline { display: none !important; }
+.tag #a-note:empty { display: none; }
 .payblock.top { border-bottom: 0; padding: 2px 0 0; gap: 0; grid-area: pay; }
 #items-labelrow { margin-top: -6px; }
 #items-labelrow .linkbtn { min-height: 32px; padding-top: 0; padding-bottom: 0; }
 .payblock.top #pay-label { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
-.paybtns { display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px; }
-.paybtn { min-height: 42px; padding: 0 2px; border: 1.5px solid var(--line); border-radius: 10px; background: var(--surface); color: var(--fg); font: 600 0.85rem var(--font-body); cursor: pointer; }
+.paybtns { display: grid; grid-template-columns: repeat(5, 1fr); gap: 5px; }
+.paybtn { min-height: 34px; padding: 0 2px; border: 1.5px solid var(--line); border-radius: 9px; background: var(--surface); color: var(--fg); font: 600 0.8rem var(--font-body); cursor: pointer; }
 .paybtn[aria-checked="true"] { background: var(--accent); color: var(--accent-fg); border-color: var(--accent); }
 .paybtn:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 .taxamt { font: 500 1rem var(--font-body); font-variant-numeric: tabular-nums; padding: 0 6px; color: var(--fg); text-align: right; }
@@ -415,7 +431,7 @@ body.sugg-open header, body.sugg-open .ctxline, body.sugg-open .tag, body.sugg-o
 .menubtn { justify-self: end; flex: none; width: 40px; height: 40px; margin-top: -2px; border: 0; border-radius: 12px; background: transparent; color: var(--fg); font-size: 1.4rem; line-height: 1; cursor: pointer; -webkit-tap-highlight-color: transparent; }
 .hmid { display: flex; flex-direction: column; align-items: center; gap: 2px; min-width: 0; }
 .tag .ctxline { position: absolute; top: 8px; right: 12px; max-width: 46%; z-index: 1; align-self: center; margin-top: 0; min-height: 24px; font-size: 0.78rem; padding-top: 0; padding-bottom: 0; line-height: 1; }
-.ctxline { display: flex; align-items: center; gap: 8px; align-self: flex-start; max-width: 100%; min-height: 32px; margin-top: -4px; padding: 0 12px; border: 1.5px solid var(--line); border-radius: 999px; background: var(--surface); color: var(--fg); font: 600 0.85rem var(--font-body); cursor: pointer; }
+.ctxline { display: flex; align-items: center; gap: 8px; align-self: flex-start; max-width: 100%; min-height: 32px; margin-top: -4px; padding: 0 12px; border: 1.5px solid var(--line); border-radius: 999px; background: var(--surface); color: var(--fg); font: 600 0.8rem var(--font-body); cursor: pointer; }
 .ctxline span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .ctxline .ctx-sep { color: var(--muted); }
 .ctxline.warn { border-color: var(--save); color: var(--save); background: var(--save-soft); }
@@ -608,8 +624,7 @@ footer { color: var(--muted); font-size: 0.8rem; }
     <div class="tag" aria-live="polite">
       <button class="ctxline" id="ctx-line" type="button" aria-label="Edit location"><span id="ctx-loc"></span></button>
       <span class="label" id="a-label">Total after discount</span>
-      <div class="big" id="a-result">$0.00</div>
-      <div class="cloverline" id="a-clover" hidden></div>
+      <div class="topsplit"><div class="leftcol"><div class="big" id="a-result">$0.00</div><div class="cloverline" id="a-clover" hidden></div></div><div class="bd" id="a-bd" aria-hidden="true"></div></div>
       <div class="row">
         <span class="was" id="a-was"></span>
         <span class="save" id="a-save"></span>
@@ -738,7 +753,7 @@ footer { color: var(--muted); font-size: 0.8rem; }
       </div>
       <div class="statrow">
         <span class="sheetstat" id="sheet-stat" role="status">Google Sheet: not connected</span>
-        <span class="ver"><span id="app-ver">Version 3.92</span></span>
+        <span class="ver"><span id="app-ver">Version 3.95</span></span>
       </div>
     </div>
   </section>
@@ -11311,6 +11326,23 @@ function findAlignmentPattern(matrix, alignmentPatternQuads, topRight, topLeft, 
     var label = extras.length ? "Total with " + (extras.length > 1 ? extras.slice(0, -1).join(", ") + " & " + extras[extras.length - 1] : extras[0]) : "Total after discount";
     $("a-label").textContent = count > 1 ? label + " · " + count + " items" : label;
     totalCents = count === 0 ? 0 : afterCents + taxCents + shipC + feeCents;
+    var bd = $("a-bd");
+    if (bd) {
+      bd.textContent = "";
+      var addBd = function (k, v, neg) {
+        var x = document.createElement("span"); x.textContent = k;
+        var y = document.createElement("span"); y.textContent = v;
+        if (neg) { x.className = "bd-neg"; y.className = "bd-neg"; }
+        bd.appendChild(x); bd.appendChild(y);
+      };
+      if (count > 0 && (beforeCents !== afterCents || taxCents > 0 || shipC > 0 || feeCents > 0)) {
+        addBd("Subtotal", money.format(beforeCents / 100));
+        if (beforeCents !== afterCents) addBd("Discount", "\u2212" + money.format((beforeCents - afterCents) / 100), true);
+        if (taxCents > 0) addBd("Tax (" + pctText(taxPct) + ")", money.format(taxCents / 100));
+        if (shipC > 0) addBd("Shipping", money.format(shipC / 100));
+        if (feeCents > 0) addBd("Card fee (" + pctText(CARD_FEE_PCT) + ")", money.format(feeCents / 100));
+      }
+    }
     if (count === 0) {
       $("a-result").textContent = "$0.00";
       $("a-was").textContent = "";
