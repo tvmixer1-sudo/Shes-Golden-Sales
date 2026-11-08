@@ -738,7 +738,7 @@ footer { color: var(--muted); font-size: 0.8rem; }
       </div>
       <div class="statrow">
         <span class="sheetstat" id="sheet-stat" role="status">Google Sheet: not connected</span>
-        <span class="ver"><span id="app-ver">Version 3.87</span></span>
+        <span class="ver"><span id="app-ver">Version 3.88</span></span>
       </div>
     </div>
   </section>
@@ -12047,9 +12047,13 @@ function findAlignmentPattern(matrix, alignmentPatternQuads, topRight, topLeft, 
   }
   function addScanned(item) {
     var list = rows();
-    var first = list.length === 1 ? list[0] : null;
-    var replace = first && (first.hasAttribute("data-sample") ||
-      (!first.querySelector(".price").value.trim() && !first.querySelector(".name").value.trim()));
+    /* Fill the first blank row if there is one; otherwise add a new row */
+    var first = null;
+    for (var bi = 0; bi < list.length; bi++) {
+      var br = list[bi];
+      if (br.hasAttribute("data-sample") || (!br.querySelector(".price").value.trim() && !br.querySelector(".name").value.trim())) { first = br; break; }
+    }
+    var replace = !!first;
     if (replace) {
       first.removeAttribute("data-sample");
       first.querySelector(".price").value = item.price;
