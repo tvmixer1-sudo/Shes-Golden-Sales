@@ -220,6 +220,8 @@ label, .label {
   cursor: pointer;
 }
 .chip[aria-pressed="true"] { background: var(--accent); color: var(--accent-fg); }
+.bogochip { display: inline-flex; flex-direction: column; align-items: center; justify-content: center; line-height: 1.05; }
+.bogochip small { font-size: 0.62rem; font-weight: 600; opacity: 0.85; }
 
 .linkbtn {
   align-self: flex-start;
@@ -512,10 +514,8 @@ body.sugg-open header, body.sugg-open .ctxline, body.sugg-open .tag, body.sugg-o
 .pick-item .pm .tagsold { color: var(--save); font-weight: 600; }
 .picker-foot { margin: 0; padding-bottom: 8px; font-size: 0.78rem; color: var(--muted); }
 .picker-empty { color: var(--muted); padding: 16px 4px; }
-.findbtn { color: var(--accent-fg); background: var(--accent); border-style: solid; }
-.findbtn:hover { background: var(--accent); filter: brightness(1.08); }
-.scanbtn, .photobtn { color: var(--accent); background: var(--accent-soft); border-style: solid; border-color: var(--accent-soft); }
-.scanbtn:hover, .photobtn:hover { background: var(--accent-soft); filter: brightness(0.97); }
+.scanbtn, .photobtn, .findbtn { color: var(--accent); background: var(--accent-soft); border-style: solid; border-color: var(--accent-soft); }
+.scanbtn:hover, .photobtn:hover, .findbtn:hover { background: var(--accent-soft); filter: brightness(0.97); }
 .scanner { position: fixed; inset: 0; z-index: 100; background: #000; color: #fff; display: flex; flex-direction: column; align-items: center; justify-content: center; }
 .scanner[hidden] { display: none; }
 .scanner video { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
@@ -765,7 +765,7 @@ footer { color: var(--muted); font-size: 0.8rem; }
       </div>
       <div class="statrow">
         <span class="sheetstat" id="sheet-stat" role="status">Google Sheet: not connected</span>
-        <span class="ver"><span id="app-ver">Version 3.104</span></span>
+        <span class="ver"><span id="app-ver">Version 3.108</span></span>
       </div>
     </div>
   </section>
@@ -788,6 +788,11 @@ footer { color: var(--muted); font-size: 0.8rem; }
         <div class="input"><input id="a-tax" inputmode="decimal" autocomplete="off" value="0"><span>%</span></div>
       </div>
       <p class="note taxnote">Cash, Venmo and Zelle sales are not taxed. Credit and Debit use this rate.</p>
+      <div class="drow">
+        <label for="bogo-pct">BOGO offer</label>
+        <div class="input"><input id="bogo-pct" inputmode="decimal" autocomplete="off" value="25" aria-label="BOGO percent off the cheapest item"><span>% off</span></div>
+      </div>
+      <p class="note taxnote">When you tap BOGO, this much comes off the cheapest item (needs two or more items). Use 100 for a free item.</p>
   </div>
 </div>
 <input type="file" id="photo-file" accept="image/*" capture="environment" hidden>
@@ -12781,6 +12786,25 @@ function findAlignmentPattern(matrix, alignmentPatternQuads, topRight, topLeft, 
     var savedTax = localStorage.getItem(TAX_KEY);
     if (savedTax !== null && isFinite(parseFloat(savedTax))) { $("a-tax").value = savedTax; taxRate = savedTax; }
   } catch (e) {}
+  var BOGO_KEY = "discount-bogo-pct";
+  function updateBogoTitle() {
+    $("bogo-btn").title = "Buy one, get one " + pctText(BOGO_PCT) + " off the cheapest";
+    $("bogo-btn").innerHTML = "BOGO<small>" + pctText(BOGO_PCT) + "</small>";
+  }
+  try {
+    var savedBogo = parseFloat(localStorage.getItem(BOGO_KEY));
+    if (isFinite(savedBogo) && savedBogo >= 0 && savedBogo <= 100) { BOGO_PCT = savedBogo; $("bogo-pct").value = String(savedBogo); }
+  } catch (e) {}
+  updateBogoTitle();
+  $("bogo-pct").addEventListener("input", function () {
+    var v = num($("bogo-pct").value);
+    if (isFinite(v) && v >= 0 && v <= 100) {
+      BOGO_PCT = v;
+      try { localStorage.setItem(BOGO_KEY, String(v)); } catch (e) {}
+      updateBogoTitle();
+    }
+    calcA();
+  });
   applyTaxMode();
   $("set-default").addEventListener("click", function () {
     var p = num($("a-pct").value);
