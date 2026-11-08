@@ -152,10 +152,11 @@ label, .label {
 .tag #a-label { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
 .topsplit { display: flex; justify-content: space-between; align-items: flex-start; gap: 10px; }
 .leftcol { display: flex; flex-direction: column; gap: 6px; flex: 0 0 auto; min-width: 0; }
-.leftcol:has(.cloverline:not([hidden])) { flex-basis: 47%; }
-.leftcol .cloverline { flex-direction: column; align-items: flex-start; gap: 4px; margin-top: 2px; padding: 10px 12px; border-radius: 14px; }
+.leftcol:has(.cloverline:not([hidden])) { flex-basis: 38%; }
+.leftcol .cloverline { flex-direction: column; align-items: flex-start; gap: 4px; margin: 2px 0 0 -12px; padding: 10px 12px; border-radius: 14px; }
 .leftcol .cloverline .cl-amt { font-size: clamp(1.7rem, 8vw, 2.1rem); }
 .leftcol .cloverline .cl-txt { font-size: 0.62rem; line-height: 1.2; }
+.leftcol .cloverline .cl-txt span { display: block; white-space: pre-line; }
 .leftcol .cloverline .cl-txt b { font-size: 0.85rem; }
 .topsplit .big { padding-top: 2px; white-space: nowrap; flex: none; font-size: clamp(1.8rem, 8.6vw, 2.2rem); }
 .bd { display: grid; grid-template-columns: auto auto; column-gap: 12px; row-gap: 1px; margin-top: 30px; font: 400 0.8rem/1.35 var(--font-body); color: var(--muted); font-variant-numeric: tabular-nums; text-align: right; white-space: nowrap; min-width: 0; }
@@ -761,7 +762,7 @@ footer { color: var(--muted); font-size: 0.8rem; }
       </div>
       <div class="statrow">
         <span class="sheetstat" id="sheet-stat" role="status">Google Sheet: not connected</span>
-        <span class="ver"><span id="app-ver">Version 3.99</span></span>
+        <span class="ver"><span id="app-ver">Version 3.100</span></span>
       </div>
     </div>
   </section>
@@ -11374,7 +11375,7 @@ function findAlignmentPattern(matrix, alignmentPatternQuads, topRight, topLeft, 
     if (inClover) {
       cl.innerHTML = '<span class="cl-amt"></span><span class="cl-txt"><b>Enter in Clover</b><span></span></span>';
       cl.querySelector(".cl-amt").textContent = money.format(afterCents / 100);
-      cl.querySelector(".cl-txt span").textContent = "(before tax; Clover adds tax" + (withFee ? " + " + pctText(CARD_FEE_PCT) : "") + ")" + (withShip ? " Shipping " + money.format(shipC / 100) + " is extra, with no tax." : "");
+      cl.querySelector(".cl-txt span").textContent = "Clover adds tax" + (withFee ? " + " + pctText(CARD_FEE_PCT) : "") + (withShip ? "\nShipping " + money.format(shipC / 100) + " extra" : "");
     }
     if (withTax || withFee || withShip) {
       var txt = money.format(afterCents / 100);
