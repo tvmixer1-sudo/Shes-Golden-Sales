@@ -762,7 +762,7 @@ footer { color: var(--muted); font-size: 0.8rem; }
       </div>
       <div class="statrow">
         <span class="sheetstat" id="sheet-stat" role="status">Google Sheet: not connected</span>
-        <span class="ver"><span id="app-ver">Version 3.100</span></span>
+        <span class="ver"><span id="app-ver">Version 3.101</span></span>
       </div>
     </div>
   </section>
@@ -11116,6 +11116,9 @@ function findAlignmentPattern(matrix, alignmentPatternQuads, topRight, topLeft, 
       if (sg && sg.parentNode) sg.parentNode.removeChild(sg);
       sg = null;
       if (keep) return;
+      /* Moving from one item name to another: keep the layout steady (no jump) */
+      var ae = document.activeElement;
+      if (ae && ae !== name && ae.classList && ae.classList.contains("name")) return;
       document.body.classList.remove("sugg-open");
       /* The Total block pins to the top again: make sure this row isn't hiding under it */
       requestAnimationFrame(function () {
@@ -11206,7 +11209,7 @@ function findAlignmentPattern(matrix, alignmentPatternQuads, topRight, topLeft, 
     name.addEventListener("focus", function () { document.body.classList.add("sugg-open"); showSugg(); placeLoop(); });
     if (window.visualViewport) window.visualViewport.addEventListener("resize", function () { if (sg) placeLoop(); });
     name.addEventListener("blur", function () { setTimeout(function () { if (document.activeElement !== name) hideSugg(); }, 200); });
-    name.addEventListener("keydown", function (e) { if (e.key === "Escape") hideSugg(); });
+    name.addEventListener("keydown", function (e) { if (e.key === "Escape") { hideSugg(); try { name.blur(); } catch (err) {} } });
     price.addEventListener("input", calcA);
     price.addEventListener("blur", fmtPrice);
     price.addEventListener("keydown", function (e) {
