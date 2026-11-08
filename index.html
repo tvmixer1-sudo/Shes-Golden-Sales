@@ -238,7 +238,7 @@ label, .label {
 /* Item list */
 .labelrow { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
 .clearbtn { align-self: auto; padding: 4px 0; min-height: 40px; }
-.items { display: flex; flex-direction: column; gap: 8px; margin: 0 -10px; }
+.items { display: flex; flex-direction: column; gap: 3px; margin: 0 -10px; }
 .item {
   display: grid;
   grid-template-columns: 30px minmax(0, 1fr) minmax(0, 66px) minmax(40px, auto) auto;
@@ -249,7 +249,15 @@ label, .label {
   border-radius: 10px;
   padding: 0 0 0 3px;
 }
-.item { position: relative; }
+.item { position: relative; border-color: transparent; box-shadow: 0 1px 2px rgba(40, 30, 10, 0.10), 0 3px 8px -2px rgba(40, 30, 10, 0.16); }
+.item:focus-within { border-color: transparent; box-shadow: 0 0 0 2px var(--accent), 0 3px 8px -2px rgba(40, 30, 10, 0.16); }
+.items { gap: 7px; }
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) .item { background: #3a3226; box-shadow: inset 0 1px 0 rgba(255, 240, 210, 0.09), 0 2px 3px rgba(0, 0, 0, 0.55), 0 6px 12px -2px rgba(0, 0, 0, 0.6); }
+  :root:not([data-theme="light"]) .item:focus-within { box-shadow: 0 0 0 2px var(--accent), 0 6px 12px -2px rgba(0, 0, 0, 0.6); }
+}
+:root[data-theme="dark"] .item { background: #3a3226; box-shadow: inset 0 1px 0 rgba(255, 240, 210, 0.09), 0 2px 3px rgba(0, 0, 0, 0.55), 0 6px 12px -2px rgba(0, 0, 0, 0.6); }
+:root[data-theme="dark"] .item:focus-within { box-shadow: 0 0 0 2px var(--accent), 0 6px 12px -2px rgba(0, 0, 0, 0.6); }
 body.sugg-open header, body.sugg-open .ctxline, body.sugg-open .tag, body.sugg-open #items-labelrow, body.sugg-open .payblock { display: none; }
 .sugg { position: absolute; left: -1.5px; right: -1.5px; top: 100%; margin-top: 4px; z-index: 30; background: var(--surface); border: 1.5px solid var(--accent); border-radius: 12px; box-shadow: 0 8px 24px rgba(0,0,0,0.18); max-height: 330px; overflow-y: auto; -webkit-overflow-scrolling: touch; overscroll-behavior: contain; }
 .sugg .sh { position: sticky; top: 0; z-index: 1; background: var(--accent-soft); color: var(--muted); font: 600 0.7rem var(--font-body); letter-spacing: 0.08em; text-transform: uppercase; padding: 6px 14px; border-bottom: 1px solid var(--line); }
@@ -341,7 +349,7 @@ body.sugg-open header, body.sugg-open .ctxline, body.sugg-open .tag, body.sugg-o
 .sheetbtns { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; }
 .savebtn.small { padding: 0 18px; min-height: 44px; font-size: 0.95rem; }
 .addrow { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
-.addrow .addbtn { font-size: 0.85rem; padding: 0 4px; }
+.addrow .addbtn { font-size: 0.85rem; padding: 0 4px; min-height: 36px; }
 .added-toast { position: fixed; z-index: 200; left: 50%; top: 34%; transform: translate(-50%, -50%); width: min(86vw, 340px); box-sizing: border-box; padding: 20px 18px 18px; border-radius: 22px; background: var(--accent); color: var(--accent-fg); text-align: center; box-shadow: 0 14px 40px rgba(0, 0, 0, 0.35); pointer-events: none; display: flex; flex-direction: column; align-items: center; gap: 2px; }
 .added-toast[hidden] { display: none; }
 .at-check { width: 48px; height: 48px; border-radius: 50%; background: var(--accent-fg); color: var(--accent); font: 700 1.8rem/48px var(--font-body); margin-bottom: 4px; }
@@ -426,7 +434,7 @@ body.sugg-open header, body.sugg-open .ctxline, body.sugg-open .tag, body.sugg-o
 .statrow { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; }
 .statrow .sheetstat { font-size: 0.75rem; }
 .statrow .ver { flex: none; text-align: right; }
-.item .name { padding: 17px 0; font-size: 0.9rem; text-overflow: ellipsis; }
+.item .name { padding: 13px 0; font-size: 0.9rem; text-overflow: ellipsis; }
 
 .menubtn { justify-self: end; flex: none; width: 40px; height: 40px; margin-top: -2px; border: 0; border-radius: 12px; background: transparent; color: var(--fg); font-size: 1.4rem; line-height: 1; cursor: pointer; -webkit-tap-highlight-color: transparent; }
 .hmid { display: flex; flex-direction: column; align-items: center; gap: 2px; min-width: 0; }
@@ -753,7 +761,7 @@ footer { color: var(--muted); font-size: 0.8rem; }
       </div>
       <div class="statrow">
         <span class="sheetstat" id="sheet-stat" role="status">Google Sheet: not connected</span>
-        <span class="ver"><span id="app-ver">Version 3.95</span></span>
+        <span class="ver"><span id="app-ver">Version 3.99</span></span>
       </div>
     </div>
   </section>
