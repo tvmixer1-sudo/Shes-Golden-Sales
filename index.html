@@ -149,7 +149,7 @@ label, .label {
   font-variant-numeric: tabular-nums;
 }
 .payblock { display: flex; flex-direction: column; gap: 8px; padding: 10px 0 12px; border-bottom: 1px solid var(--line); }
-.payblock.top { border-bottom: 0; padding: 0; gap: 0; }
+.payblock.top { border-bottom: 0; padding: 2px 0 0; gap: 0; grid-area: pay; }
 #items-labelrow { margin-top: -6px; }
 #items-labelrow .linkbtn { min-height: 32px; padding-top: 0; padding-bottom: 0; }
 .payblock.top #pay-label { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
@@ -573,7 +573,7 @@ footer { color: var(--muted); font-size: 0.8rem; }
 /* Phone held sideways: same single column, stretched to the full width, with a compact total bar and bigger tap targets. Portrait is unchanged. */
 @media (orientation: landscape) and (max-height: 520px) {
   .wrap { max-width: none; }
-  .tag { display: grid; grid-template-columns: 1fr auto; grid-template-areas: "label clover" "big clover" "row clover" "tax tax" "note note"; column-gap: 20px; row-gap: 4px; align-items: center; padding: 10px 18px; }
+  .tag { display: grid; grid-template-columns: 1fr auto; grid-template-areas: "label clover" "big clover" "row clover" "tax tax" "note note" "pay pay"; column-gap: 20px; row-gap: 4px; align-items: center; padding: 10px 18px; }
   .tag > .label { grid-area: label; }
   .tag > .big { grid-area: big; font-size: clamp(2.2rem, 6vw, 3rem); }
   .tag > .row { grid-area: row; justify-content: flex-start; gap: 16px; }
@@ -617,8 +617,6 @@ footer { color: var(--muted); font-size: 0.8rem; }
       </div>
       <div class="taxline" id="a-taxline" hidden></div>
       <p class="note" id="a-note"></p>
-    </div>
-
       <div class="payblock top">
         <span class="label" id="pay-label">Payment type</span>
         <div class="paybtns" id="paybtns" role="radiogroup" aria-labelledby="pay-label">
@@ -636,6 +634,9 @@ footer { color: var(--muted); font-size: 0.8rem; }
           <option value="zelle">Zelle</option>
         </select>
       </div>
+    </div>
+
+
 
     <div class="field">
       <div class="labelrow" id="items-labelrow"><span class="label" id="items-label">Items</span><button class="linkbtn clearbtn" type="button" id="clear-items">Clear sale</button></div>
@@ -738,7 +739,7 @@ footer { color: var(--muted); font-size: 0.8rem; }
       </div>
       <div class="statrow">
         <span class="sheetstat" id="sheet-stat" role="status">Google Sheet: not connected</span>
-        <span class="ver"><span id="app-ver">Version 3.88</span></span>
+        <span class="ver"><span id="app-ver">Version 3.90</span></span>
       </div>
     </div>
   </section>
@@ -11204,8 +11205,8 @@ function findAlignmentPattern(matrix, alignmentPatternQuads, topRight, topLeft, 
       itemsEl.removeChild(row);
       syncRemoveButtons();
       calcA();
-      var next = rows()[Math.min(idx, rows().length - 1)];
-      if (next) next.querySelector(".name").focus();
+      /* Don't move the cursor into another item box */
+      try { if (document.activeElement && document.activeElement !== document.body) document.activeElement.blur(); } catch (e) {}
     });
 
     syncRemoveButtons();
