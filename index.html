@@ -242,7 +242,7 @@ label, .label {
 .items { display: flex; flex-direction: column; gap: 3px; margin: 0 -10px; }
 .item {
   display: grid;
-  grid-template-columns: 30px minmax(0, 1fr) minmax(0, 66px) minmax(40px, auto) auto;
+  grid-template-columns: 30px minmax(0, 1fr) 92px 0 auto;
   gap: 0 3px;
   align-items: center;
   background: var(--surface);
@@ -250,6 +250,7 @@ label, .label {
   border-radius: 10px;
   padding: 0 0 0 3px;
 }
+.items:has(.after:not(:empty)) .item { grid-template-columns: 30px minmax(0, 1fr) 92px 74px auto; }
 .item { position: relative; border-color: transparent; box-shadow: 0 1px 2px rgba(40, 30, 10, 0.10), 0 3px 8px -2px rgba(40, 30, 10, 0.16); }
 .item:focus-within { border-color: transparent; box-shadow: 0 0 0 2px var(--accent), 0 3px 8px -2px rgba(40, 30, 10, 0.16); }
 .items { gap: 7px; }
@@ -305,22 +306,24 @@ body.sugg-open header, body.sugg-open .ctxline, body.sugg-open .tag, body.sugg-o
 }
 .rm:hover:not(:disabled) { color: var(--save); background: var(--save-soft); }
 .rm:disabled { opacity: 0.35; cursor: default; }
-.pricebox { display: flex; align-items: center; gap: 4px; min-width: 0; }
-.pricebox span { font-family: var(--font-mono); color: var(--muted); font-size: 0.85rem; }
+.pricebox { display: flex; align-items: center; justify-content: flex-end; gap: 0; min-width: 0; padding-right: 4px; }
+.pricebox span { font: 600 1rem var(--font-mono); color: var(--fg); }
+.pricebox.empty span { display: none; }
+.pricebox input::placeholder { color: var(--muted); opacity: 1; font-weight: 500; }
 .pricebox input {
   text-align: right;
-  flex: 1;
+  flex: 0 1 auto;
   min-width: 0;
   border: 0;
   background: transparent;
   color: var(--fg);
-  font: 500 0.9rem var(--font-mono);
+  font: 600 1rem var(--font-mono);
   padding: 2px 0;
   outline: none;
   font-variant-numeric: tabular-nums;
 }
 .after {
-  font: 500 0.78rem var(--font-mono);
+  font: 600 0.88rem var(--font-mono);
   color: var(--accent);
   text-align: right;
   font-variant-numeric: tabular-nums;
@@ -435,7 +438,7 @@ body.sugg-open header, body.sugg-open .ctxline, body.sugg-open .tag, body.sugg-o
 .statrow { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; }
 .statrow .sheetstat { font-size: 0.75rem; }
 .statrow .ver { flex: none; text-align: right; }
-.item .name { padding: 13px 0; font-size: 0.9rem; text-overflow: ellipsis; }
+.item .name { padding: 13px 0; font-size: 1rem; font-weight: 500; text-overflow: ellipsis; }
 
 .menubtn { justify-self: end; flex: none; width: 40px; height: 40px; margin-top: -2px; border: 0; border-radius: 12px; background: transparent; color: var(--fg); font-size: 1.4rem; line-height: 1; cursor: pointer; -webkit-tap-highlight-color: transparent; }
 .hmid { display: flex; flex-direction: column; align-items: center; gap: 2px; min-width: 0; }
@@ -762,7 +765,7 @@ footer { color: var(--muted); font-size: 0.8rem; }
       </div>
       <div class="statrow">
         <span class="sheetstat" id="sheet-stat" role="status">Google Sheet: not connected</span>
-        <span class="ver"><span id="app-ver">Version 3.101</span></span>
+        <span class="ver"><span id="app-ver">Version 3.104</span></span>
       </div>
     </div>
   </section>
@@ -11087,6 +11090,7 @@ function findAlignmentPattern(matrix, alignmentPatternQuads, topRight, topLeft, 
     price.className = "price";
     price.id = "item-price-" + rowCount;
     price.setAttribute("inputmode", "decimal");
+    price.placeholder = "$0.00";
     price.autocomplete = "off";
     price.value = value == null ? "" : String(value);
     pb.appendChild(sym);
@@ -11304,6 +11308,14 @@ function findAlignmentPattern(matrix, alignmentPatternQuads, topRight, topLeft, 
     for (var r = 0; r < list.length; r++) {
       var p = num(list[r].querySelector(".price").value);
       var afterEl = list[r].querySelector(".after");
+      var pin = list[r].querySelector(".price");
+      try {
+        if (pin.parentNode) pin.parentNode.classList.toggle("empty", !String(pin.value).trim());
+        /* Fit the field to what is typed so the $ sits right against the number */
+        pin.style.width = "1px";
+        var pw = pin.scrollWidth;
+        pin.style.width = (pw > 1 ? pw + 1 : 44) + "px";
+      } catch (e) { pin.style.width = ""; }
       if (isNaN(p) || (isNaN(pct) && !bogo)) { afterEl.textContent = ""; continue; }
       valid.push({ el: afterEl, c: Math.round(p * 100) });
     }
@@ -11312,7 +11324,7 @@ function findAlignmentPattern(matrix, alignmentPatternQuads, topRight, topLeft, 
       beforeCents += v.c;
       afterCents += afs[i];
       count++;
-      v.el.textContent = "→ " + money.format(afs[i] / 100);
+      v.el.textContent = afs[i] !== v.c ? "→ " + money.format(afs[i] / 100) : "";
     });
     if (bogo && !note.textContent) {
       note.className = "note";
