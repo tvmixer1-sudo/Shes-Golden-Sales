@@ -378,6 +378,8 @@ body .tag { padding-top: 18px; padding-bottom: 18px; }
 .item { background: color-mix(in srgb, var(--accent) 7%, var(--surface)); }
 .items .item { min-height: 58px; }
 .items .item .name { padding-top: 15px; padding-bottom: 15px; }
+.savebtn.locked, .savebtn.locked:active { opacity: 0.4; filter: grayscale(0.4); cursor: not-allowed; }
+#loc-lock { margin: 6px 0 8px; font-weight: 600; }
 #items-labelrow .clearbtn { min-height: 34px; padding: 0 14px; border: 0; border-radius: 10px; background: var(--accent); color: var(--accent-fg); text-decoration: none; font-weight: 700; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.06em; }
 #items-labelrow .clearbtn:active { filter: brightness(1.15); }
 #items-labelrow .clearbtn:disabled { opacity: 0.45; border-color: var(--line); color: var(--muted); }
@@ -855,6 +857,7 @@ footer { color: var(--muted); font-size: 0.8rem; }
         <span class="chg-amt" id="chg-amt"></span>
       </div>
       <p class="note" id="save-msg" role="status"></p>
+      <p class="note warn" id="loc-lock" hidden>Choose a location in settings to save this sale.</p>
       <button class="savebtn cloverbtn" type="button" id="send-clover" hidden>Send to Clover</button>
       <div class="savepair">
         <button class="savebtn" type="button" id="save-sale">Save Sale</button>
@@ -862,7 +865,7 @@ footer { color: var(--muted); font-size: 0.8rem; }
       </div>
       <div class="statrow">
         <span class="sheetstat" id="sheet-stat" role="status">Spreadsheet: not connected</span>
-        <span class="ver"><span id="app-ver">Version 4.8.3Clover</span></span>
+        <span class="ver"><span id="app-ver">Version 4.8.4Clover</span></span>
       </div>
     </div>
   </section>
@@ -11471,7 +11474,18 @@ function findAlignmentPattern(matrix, alignmentPatternQuads, topRight, topLeft, 
     var sp = ""; try { sp = (localStorage.getItem("clover-name") || "").trim(); } catch (e) {}
     $("ctx-sp").textContent = sp; $("ctx-sp").hidden = !sp; $("ctx-sep").hidden = !sp;
     $("ctx-line").className = "ctxline" + (loc ? "" : " warn");
+    lockSave(!!loc);
   }
+  /* No location, no saving: the buttons stay locked until one is chosen */
+  function lockSave(hasLoc) {
+    ["save-sale", "save-receipt", "send-clover"].forEach(function (id) {
+      var b = $(id); if (!b) return;
+      b.classList.toggle("locked", !hasLoc);
+      b.setAttribute("aria-disabled", hasLoc ? "false" : "true");
+    });
+    $("loc-lock").hidden = hasLoc;
+  }
+  function needLoc() { return !$("a-loc").value.trim(); }
   var saleId = null, cloverSent = null;   /* one id per sale; the Clover order made for this sale, if any */
   function calcA() {
     try { syncPayButtons(); } catch (e) {}
@@ -12883,6 +12897,7 @@ function findAlignmentPattern(matrix, alignmentPatternQuads, topRight, topLeft, 
       u.addEventListener("click", function () { clearTimeout(t); undoClear(snap); msg.textContent = "Sale restored."; });
   }
   $("save-sale").addEventListener("click", function () {
+    if (needLoc()) { updateCtx(); return; }
     var msg = $("save-msg");
     msg.className = "note";
     msg.textContent = "";
@@ -12922,6 +12937,7 @@ function findAlignmentPattern(matrix, alignmentPatternQuads, topRight, topLeft, 
     setTimeout(function () { if (m.textContent === "Customer saved.") m.textContent = ""; }, 4000);
   });
   $("save-receipt").addEventListener("click", function () {
+    if (needLoc()) { updateCtx(); return; }
     var msg = $("save-msg");
     msg.className = "note";
     msg.textContent = "";
@@ -13129,6 +13145,7 @@ function findAlignmentPattern(matrix, alignmentPatternQuads, topRight, topLeft, 
     b.textContent = same ? "Sent to Clover ✓ (order " + cloverSent.shortId + ")" : (cloverSent ? "Cart changed. Send again" : "Send to Clover");
   }
   $("send-clover").addEventListener("click", function () {
+    if (needLoc()) { updateCtx(); return; }
     var msg = $("save-msg"), btn = this;
     msg.className = "note"; msg.textContent = "";
     var cfg = getCfg(), p = cloverPayload();
