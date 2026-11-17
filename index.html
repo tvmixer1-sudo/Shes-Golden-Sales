@@ -171,13 +171,19 @@ label, .label {
 #items-labelrow .linkbtn { min-height: 32px; padding-top: 0; padding-bottom: 0; }
 .payblock.top #pay-label { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
 .paybtns { display: grid; grid-template-columns: repeat(5, 1fr); gap: 5px; }
-.paybtn { min-height: 34px; padding: 0 2px; border: 1.5px solid var(--line); border-radius: 9px; background: var(--surface); color: var(--fg); font: 600 0.8rem var(--font-body); cursor: pointer; }
+.paybtn { min-height: 42px; padding: 0 2px; border: 1.5px solid var(--line); border-radius: 9px; background: var(--surface); color: var(--fg); font: 600 0.8rem var(--font-body); cursor: pointer; }
 .paybtn[aria-checked="true"] { background: var(--accent); color: var(--accent-fg); border-color: var(--accent); }
 .paybtn:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 .taxamt { font: 500 1rem var(--font-body); font-variant-numeric: tabular-nums; padding: 0 6px; color: var(--fg); text-align: right; }
 .drow .input.amt .taxamt { flex: 1; font: 500 1rem var(--font-body); font-variant-numeric: tabular-nums; color: var(--fg); padding: 0; text-align: right; }
 .taxpct { color: var(--muted); text-transform: none; letter-spacing: 0; font-weight: 500; }
 .paysel { box-sizing: border-box; width: 112px; height: 38px; min-height: 38px; padding: 0 10px; text-align-last: right; background: var(--surface); color: var(--fg); border: 1.5px solid var(--line); border-radius: 10px; font: 500 1rem var(--font-body); }
+.taxsel { box-sizing: border-box; width: 100%; max-width: 100%; min-height: 38px; padding: 0 10px; text-align-last: right; background: var(--surface); color: var(--fg); border: 1.5px solid var(--line); border-radius: 10px; font: 500 1rem var(--font-body); }
+.taxsel:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-color: var(--accent); }
+#tax-add { border-bottom: 1px solid var(--line); padding-bottom: 8px; }
+#tax-add .drow { border-bottom: 0; }
+#tax-add input[type=text] { width: 100%; text-align: right; }
+.taxbtns { display: flex; gap: 14px; justify-content: flex-end; padding: 2px 0 4px; }
 .paysel:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-color: var(--accent); }
 .locin { padding: 0 12px; border-radius: 10px; }
 .locrow { flex-wrap: wrap; padding-bottom: 12px; }
@@ -355,7 +361,26 @@ body.sugg-open header, body.sugg-open .ctxline, body.sugg-open .tag, body.sugg-o
 .sheetbtns { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; }
 .savebtn.small { padding: 0 18px; min-height: 44px; font-size: 0.95rem; }
 .addrow { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
-.addrow .addbtn { font-size: 0.85rem; padding: 0 4px; min-height: 36px; }
+.addrow { gap: 7px; margin-top: 14px; grid-template-columns: 1fr 1fr 1.35fr 1.2fr; }
+.addrow .addbtn { font-size: 0.76rem; padding: 0 4px; min-height: 40px; white-space: nowrap; background: var(--accent); color: var(--accent-fg); border: 0; }
+.addrow .addbtn.clearbtn { color: #ff7b6e; text-transform: uppercase; letter-spacing: 0.02em; font-weight: 700; font-size: 0.72rem; }
+.addrow .addbtn:hover { background: var(--accent); filter: brightness(1.1); }
+body .tag { padding-top: 18px; padding-bottom: 18px; }
+#details { padding-top: 0; padding-bottom: 0; }
+#details .drow { min-height: 32px; gap: 8px; }
+#details .input { height: 28px; }
+#details .drow label { font-size: 0.9rem; }
+#details .input input, #details .input span { font-size: 0.92rem; }
+#details .taxpct { font-size: 0.8rem; }
+.item { border: 1.5px solid color-mix(in srgb, var(--muted) 55%, transparent); box-shadow: 0 1px 3px rgba(40, 30, 10, 0.18), 0 4px 10px -2px rgba(40, 30, 10, 0.22); }
+.item:focus-within { border-color: var(--accent); box-shadow: 0 0 0 2px var(--accent), 0 4px 10px -2px rgba(40, 30, 10, 0.22); }
+.item .name::placeholder, .pricebox input::placeholder { color: var(--fg); opacity: 0.6; }
+.item { background: color-mix(in srgb, var(--accent) 7%, var(--surface)); }
+.items .item { min-height: 58px; }
+.items .item .name { padding-top: 15px; padding-bottom: 15px; }
+#items-labelrow .clearbtn { min-height: 34px; padding: 0 14px; border: 0; border-radius: 10px; background: var(--accent); color: var(--accent-fg); text-decoration: none; font-weight: 700; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.06em; }
+#items-labelrow .clearbtn:active { filter: brightness(1.15); }
+#items-labelrow .clearbtn:disabled { opacity: 0.45; border-color: var(--line); color: var(--muted); }
 .added-toast { position: fixed; z-index: 200; left: 50%; top: 34%; transform: translate(-50%, -50%); width: min(86vw, 340px); box-sizing: border-box; padding: 20px 18px 18px; border-radius: 22px; background: var(--accent); color: var(--accent-fg); text-align: center; box-shadow: 0 14px 40px rgba(0, 0, 0, 0.35); pointer-events: none; display: flex; flex-direction: column; align-items: center; gap: 2px; }
 .added-toast[hidden] { display: none; }
 .at-check { width: 48px; height: 48px; border-radius: 50%; background: var(--accent-fg); color: var(--accent); font: 700 1.8rem/48px var(--font-body); margin-bottom: 4px; }
@@ -448,6 +473,8 @@ body.sugg-open header, body.sugg-open .ctxline, body.sugg-open .tag, body.sugg-o
 .ctxline { display: flex; align-items: center; gap: 8px; align-self: flex-start; max-width: 100%; min-height: 32px; margin-top: -4px; padding: 0 12px; border: 1.5px solid var(--line); border-radius: 999px; background: var(--surface); color: var(--fg); font: 600 0.8rem var(--font-body); cursor: pointer; }
 .ctxline span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .ctxline .ctx-sep { color: var(--muted); }
+.ctxline [hidden] { display: none; }
+.tag .ctxline { max-width: 62%; }
 .ctxline.warn { border-color: var(--save); color: var(--save); background: var(--save-soft); }
 .menu { position: fixed; inset: 0; z-index: 250; display: flex; align-items: flex-start; justify-content: center; padding: calc(env(safe-area-inset-top, 0px) + 64px) 16px 16px; background: rgba(0, 0, 0, 0.4); }
 .menu[hidden] { display: none; }
@@ -455,6 +482,62 @@ body.sugg-open header, body.sugg-open .ctxline, body.sugg-open .tag, body.sugg-o
 #photo-res .menucard { max-height: calc(100dvh - env(safe-area-inset-top, 0px) - 80px); overflow-y: auto; -webkit-overflow-scrolling: touch; }
 .menuhead { display: flex; align-items: center; justify-content: space-between; min-height: 44px; border-bottom: 1px solid var(--line); }
 .menucard .drow:last-child { border-bottom: 0; }
+
+/* ---- Sale settings menu (4.7.4) ---- */
+.mset { max-height: calc(100dvh - env(safe-area-inset-top, 0px) - 80px); overflow-y: auto; -webkit-overflow-scrolling: touch; padding: 2px 16px 18px; }
+.mset .menuhead { border-bottom: 0; }
+.msec { padding: 14px 0 4px; border-top: 1px solid var(--line); }
+.msec:first-of-type { border-top: 0; padding-top: 4px; }
+.mhd { margin: 0 0 10px; font: 700 0.72rem var(--font-body); letter-spacing: 0.12em; text-transform: uppercase; color: var(--accent); }
+.mset label { text-transform: none; letter-spacing: 0; font-size: 0.92rem; font-weight: 600; color: var(--fg); }
+.mfield { display: flex; flex-direction: column; gap: 6px; margin-bottom: 12px; }
+.mset .mfield .input { flex: none; width: 100%; height: 46px; padding: 0 12px; border: 1.5px solid var(--line); border-radius: 10px; background: var(--surface); }
+.mset .mfield .input:focus-within { border-color: var(--accent); background: var(--surface); }
+.mset .mfield .input input { text-align: left; }
+.mset .mfield .locin { padding: 0 8px 0 12px; }
+.mset .taxsel { height: 46px; text-align-last: left; padding: 0 12px; }
+.mset .taxbtns { padding: 0; margin-top: -2px; }
+.mset .taxadd { padding: 12px 12px 2px; margin-bottom: 12px; border-radius: 10px; background: var(--accent-soft); }
+.mset .taxadd .input { background: var(--surface); }
+.mset .taxadd .input input { text-align: left !important; }
+.mrow { display: flex; align-items: center; justify-content: space-between; gap: 12px; min-height: 46px; margin-bottom: 4px; }
+.mset .mrow .input { flex: none; width: 128px; height: 42px; padding: 0 10px; border: 1.5px solid var(--line); border-radius: 10px; background: var(--surface); }
+.mset .mrow .input:focus-within { border-color: var(--accent); background: var(--surface); }
+.mset .mrow .input input { text-align: right; }
+.mhint { margin: 0 0 12px; font-size: 0.8rem; line-height: 1.35; color: var(--muted); }
+#rep-msg.warn { color: var(--danger, #b3261e); }
+#rep-msg:empty { display: none; }
+.mbtn { display: block; width: 100%; min-height: 46px; margin: 10px 0 8px; border: 1.5px solid var(--accent); border-radius: 10px; background: transparent; color: var(--accent); font: 600 1rem var(--font-body); cursor: pointer; }
+.mbtn:active { background: var(--accent-soft); }
+.mbtn:disabled { opacity: 0.55; cursor: default; }
+.mswitch { appearance: none; -webkit-appearance: none; flex: none; position: relative; width: 50px; height: 30px; margin: 0; border-radius: 999px; background: #c9c4b8; cursor: pointer; transition: background 0.15s; }
+.mswitch::after { content: ""; position: absolute; top: 3px; left: 3px; width: 24px; height: 24px; border-radius: 50%; background: #fff; box-shadow: 0 1px 3px rgba(0,0,0,0.3); transition: transform 0.15s; }
+.mswitch:checked { background: var(--accent); }
+.mswitch:checked::after { transform: translateX(20px); }
+.mswitch:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+/* ---- BOGO pop-up ---- */
+.bogocard .msec { border-top: 0; padding-top: 4px; }
+.bogo-presets { display: flex; gap: 8px; margin: 2px 0 12px; }
+.bogo-pre { flex: 1 1 auto; min-width: 0; display: inline-flex; align-items: center; justify-content: center; gap: 5px; min-height: 36px; padding: 0 8px; border: 1.5px solid var(--accent); border-radius: 999px; background: transparent; color: var(--accent); font: 600 0.92rem var(--font-body); cursor: pointer; line-height: 1; }
+.bogo-pre small { font-size: 0.72rem; font-weight: 600; opacity: 0.85; }
+.mset.bogocard .mfield .input { width: 124px; height: 38px; padding: 0 10px; border-radius: 10px; }
+.bogocard .mfield { margin-bottom: 14px; }
+.bogo-row { display: flex; align-items: center; gap: 10px; }
+.bogo-row .mfield { flex: none; margin: 0; }
+.bogo-row .mbtn { flex: 1; margin: 0; min-height: 38px; }
+.bogocard #bogo-hint { margin: 10px 0 0; }
+#clear-pop { padding-top: calc(env(safe-area-inset-top, 0px) + 34vh); }
+.clear-text { margin: 4px 0 12px; font-size: 1rem; color: var(--fg); }
+.clear-btns { display: flex; gap: 10px; }
+.clear-btns .mbtn { flex: 1; margin: 0; min-height: 46px; }
+.mbtn.solid.danger, .mbtn.solid.danger:active { background: #b3261e; color: #fff; border-color: #b3261e; text-transform: uppercase; letter-spacing: 0.03em; font-size: 0.9rem; }
+#bogo-pop { padding-top: calc(env(safe-area-inset-top, 0px) + 34vh); }
+.bogo-pre.on { background: var(--accent); color: var(--accent-fg); }
+.mbtn.solid { background: var(--accent); color: var(--accent-fg); }
+.mbtn.solid:active { opacity: 0.85; background: var(--accent); }
+#bogo-hint:empty { display: none; }
+#bogo-hint.warn { color: var(--danger, #b3261e); }
 .defbtn { min-height: 32px; padding: 0; font-size: 0.85rem; }
 .thumb { width: 56px; height: 56px; border-radius: 10px; background: #fff; object-fit: contain; flex: none; display: block; }
 .thumb.none { background: var(--accent-soft); }
@@ -502,6 +585,13 @@ body.sugg-open header, body.sugg-open .ctxline, body.sugg-open .tag, body.sugg-o
 .zoom[hidden] { display: none; }
 .zoom-card { width: min(100%, 420px); box-sizing: border-box; padding: 12px; border-radius: 20px; background: var(--surface); display: flex; flex-direction: column; gap: 8px; align-items: stretch; text-align: center; }
 .zoom-card img { width: 100%; max-height: 58vh; object-fit: contain; background: #fff; border-radius: 12px; display: block; }
+.zoom-card { position: relative; }
+.zoom-nav { position: absolute; top: 24%; width: 40px; height: 56px; border: 0; border-radius: 12px; background: rgba(0,0,0,0.38); color: #fff; font: 400 2rem/1 var(--font-body); cursor: pointer; display: flex; align-items: center; justify-content: center; padding: 0 0 4px; }
+.zoom-nav[hidden] { display: none; }
+.zoom-nav:disabled { opacity: 0.25; }
+.zprev { left: 14px; } .znext { right: 14px; }
+.zoom-count { font: 500 0.8rem var(--font-mono); color: var(--muted); text-align: center; }
+.zoom-count[hidden] { display: none; }
 .zoom-name { font: 700 1.05rem var(--font-body); color: var(--fg); overflow-wrap: anywhere; }
 .zoom-price { font: 500 1rem var(--font-mono); color: var(--muted); }
 .zoom-btns { display: flex; gap: 8px; margin-top: 4px; }
@@ -535,6 +625,11 @@ body.sugg-open header, body.sugg-open .ctxline, body.sugg-open .tag, body.sugg-o
   cursor: pointer;
 }
 .savepair { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.cloverbtn { background: var(--gold); color: var(--gold-fg); min-height: 44px; font-size: 0.95rem; letter-spacing: 0.02em; }
+.cloverbtn[hidden] { display: none; }
+.cloverbtn[disabled] { opacity: .6; cursor: default; }
+.cloverbtn.sent { background: transparent; color: var(--gold-fg); box-shadow: inset 0 0 0 2px var(--gold); }
+.drow .cl-check { width: 22px; height: 22px; accent-color: var(--accent); flex: none; margin: 0; }
 .savebtn.alt { background: transparent; color: var(--accent); border: 2px solid var(--accent); }
 .savebtn:hover { filter: brightness(1.08); }
 .savebtn:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
@@ -634,7 +729,7 @@ footer { color: var(--muted); font-size: 0.8rem; }
 
   <section class="panel" id="panel-a">
     <div class="tag" aria-live="polite">
-      <button class="ctxline" id="ctx-line" type="button" aria-label="Edit location"><span id="ctx-loc"></span></button>
+      <button class="ctxline" id="ctx-line" type="button" aria-label="Edit location"><span id="ctx-loc"></span><span class="ctx-sep" id="ctx-sep" hidden>·</span><span id="ctx-sp" hidden></span></button>
       <span class="label" id="a-label">Total after discount</span>
       <div class="topsplit"><div class="leftcol"><div class="big" id="a-result">$0.00</div><div class="cloverline" id="a-clover" hidden></div></div><div class="bd" id="a-bd" aria-hidden="true"></div></div>
       <div class="row">
@@ -665,17 +760,18 @@ footer { color: var(--muted); font-size: 0.8rem; }
 
 
     <div class="field">
-      <div class="labelrow" id="items-labelrow"><span class="label" id="items-label">Items</span><button class="linkbtn clearbtn" type="button" id="clear-items">Clear sale</button></div>
+      <div class="labelrow" id="items-labelrow"><span class="label" id="items-label">Items</span></div>
       <div class="items" id="items" role="group" aria-labelledby="items-label"></div>
       <div class="addrow">
         <button class="addbtn findbtn" type="button" id="pick-open">Find item</button>
         <button class="addbtn scanbtn" type="button" id="scan-open">Scan item</button>
         <button class="addbtn photobtn" type="button" id="photo-open">Find by photo</button>
+        <button class="addbtn clearbtn" type="button" id="clear-items">Clear sale</button>
       </div>
     </div>
 
     <div class="field">
-      <div class="labelrow"><label for="a-pct">Discount</label><span class="discacts"><button class="linkbtn defbtn" type="button" id="set-default">&#10003; 0% is default</button></span></div>
+      <div class="labelrow"><label for="a-pct">Discount</label><span class="discacts"><button class="linkbtn defbtn" type="button" id="set-default" hidden></button></span></div>
       <div class="discrow">
         <div class="input pctin"><input id="a-pct" inputmode="decimal" autocomplete="off" value="0" aria-label="Discount percent"><span>%</span></div>
         <div class="chips" id="chips" aria-label="Common discounts">
@@ -759,13 +855,14 @@ footer { color: var(--muted); font-size: 0.8rem; }
         <span class="chg-amt" id="chg-amt"></span>
       </div>
       <p class="note" id="save-msg" role="status"></p>
+      <button class="savebtn cloverbtn" type="button" id="send-clover" hidden>Send to Clover</button>
       <div class="savepair">
         <button class="savebtn" type="button" id="save-sale">Save Sale</button>
         <button class="savebtn alt" type="button" id="save-receipt">Save + PDF receipt</button>
       </div>
       <div class="statrow">
-        <span class="sheetstat" id="sheet-stat" role="status">Google Sheet: not connected</span>
-        <span class="ver"><span id="app-ver">Version 3.108</span></span>
+        <span class="sheetstat" id="sheet-stat" role="status">Spreadsheet: not connected</span>
+        <span class="ver"><span id="app-ver">Version 4.8.1Clover</span></span>
       </div>
     </div>
   </section>
@@ -775,24 +872,94 @@ footer { color: var(--muted); font-size: 0.8rem; }
 </div>
 
 <div class="menu" id="menu" hidden>
-  <div class="menucard details" role="dialog" aria-modal="true" aria-labelledby="menu-title">
+  <div class="menucard details mset" role="dialog" aria-modal="true" aria-labelledby="menu-title">
     <div class="menuhead"><span class="label" id="menu-title">Sale settings</span><button class="linkbtn" type="button" id="menu-done">Done</button></div>
-      <div class="drow locrow">
-        <label for="a-loc">Location</label>
-        <div class="input locin"><input id="a-loc" type="text" list="loc-list" autocomplete="off" maxlength="40" placeholder="Where are you selling today?"><button type="button" class="loc-clear" id="loc-clear" aria-label="Clear location" hidden>&times;</button></div>
-        <datalist id="loc-list"></datalist>
-        <div class="locchips" id="loc-chips" hidden></div>
+
+    <section class="msec">
+      <div class="mfield">
+        <label for="loc-sel">Location</label>
+        <select id="loc-sel" class="taxsel" aria-label="Location"></select>
+        <input id="a-loc" type="hidden" value="">
+        <div class="taxbtns"><button class="linkbtn" type="button" id="loc-rm" hidden>Remove this location</button></div>
       </div>
-      <div class="drow">
-        <label for="a-tax">Sales tax</label>
-        <div class="input"><input id="a-tax" inputmode="decimal" autocomplete="off" value="0"><span>%</span></div>
+      <div id="loc-add" class="taxadd" hidden>
+        <div class="mfield">
+          <label for="loc-new-name">Location name</label>
+          <div class="input"><input id="loc-new-name" type="text" autocomplete="off" maxlength="40" placeholder="Like the market, e.g. Clovis Farmers Market"></div>
+        </div>
+        <div class="taxbtns"><button class="linkbtn" type="button" id="loc-cancel">Cancel</button><button class="linkbtn" type="button" id="loc-save">Save location</button></div>
+        <p class="note warn" id="loc-msg" hidden></p>
       </div>
-      <p class="note taxnote">Cash, Venmo and Zelle sales are not taxed. Credit and Debit use this rate.</p>
-      <div class="drow">
-        <label for="bogo-pct">BOGO offer</label>
-        <div class="input"><input id="bogo-pct" inputmode="decimal" autocomplete="off" value="25" aria-label="BOGO percent off the cheapest item"><span>% off</span></div>
+      <p class="note warn" id="loc-sync"></p>
+      <div class="mfield">
+        <label for="tax-sel">Sales tax</label>
+        <select id="tax-sel" class="taxsel" aria-label="Sales tax"></select>
+        <input id="a-tax" type="hidden" value="0">
+        <div class="taxbtns"><button class="linkbtn" type="button" id="tax-rm" hidden>Remove this tax</button></div>
       </div>
-      <p class="note taxnote">When you tap BOGO, this much comes off the cheapest item (needs two or more items). Use 100 for a free item.</p>
+      <div id="tax-add" class="taxadd" hidden>
+        <div class="mfield">
+          <label for="tax-new-name">Tax name</label>
+          <div class="input"><input id="tax-new-name" type="text" autocomplete="off" maxlength="30" placeholder="Like the city, e.g. Fresno"></div>
+        </div>
+        <div class="mfield">
+          <label for="tax-new-pct">Percent</label>
+          <div class="input"><input id="tax-new-pct" inputmode="decimal" autocomplete="off" placeholder="8.35"><span>%</span></div>
+        </div>
+        <div class="taxbtns"><button class="linkbtn" type="button" id="tax-cancel">Cancel</button><button class="linkbtn" type="button" id="tax-save">Save tax</button></div>
+        <p class="note warn" id="tax-msg" hidden></p>
+      </div>
+      <p class="note warn" id="tax-sync"></p>
+    </section>
+
+    <section class="msec">
+      <h3 class="mhd">Clover</h3>
+      <div class="mfield">
+        <label for="cl-name">Your name (salesperson)</label>
+        <div class="input"><input id="cl-name" type="text" autocomplete="off" maxlength="30" placeholder="Name as in Clover"></div>
+      </div>
+      <div class="mrow">
+        <label for="cl-on">Show Send to Clover</label>
+        <input id="cl-on" class="mswitch" type="checkbox" role="switch">
+      </div>
+    </section>
+
+    <section class="msec">
+      <h3 class="mhd">Sales report</h3>
+      <button class="mbtn" type="button" id="rep-btn">Email Sales Report</button>
+      <p class="mhint" id="rep-msg"></p>
+    </section>
+  </div>
+</div>
+<div class="menu" id="bogo-pop" hidden>
+  <div class="menucard details mset bogocard" role="dialog" aria-modal="true" aria-labelledby="bogo-title">
+    <div class="menuhead"><span class="label" id="bogo-title">BOGO offer</span><button class="linkbtn" type="button" id="bogo-cancel">Cancel</button></div>
+    <section class="msec">
+      <div class="bogo-presets" role="group" aria-label="Quick amounts">
+        <button type="button" class="bogo-pre" data-pct="10">10%</button>
+        <button type="button" class="bogo-pre" data-pct="15">15%</button>
+        <button type="button" class="bogo-pre" data-pct="25">25%</button>
+        <button type="button" class="bogo-pre" data-pct="50">50%</button>
+        <button type="button" class="bogo-pre" data-pct="100">100%</button>
+      </div>
+      <div class="bogo-row">
+        <div class="mfield"><div class="input"><input id="bogo-amt" inputmode="decimal" autocomplete="off" aria-label="Percent off the cheapest item"><span>% off</span></div></div>
+        <button class="mbtn solid" type="button" id="bogo-apply">Apply BOGO</button>
+      </div>
+      <p class="mhint" id="bogo-hint"></p>
+    </section>
+  </div>
+</div>
+<div class="menu" id="clear-pop" hidden>
+  <div class="menucard details mset clearcard" role="alertdialog" aria-modal="true" aria-labelledby="clear-title" aria-describedby="clear-text">
+    <div class="menuhead"><span class="label" id="clear-title">Clear this sale?</span></div>
+    <section class="msec">
+      <p class="clear-text" id="clear-text">All items on this sale will be removed.</p>
+      <div class="clear-btns">
+        <button class="mbtn" type="button" id="clear-no">Cancel</button>
+        <button class="mbtn solid danger" type="button" id="clear-yes">Clear sale</button>
+      </div>
+    </section>
   </div>
 </div>
 <input type="file" id="photo-file" accept="image/*" capture="environment" hidden>
@@ -831,6 +998,9 @@ footer { color: var(--muted); font-size: 0.8rem; }
 <div class="zoom" id="zoom" hidden role="dialog" aria-modal="true" aria-label="Photo">
   <div class="zoom-card" id="zoom-card">
     <img id="zoom-img" alt="" draggable="false">
+    <button class="zoom-nav zprev" type="button" id="zoom-prev" aria-label="Previous item" hidden>&#8249;</button>
+    <button class="zoom-nav znext" type="button" id="zoom-next" aria-label="Next item" hidden>&#8250;</button>
+    <div class="zoom-count" id="zoom-count" hidden></div>
     <div class="zoom-name" id="zoom-name"></div>
     <div class="zoom-price" id="zoom-price"></div>
     <div class="zoom-btns">
@@ -11008,7 +11178,7 @@ function findAlignmentPattern(matrix, alignmentPatternQuads, topRight, topLeft, 
     $("bogo-btn").setAttribute("aria-pressed", String(bogo));
     document.body.classList.toggle("bogo-on", bogo);
   }
-  $("bogo-btn").addEventListener("click", function () { setBogo(!bogo); calcA(); });
+  $("bogo-btn").addEventListener("click", function () { if (bogo) { setBogo(false); calcA(); } else openBogoPop(); });
   /* After-discount cents for each price (in cents). BOGO takes BOGO_PCT off the single cheapest item and needs two or more items. */
   // Clover rounds sub-cent amounts half-up; the epsilon absorbs float error like 478.49999999999994
   function roundHalfUp(x) { return Math.floor(x + 0.5 + 1e-7); }
@@ -11027,8 +11197,9 @@ function findAlignmentPattern(matrix, alignmentPatternQuads, topRight, topLeft, 
   function updateDefaultUI(pct) {
     var b = $("set-default");
     var ok = isFinite(pct) && pct >= 0 && pct <= 100;
+    b.hidden = false;
     if (!ok) { b.disabled = true; b.textContent = "Enter a discount"; return; }
-    if (pct === defaultPct) { b.disabled = true; b.textContent = "✓ " + pctText(pct) + " is default"; }
+    if (pct === defaultPct) { b.disabled = true; b.textContent = ""; b.hidden = true; }
     else { b.disabled = false; b.textContent = "Make " + pctText(pct) + " default"; }
   }
   function num(v) {
@@ -11174,9 +11345,14 @@ function findAlignmentPattern(matrix, alignmentPatternQuads, topRight, topLeft, 
       var toks = q.split(/\s+/), hits = [];
       catalog.forEach(function (it, i) {
         var hay = (it.name + " " + it.id + " " + (it.cat || "")).toLowerCase();
-        for (var t = 0; t < toks.length; t++) if (hay.indexOf(toks[t]) === -1) return;
+        var full = hay + " " + itemTags(it), byName = true;
+        for (var t = 0; t < toks.length; t++) {
+          if (full.indexOf(toks[t]) === -1) return;
+          if (hay.indexOf(toks[t]) === -1) byName = false;
+        }
         var at = hay.indexOf(toks[0]);
-        hits.push({ it: it, k: (it.sold ? 10 : 0) + (at === 0 ? 0 : (hay.charAt(at - 1) === " " ? 1 : 2)), i: i });
+        /* Matches on the name come first; matches that only come from the website tags follow */
+        hits.push({ it: it, k: (it.sold ? 10 : 0) + (!byName ? 3 : at === 0 ? 0 : (hay.charAt(at - 1) === " " ? 1 : 2)), i: i });
       });
       if (!hits.length) return;
       hits.sort(function (a, b) { return a.k - b.k || a.i - b.i; });
@@ -11186,9 +11362,11 @@ function findAlignmentPattern(matrix, alignmentPatternQuads, topRight, topLeft, 
       hits = hits.slice(0, 30);
       var cats = (typeof CATEGORY_ORDER !== "undefined" ? CATEGORY_ORDER.slice() : []);
       hits.forEach(function (h) { if (cats.indexOf(h.it.cat || "Other") === -1) cats.push(h.it.cat || "Other"); });
+      var ordered = [];
       cats.forEach(function (c) {
         var grp = hits.filter(function (h) { return (h.it.cat || "Other") === c; });
         if (!grp.length) return;
+        grp.forEach(function (h) { ordered.push(h.it); });
         var hd = document.createElement("div"); hd.className = "sh"; hd.textContent = c;
         sg.appendChild(hd);
         grp.forEach(function (h) {
@@ -11200,7 +11378,14 @@ function findAlignmentPattern(matrix, alignmentPatternQuads, topRight, topLeft, 
           if (h.it.sold) { n.textContent += " \u00b7 Sold out"; n.classList.add("dim"); }
           b.addEventListener("click", function (e) {
             var tg = e.target;
-            if (tg && tg.classList && tg.classList.contains("thumb") && !tg.classList.contains("none")) { e.preventDefault(); openZoom(h.it, function () { chooseSugg(h.it); }); return; }
+            if (tg && tg.classList && tg.classList.contains("thumb") && !tg.classList.contains("none")) {
+              e.preventDefault();
+              openZoom(h.it, function () { chooseSugg(h.it); }, {
+                list: ordered.map(function (x) { return { it: x, add: function () { chooseSugg(x); } }; }),
+                i: Math.max(0, ordered.indexOf(h.it))
+              });
+              return;
+            }
             chooseSugg(h.it);
           });
           sg.appendChild(b);
@@ -11273,13 +11458,17 @@ function findAlignmentPattern(matrix, alignmentPatternQuads, topRight, topLeft, 
   function updateCtx() {
     var loc = $("a-loc").value.trim();
     $("ctx-loc").textContent = loc || "Set location";
+    var sp = ""; try { sp = (localStorage.getItem("clover-name") || "").trim(); } catch (e) {}
+    $("ctx-sp").textContent = sp; $("ctx-sp").hidden = !sp; $("ctx-sep").hidden = !sp;
     $("ctx-line").className = "ctxline" + (loc ? "" : " warn");
   }
+  var saleId = null, cloverSent = null;   /* one id per sale; the Clover order made for this sale, if any */
   function calcA() {
     try { syncPayButtons(); } catch (e) {}
     calcA2();
     updateChange();
     updateCtx();
+    try { syncCloverBtn(); } catch (e) {}
   }
   function openMenu() { $("menu").hidden = false; }
   function closeMenu() { $("menu").hidden = true; updateCtx(); }
@@ -11440,6 +11629,7 @@ function findAlignmentPattern(matrix, alignmentPatternQuads, topRight, topLeft, 
     syncNotesHint();
   }
   function clearSale(noFocus) {
+    saleId = null; cloverSent = null;
     var snap = { ship: $("a-ship").value, nodes: [], pay: $("a-pay").value, loc: $("a-loc").value, cust: customer(), notesOpen: $("notes").open, bogo: bogo };
     while (itemsEl.firstChild) { snap.nodes.push(itemsEl.firstChild); itemsEl.removeChild(itemsEl.firstChild); }
     snap.cash = $("a-cash").value;
@@ -11468,16 +11658,29 @@ function findAlignmentPattern(matrix, alignmentPatternQuads, topRight, topLeft, 
     calcA();
   }
   $("clear-items").addEventListener("click", function () {
-    $("save-msg").textContent = "";
+    var hasData = Array.prototype.some.call(itemsEl.querySelectorAll("input"), function (i) {
+      var v = (i.value || "").trim();
+      return v !== "" && !(parseFloat(v) === 0 && /^[0.]*$/.test(v));
+    }) || ($("a-ship").value || "").trim() !== "" || ($("a-cash").value || "").trim() !== "";
     try { if (document.activeElement && document.activeElement.blur) document.activeElement.blur(); } catch (e) {}
-    clearSale(true);
+    if (hasData) { $("clear-pop").hidden = false; return; }
+    doClear();
   });
+  function doClear() {
+    $("clear-pop").hidden = true;
+    $("save-msg").textContent = "";
+    clearSale(true);
+  }
+  $("clear-yes").addEventListener("click", doClear);
+  $("clear-no").addEventListener("click", function () { $("clear-pop").hidden = true; });
+  $("clear-pop").addEventListener("click", function (e) { if (e.target === this) this.hidden = true; });
+  document.addEventListener("keydown", function (e) { if (e.key === "Escape" && !$("clear-pop").hidden) $("clear-pop").hidden = true; });
 
-  /* ---------- Item list (built-in copy, refreshed from the Google Sheet) ---------- */
-  var BUILT_IN_ITEMS = [["SG001","Sunlit Sage Pearl Necklace","Necklaces",132.0,0],["SG002","Evergreen Star Pearl Necklace","Necklaces",122.0,0],["SG003","Pearl Essence Necklace","Necklaces",122.0,0],["SG004","Petals of Pearl Necklace","Necklaces",102.0,0],["SG005","Blue Lagoon Pearl Necklace","Necklaces",102.0,0],["SG006","The Golden Standard Necklace","Necklaces",88.0,0],["SG007","Luna Horn Necklace","Necklaces",88.0,0],["SG008","L.O.V.E Necklace","Necklaces",82.0,0],["SG009","Opal Sky Necklace","Necklaces",78.0,0],["SG010","True North Compass Necklace","Necklaces",72.0,0],["SG011","Golden Promise Necklace","Necklaces",72.0,0],["SG012","Cosmic Keepsake Necklace","Necklaces",68.0,0],["SG013","Guiding Light - Harmony Necklace","Necklaces",68.0,0],["SG014","Blush Heart - Harmony Necklace","Necklaces",68.0,0],["SG015","First Bloom - Harmony Necklace","Necklaces",68.0,0],["SG016","Harbor Light - Harmony Necklace","Necklaces",68.0,0],["SG017","Turquoise Star - Harmony Necklace","Necklaces",68.0,0],["SG018","Fortune Found Necklace","Necklaces",68.0,0],["SG019","Forever Yours Locket","Necklaces",68.0,0],["SG020","Soleil Necklace","Necklaces",68.0,0],["SG021","Ocean Muse Necklace","Necklaces",68.0,0],["SG022","Everly Lariat Necklace","Necklaces",68.0,0],["SG023","The Maren Necklace","Necklaces",66.0,0],["SG024","The Evermore Necklace","Necklaces",62.0,0],["SG025","Golden Drift Necklace","Necklaces",62.0,0],["SG026","Camille Lariat Necklace","Necklaces",62.0,0],["SG027","Wild Luck Necklace","Necklaces",62.0,0],["SG028","Golden Drift Necklace","Necklaces",62.0,0],["SG029","The Awakening Necklace","Necklaces",62.0,0],["SG030","The Crescent Necklace","Necklaces",58.0,0],["SG031","Golden Girl Necklace","Necklaces",58.0,0],["SG032","Pacific Starfish Necklace","Necklaces",58.0,0],["SG033","Golden Rhythm Necklace","Necklaces",56.0,0],["SG034","North Star Duo Necklace","Necklaces",56.0,0],["SG035","Forever Rooted Necklace","Necklaces",52.0,0],["SG036","The Halo Necklace","Necklaces",52.0,0],["SG037","Desert Darling Necklace","Necklaces",48.0,0],["SG038","Tiny Miracles Necklace","Necklaces",48.0,0],["SG039","A Little Love Necklace","Necklaces",48.0,0],["SG040","Lucky Charm Necklace","Necklaces",48.0,0],["SG041","Free Spirit Necklace","Necklaces",48.0,0],["SG042","Golden Wings Necklace","Necklaces",48.0,0],["SG043","Everleaf Necklace","Necklaces",48.0,0],["SG044","Autumn Bloom Pearl Necklace","Necklaces",122.0,0],["SG045","Classic Cuban","Bracelets",52.0,0],["SG046","Lucky Streak Bracelet","Bracelets",58.0,0],["SG047","Chasing Feathers Bracelet","Bracelets",62.0,0],["SG048","Legacy Link Bracelet","Bracelets",58.0,0],["SG049","The Maren Bracelet","Bracelets",56.0,0],["SG050","Sunbeam Heart Bracelet","Bracelets",52.0,0],["SG051","The Dainty Staple Bracelet","Bracelets",42.0,0],["SG052","Luna Horn Bracelet","Bracelets",72.0,0],["SG053","Twist of Luck Bracelet","Bracelets",52.0,0],["SG054","Wild Spirit Bracelet","Bracelets",58.0,0],["SG055","The Classic Bracelet","Bracelets",68.0,0],["SG056","The Lennox Bracelet","Bracelets",58.0,0],["SG057","Starfall Huggies","Earrings",56.0,0],["SG058","Golden Dagger Huggies","Earrings",52.0,0],["SG059","Mini Luxe Huggies","Earrings",38.0,0],["SG060","Silver Luster Hoops","Earrings",56.0,0],["SG061","Classic Pearl Huggies","Earrings",52.0,0],["SG062","The Promise Huggies","Earrings",48.0,0],["SG063","The Golden Studs","Earrings",48.0,0],["SG064","Moonlight Hoops","Earrings",52.0,0],["SG065","Nova Oval Bezel Huggie","Earrings",56.0,0],["SG066","Goddess Hoops","Earrings",62.0,0],["SG067","Nova Hoops","Earrings",48.0,1],["SG068","The Soho Hoop","Earrings",44.0,0],["SG069","The Baby Studs","Earrings",32.0,0],["SG070","Forever Hiuggies","Earrings",42.0,0],["SG071","Duo Link Earrings","Earrings",52.0,0],["SG072","The Boulevard Huggies","Earrings",52.0,0],["SG073","The Essential Studs","Earrings",52.0,0],["SG074","The Box Hoops","Earrings",52.0,0],["SG075","Twinkle Studs","Earrings",42.0,0],["SG076","The Catalina Hoops","Earrings",52.0,0],["SG077","Classic Chunky Hoops","Earrings",54.0,0],["SG078","Golden Trio Huggies","Earrings",48.0,0],["SG079","Nova Bezel Huggies","Earrings",56.0,1],["SG080","Sun Kissed - Harmony Anklet","Anklets",48.0,0],["SG081","Olive Grove - Harmony Beaded Anklet","Anklets",48.0,0],["SG082","Turquoise Tide - Harmony Anklet","Anklets",48.0,0],["SG083","Laguna - Harmony Anklet","Anklets",48.0,0],["SG084","Midnight Muse - Harmony Anklet","Anklets",42.0,0],["SG085","Pearl Confetti Anklet","Anklets",42.0,0]];
+  /* ---------- Item list (built-in copy, refreshed from the spreadsheet) ---------- */
+  var BUILT_IN_ITEMS = [["SG001","Sunlit Sage Pearl Necklace","Necklaces",132.0,0],["SG002","Evergreen Star Pearl Necklace","Necklaces",122.0,0],["SG003","Pearl Essence Necklace","Necklaces",122.0,0],["SG004","Petals of Pearl Necklace","Necklaces",102.0,0],["SG005","Blue Lagoon Pearl Necklace","Necklaces",102.0,0],["SG006-CLR","The Golden Standard Necklace - Clear","Necklaces",88.0,0,"Clear"],["SG006-BLU","The Golden Standard Necklace - Blue","Necklaces",88.0,0,"Blue"],["SG006-GRN","The Golden Standard Necklace - Green","Necklaces",88.0,0,"Green"],["SG006-RED","The Golden Standard Necklace - Red","Necklaces",88.0,0,"Red"],["SG007","Luna Horn Necklace","Necklaces",88.0,0],["SG008","L.O.V.E Necklace","Necklaces",82.0,0],["SG009","Opal Sky Necklace","Necklaces",78.0,0],["SG010","True North Compass Necklace","Necklaces",72.0,0],["SG011","Golden Promise Necklace","Necklaces",72.0,0],["SG012","Cosmic Keepsake Necklace","Necklaces",68.0,0],["SG013","Guiding Light - Harmony Necklace","Necklaces",68.0,0],["SG014","Blush Heart - Harmony Necklace","Necklaces",68.0,0],["SG015","First Bloom - Harmony Necklace","Necklaces",68.0,0],["SG016","Harbor Light - Harmony Necklace","Necklaces",68.0,0],["SG017","Turquoise Star - Harmony Necklace","Necklaces",68.0,0],["SG018","Fortune Found Necklace","Necklaces",68.0,0],["SG019","Forever Yours Locket","Necklaces",68.0,0],["SG020","Soleil Necklace","Necklaces",68.0,0],["SG021","Ocean Muse Necklace","Necklaces",68.0,0],["SG022","Everly Lariat Necklace","Necklaces",68.0,0],["SG023","The Maren Necklace","Necklaces",66.0,0],["SG024","The Evermore Necklace","Necklaces",62.0,0],["SG025","Golden Drift Necklace","Necklaces",62.0,0],["SG026","Camille Lariat Necklace","Necklaces",62.0,0],["SG027","Wild Luck Necklace","Necklaces",62.0,0],["SG028","Slow Drip Necklace","Necklaces",62.0,0],["SG029-GLD","The Awakening Necklace - Gold","Necklaces",62.0,0,"Gold"],["SG029-SLV","The Awakening Necklace - Silver","Necklaces",62.0,0,"Silver"],["SG030","The Crescent Necklace","Necklaces",58.0,0],["SG031","Golden Girl Necklace","Necklaces",58.0,0],["SG032-GLD","Pacific Starfish Necklace - Gold","Necklaces",58.0,0,"Gold"],["SG032-SLV","Pacific Starfish Necklace - Silver","Necklaces",58.0,0,"Silver"],["SG033","Golden Rhythm Necklace","Necklaces",56.0,0],["SG034","North Star Duo Necklace","Necklaces",56.0,0],["SG035-GLD","Forever Rooted Necklace - Gold","Necklaces",52.0,0,"Gold"],["SG035-SLV","Forever Rooted Necklace - Silver","Necklaces",52.0,0,"Silver"],["SG036-GLD","The Halo Necklace - Gold","Necklaces",52.0,0,"Gold"],["SG036-SLV","The Halo Necklace - Silver","Necklaces",52.0,0,"Silver"],["SG037","Desert Darling Necklace","Necklaces",48.0,0],["SG038","Tiny Miracles Necklace","Necklaces",48.0,0],["SG039","A Little Love Necklace","Necklaces",48.0,0],["SG040-CLR","Lucky Charm Necklace - Clear","Necklaces",48.0,0,"Clear"],["SG040-GRN","Lucky Charm Necklace - Green","Necklaces",48.0,0,"Green"],["SG041","Free Spirit Necklace","Necklaces",48.0,0],["SG042","Golden Wings Necklace","Necklaces",48.0,0],["SG043-GLD","Everleaf Necklace - Gold","Necklaces",48.0,0,"Gold"],["SG043-SLV","Everleaf Necklace - Silver","Necklaces",48.0,0,"Silver"],["SG044","Autumn Bloom Pearl Necklace","Necklaces",122.0,0],["SG045","Classic Cuban","Bracelets",52.0,0],["SG046","Lucky Streak Bracelet","Bracelets",58.0,0],["SG047","Chasing Feathers Bracelet","Bracelets",62.0,0],["SG048","Legacy Link Bracelet","Bracelets",58.0,0],["SG049","The Maren Bracelet","Bracelets",56.0,0],["SG050","Sunbeam Heart Bracelet","Bracelets",52.0,0],["SG051","The Dainty Staple Bracelet","Bracelets",42.0,0],["SG052","Luna Horn Bracelet","Bracelets",72.0,0],["SG053","Twist of Luck Bracelet","Bracelets",52.0,0],["SG054-GLD","Wild Spirit Bracelet - Gold","Bracelets",58.0,0,"Gold"],["SG054-SLV","Wild Spirit Bracelet - Silver","Bracelets",58.0,0,"Silver"],["SG055","The Classic Bracelet","Bracelets",68.0,0],["SG056","The Lennox Bracelet","Bracelets",58.0,0],["SG057","Starfall Huggies","Earrings",56.0,0],["SG058","Golden Dagger Huggies","Earrings",52.0,0],["SG059","Mini Luxe Huggies","Earrings",38.0,0],["SG060","Silver Luster Hoops","Earrings",56.0,0],["SG061","Classic Pearl Huggies","Earrings",52.0,0],["SG062","The Promise Huggies","Earrings",48.0,0],["SG063","The Golden Studs","Earrings",48.0,0],["SG064","Moonlight Hoops","Earrings",52.0,0],["SG065-GLD","Nova Oval Bezel Huggie - Gold","Earrings",56.0,0,"Gold"],["SG065-SLV","Nova Oval Bezel Huggie - Silver","Earrings",56.0,0,"Silver"],["SG066-GLD","Goddess Hoops - Gold","Earrings",62.0,0,"Gold"],["SG066-SLV","Goddess Hoops - Silver","Earrings",62.0,0,"Silver"],["SG067","Nova Hoops","Earrings",48.0,1],["SG068-GLD","The Soho Hoop - Gold","Earrings",44.0,0,"Gold"],["SG068-SLV","The Soho Hoop - Silver","Earrings",44.0,0,"Silver"],["SG069","The Baby Studs","Earrings",32.0,0],["SG070","Forever Hiuggies","Earrings",42.0,0],["SG071","Duo Link Earrings","Earrings",52.0,0],["SG072-GLD","The Boulevard Huggies - Gold","Earrings",52.0,0,"Gold"],["SG072-SLV","The Boulevard Huggies - Silver","Earrings",52.0,0,"Silver"],["SG073-GLD","The Essential Studs - Gold","Earrings",52.0,0,"Gold"],["SG073-SLV","The Essential Studs - Silver","Earrings",52.0,0,"Silver"],["SG074","The Box Hoops","Earrings",52.0,0],["SG075-GLD","Twinkle Studs - Gold","Earrings",42.0,0,"Gold"],["SG075-SLV","Twinkle Studs - Silver","Earrings",42.0,0,"Silver"],["SG076","The Catalina Hoops","Earrings",52.0,0],["SG077","Classic Chunky Hoops","Earrings",54.0,0],["SG078","Golden Trio Huggies","Earrings",48.0,0],["SG079","Nova Bezel Huggies","Earrings",56.0,1],["SG080","Sun Kissed - Harmony Anklet","Anklets",48.0,0],["SG081","Olive Grove - Harmony Beaded Anklet","Anklets",48.0,0],["SG082","Turquoise Tide - Harmony Anklet","Anklets",48.0,0],["SG083","Laguna - Harmony Anklet","Anklets",48.0,0],["SG084","Midnight Muse - Harmony Anklet","Anklets",42.0,0],["SG085-GLD","Pearl Confetti Anklet - Gold","Anklets",42.0,0,"Gold"],["SG085-SLV","Pearl Confetti Anklet - Silver","Anklets",42.0,0,"Silver"],["SG086-GLD","Little Faith Necklace - Gold","Necklaces",48.0,0,"Gold"],["SG086-SLV","Little Faith Necklace - Silver","Necklaces",48.0,0,"Silver"],["SG087-GLD","Social Butterfly Necklace - Gold","Necklaces",68.0,0,"Gold"],["SG087-SLV","Social Butterfly Necklace - Silver","Necklaces",68.0,0,"Silver"],["SG088","Champagne Toast Necklace","Necklaces",62.0,0],["SG089","Silver Linings Necklace","Necklaces",68.0,0],["SG090","Simple Blessing Necklace","Necklaces",48.0,0],["SG091","Bright Side Necklace","Necklaces",52.0,0],["SG092","Turquoise Rays Necklace","Necklaces",68.0,0],["SG093","Evergreen Dreams Necklace","Necklaces",58.0,0],["SG094-CLR","Square Deal Necklace - Clear","Necklaces",56.0,0,"Clear"],["SG094-YEL","Square Deal Necklace - Yellow","Necklaces",56.0,0,"Yellow"],["SG094-PNK","Square Deal Necklace - Pink","Necklaces",56.0,0,"Pink"],["SG094-OLV","Square Deal Necklace - Olive","Necklaces",56.0,0,"Olive"],["SG094-FGR","Square Deal Necklace - Forest Green","Necklaces",56.0,0,"Forest Green"],["SG094-NVY","Square Deal Necklace - Navy Blue","Necklaces",56.0,0,"Navy Blue"],["SG094-RED","Square Deal Necklace - Red","Necklaces",56.0,0,"Red"],["SG094-PUR","Square Deal Necklace - Purple","Necklaces",56.0,0,"Purple"],["SG095","Wise Eyes Necklace","Necklaces",48.0,0],["SG096-BLU","Covered in Grace Necklace - Blue","Necklaces",58.0,0,"Blue"],["SG096-GRN","Covered in Grace Necklace - Green","Necklaces",58.0,0,"Green"],["SG096-MAG","Covered in Grace Necklace - Magenta","Necklaces",58.0,0,"Magenta"],["SG097-GLD","Faithfully Yours Necklace - Gold","Necklaces",52.0,0,"Gold"],["SG097-SLV","Faithfully Yours Necklace - Silver","Necklaces",52.0,0,"Silver"],["SG098-GLD","Free Rein Necklace - Gold","Necklaces",48.0,0,"Gold"],["SG098-SLV","Free Rein Necklace - Silver","Necklaces",48.0,0,"Silver"],["SG099-GLD","Tiny Paws Necklace - Gold","Necklaces",48.0,0,"Gold"],["SG099-SLV","Tiny Paws Necklace - Silver","Necklaces",48.0,0,"Silver"],["SG100","Gold Digger Heart Necklace","Necklaces",72.0,0],["SG101","Golden Spur Necklace","Necklaces",68.0,0],["SG102","Golden Grin Necklaces","Necklaces",62.0,0],["SG103","Melted Heart Necklace","Necklaces",68.0,0],["SG104","Good Karma Necklace","Necklaces",48.0,0],["SG105","Off Script Necklace","Necklaces",72.0,0],["SG106","Off Duty Necklace","Necklaces",56.0,0],["SG107","Sunbeam Necklace","Necklaces",68.0,0],["SG108","The Outlaw Necklace","Necklaces",56.0,0],["SG109","Green Affair Locket Necklace","Necklaces",102.0,0],["SG110","Blue Devotion Necklace","Necklaces",68.0,0]];
   var CATALOG_KEY = "item-list-cache";
   var CATEGORY_ORDER = ["Necklaces", "Bracelets", "Earrings", "Anklets"];
-  var catalog = BUILT_IN_ITEMS.map(function (a) { return { id: a[0], name: a[1], cat: a[2], price: a[3], sold: !!a[4] }; });
+  var catalog = BUILT_IN_ITEMS.map(function (a) { return { id: a[0], name: a[1], cat: a[2], price: a[3], sold: !!a[4], color: a[5] || "" }; });
   var catalogSource = "Built-in list";
   function timeText(ms) { return new Date(ms).toLocaleString("en-US", { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" }); }
   function validItems(list) {
@@ -11487,7 +11690,7 @@ function findAlignmentPattern(matrix, alignmentPatternQuads, topRight, topLeft, 
   }
   try {
     var cached = JSON.parse(localStorage.getItem(CATALOG_KEY) || "null");
-    if (cached && validItems(cached.items)) { catalog = cached.items; catalogSource = "From your Google Sheet, saved " + timeText(cached.time); }
+    if (cached && validItems(cached.items)) { catalog = cached.items; catalogSource = "From your spreadsheet, saved " + timeText(cached.time); }
   } catch (e) {}
   function findItem(id) {
     id = String(id).toUpperCase();
@@ -11503,7 +11706,7 @@ function findAlignmentPattern(matrix, alignmentPatternQuads, topRight, topLeft, 
         if (!j || !j.ok || !validItems(j.items)) return;
         catalog = j.items;
         var now = Date.now();
-        catalogSource = "From your Google Sheet, updated " + timeText(now);
+        catalogSource = "From your spreadsheet, updated " + timeText(now);
         try { localStorage.setItem(CATALOG_KEY, JSON.stringify({ time: now, items: j.items })); } catch (e) {}
         if (!$("picker").hidden) {
           if (catList().indexOf(pickCat) === -1) pickCat = "All";
@@ -11520,7 +11723,14 @@ function findAlignmentPattern(matrix, alignmentPatternQuads, topRight, topLeft, 
   /* ---------- Item photos: img/<ID>.webp (a missing file just shows a plain tile) ---------- */
   var noPhoto = {};
   var BLANK = "data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==";
-  function photoUrl(id) { return "img/" + encodeURIComponent(id) + ".webp"; }
+  /* Color rows (SG043-GLD) share the photo of the base item (SG043) */
+  function baseId(id) { return String(id || "").split("-")[0]; }
+  function bname(it) { var suf = it.color ? " - " + it.color : ""; return suf && it.name.slice(-suf.length) === suf ? it.name.slice(0, -suf.length) : it.name; }
+  function variantsOf(base) { base = String(base).toUpperCase(); return catalog.filter(function (x) { return x.color && baseId(x.id).toUpperCase() === base; }); }
+  /* Colors with their own photo (SG098-GLD.webp); every other color row uses the base item photo */
+  var OWN_PHOTO = {"SG098-GLD":1,"SG098-SLV":1,"SG099-GLD":1,"SG099-SLV":1,"SG032-SLV":1,"SG036-SLV":1,"SG043-SLV":1};
+  function photoKey(id) { id = String(id || "").toUpperCase(); return OWN_PHOTO[id] ? id : baseId(id); }
+  function photoUrl(id) { return "img/" + encodeURIComponent(photoKey(id)) + ".webp"; }
   function hasPhoto(id) { return id && !noPhoto[id]; }
   function makeThumb(id) {
     var im = document.createElement("img");
@@ -11680,7 +11890,7 @@ function findAlignmentPattern(matrix, alignmentPatternQuads, topRight, topLeft, 
     if (vsRefs) return Promise.resolve(vsRefs);
     if (vsBuilding) return vsBuilding;
     var seen = {}, list = [];
-    catalog.forEach(function (it) { if (hasPhoto(it.id) && !seen[it.name.toLowerCase()]) { seen[it.name.toLowerCase()] = 1; list.push(it); } });
+    catalog.forEach(function (it) { if (hasPhoto(it.id) && !seen[baseId(it.id)]) { seen[baseId(it.id)] = 1; list.push(it); } });
     var out = [], idx = 0;
     vsBuilding = new Promise(function (resolve) {
       function next() {
@@ -11786,14 +11996,14 @@ function findAlignmentPattern(matrix, alignmentPatternQuads, topRight, topLeft, 
       if (!ok) return null;
       return pmEmbed(src).then(function (q) {
         var seen = {}, list = [];
-        catalog.forEach(function (it) { if (hasPhoto(it.id) && !seen[it.name.toLowerCase()]) { seen[it.name.toLowerCase()] = 1; list.push(it); } });
+        catalog.forEach(function (it) { if (hasPhoto(it.id) && !seen[baseId(it.id)]) { seen[baseId(it.id)] = 1; list.push(it); } });
         var jobs = list.map(function (it) {
-          var v = PM.vecs[it.id];
+          var v = PM.vecs[baseId(it.id)];
           if (v && v.length === 384) return Promise.resolve({ it: it, score: pmDot(q, v) });
           /* A new item that isn't in the precomputed list yet: work it out from its photo once. */
           return vsLoad(photoUrl(it.id)).then(function (img) {
             if (!img) return null;
-            return pmEmbed(img).then(function (e) { PM.vecs[it.id] = Array.prototype.slice.call(e); return { it: it, score: pmDot(q, e) }; });
+            return pmEmbed(img).then(function (e) { PM.vecs[baseId(it.id)] = Array.prototype.slice.call(e); return { it: it, score: pmDot(q, e) }; });
           }).catch(function () { return null; });
         });
         return Promise.all(jobs).then(function (rows) {
@@ -11903,12 +12113,13 @@ function findAlignmentPattern(matrix, alignmentPatternQuads, topRight, topLeft, 
       ranked.forEach(function (x, i) {
         var li = document.createElement("li"), b = document.createElement("button");
         b.type = "button"; b.className = "pr-item" + (i === 0 && !res.weak ? " best" : "");
-        var n = document.createElement("span"); n.className = "pn"; n.textContent = x.it.name;
+        var n = document.createElement("span"); n.className = "pn"; n.textContent = bname(x.it);
         var pr = document.createElement("span"); pr.className = "pp"; pr.textContent = money.format(x.it.price);
-        var m = document.createElement("span"); m.className = "pm"; m.textContent = (res.weak ? "Closest guess" : (i === 0 ? "Best guess" : "Also close")) + " \u00b7 " + x.it.id + (x.it.sold ? " \u00b7 Sold out" : "");
+        var m = document.createElement("span"); m.className = "pm"; m.textContent = (res.weak ? "Closest guess" : (i === 0 ? "Best guess" : "Also close")) + " \u00b7 " + baseId(x.it.id) + (x.it.color ? " \u00b7 choose color" : "") + (x.it.sold ? " \u00b7 Sold out" : "");
         b.appendChild(makeThumb(x.it.id)); b.appendChild(n); b.appendChild(pr); b.appendChild(m);
         b.addEventListener("click", function () {
           openZoom(x.it, function () {
+            if (x.it.color) { closePhotoRes(); openPicker(bname(x.it)); return; }
             addScanned({ id: x.it.id, name: x.it.name, price: x.it.price.toFixed(2) });
             showAdded(x.it.name, x.it.price, 1, x.it.sold, x.it.id);
             try { if (navigator.vibrate) navigator.vibrate(40); } catch (e) {}
@@ -11919,7 +12130,7 @@ function findAlignmentPattern(matrix, alignmentPatternQuads, topRight, topLeft, 
       });
     }).catch(function () { tip.textContent = "Couldn't read that photo. Try again."; });
   }
-  if (window.SG_TEST) window.__sg = { pmMatch: pmMatch, PM: PM, vsDescribe: vsDescribe, vsDist: vsDist, buildReceipt: function () { return buildReceipt(); } };
+  if (window.SG_TEST) window.__sg = { handleCode: handleCode, resolveCode: resolveCode, pmMatch: pmMatch, PM: PM, vsDescribe: vsDescribe, vsDist: vsDist, buildReceipt: function () { return buildReceipt(); } };
 
   var toastTimer = null;
   function showAdded(name, price, count, sold, id) {
@@ -11964,19 +12175,65 @@ function findAlignmentPattern(matrix, alignmentPatternQuads, topRight, topLeft, 
     });
   }
   /* ---------- Close-up photo ---------- */
-  function largeUrl(id) { return "img/large/" + id + ".webp"; }
+  function largeUrl(id) { return "img/large/" + photoKey(id) + ".webp"; }
   var zoomAdd = null;
-  function openZoom(it, addFn) {
+  var zoomNav = null, zoomSwiped = 0;
+  function showZoom(it) {
     var im = $("zoom-img");
     im.onerror = function () { im.onerror = null; im.src = photoUrl(it.id); };
     im.src = largeUrl(it.id);
     $("zoom-name").textContent = it.name;
     $("zoom-price").textContent = money.format(it.price) + (it.sold ? " \u00b7 Sold out" : "");
+  }
+  function syncZoomNav() {
+    var n = zoomNav, many = !!n && n.list.length > 1;
+    $("zoom-prev").hidden = !many; $("zoom-next").hidden = !many; $("zoom-count").hidden = !many;
+    if (!many) return;
+    $("zoom-prev").disabled = n.i <= 0; $("zoom-next").disabled = n.i >= n.list.length - 1;
+    $("zoom-count").textContent = (n.i + 1) + " of " + n.list.length + " \u00b7 swipe for the next item";
+  }
+  /* nav (optional): { list: [{it, add}], i } so you can swipe through the list the photo came from */
+  function openZoom(it, addFn, nav) {
+    zoomNav = nav && nav.list && nav.list.length > 1 ? nav : null;
+    /* Close the phone keyboard so the whole photo is visible and swiping is easy */
+    try { var ae = document.activeElement; if (ae && ae !== document.body && /^(INPUT|TEXTAREA|SELECT)$/.test(ae.tagName)) ae.blur(); } catch (e) {}
+    showZoom(it);
     zoomAdd = addFn;
+    syncZoomNav();
     $("zoom").hidden = false;
   }
-  function closeZoom() { $("zoom").hidden = true; $("zoom-img").removeAttribute("src"); zoomAdd = null; }
-  $("zoom").addEventListener("click", function (e) { if (!e.target.closest("#zoom-add")) closeZoom(); });
+  function zoomStep(d) {
+    var n = zoomNav; if (!n) return;
+    var i = n.i + d; if (i < 0 || i >= n.list.length) return;
+    n.i = i;
+    var x = n.list[i];
+    zoomAdd = x.add;
+    showZoom(x.it);
+    syncZoomNav();
+  }
+  function closeZoom() { $("zoom").hidden = true; $("zoom-img").removeAttribute("src"); zoomAdd = null; zoomNav = null; }
+  $("zoom").addEventListener("click", function (e) {
+    if (e.target.closest("#zoom-add")) return;
+    if (e.target.closest(".zoom-nav")) { zoomStep(e.target.closest(".zprev") ? -1 : 1); return; }
+    if (Date.now() - zoomSwiped < 400) return;
+    closeZoom();
+  });
+  (function () {
+    var sx = 0, sy = 0, on = false;
+    var z = $("zoom");
+    z.addEventListener("touchstart", function (e) { if (e.touches.length !== 1) { on = false; return; } on = true; sx = e.touches[0].clientX; sy = e.touches[0].clientY; }, { passive: true });
+    z.addEventListener("touchend", function (e) {
+      if (!on || !zoomNav) return; on = false;
+      var t = e.changedTouches[0], dx = t.clientX - sx, dy = t.clientY - sy;
+      if (Math.abs(dx) < 50 || Math.abs(dx) < Math.abs(dy) * 1.5) return;
+      zoomSwiped = Date.now();
+      zoomStep(dx < 0 ? 1 : -1);
+    }, { passive: true });
+    document.addEventListener("keydown", function (e) {
+      if ($("zoom").hidden) return;
+      if (e.key === "ArrowRight") zoomStep(1); else if (e.key === "ArrowLeft") zoomStep(-1);
+    });
+  })();
   $("zoom-add").addEventListener("click", function () { var f = zoomAdd; closeZoom(); if (f) f(); });
   document.addEventListener("keydown", function (e) { if (e.key === "Escape" && !$("zoom").hidden) closeZoom(); });
   /* Tapping a photo in the item list or the photo-search results shows it larger. Tapping anywhere else on the row still adds the item. */
@@ -11991,15 +12248,32 @@ function findAlignmentPattern(matrix, alignmentPatternQuads, topRight, topLeft, 
     e.stopPropagation(); e.preventDefault();
     openZoom(it, function () { btn.click(); });
   }, true);
+  /* Tags from the website, so searching works for things like "horseshoe", "cross" or "huggies" */
+  var WEB_TAGS = {"pacific starfish necklace":"beach vibe | gold starfish | ocean theme necklaces | starfish charm necklace","wild spirit bracelet":"charm bracelet | longhorn | mother of pearl beads | stretch bracelets","golden dagger huggies":"cz huggies | dagger charm | dangle earrings | earrings with charm | hip huggies","classic chunky hoops":"chunky hoops | gold fill hoops | gold hoops","the catalina hoops":"cubic zirconia hoops | gold hoops | rectangle hoops","twist of luck bracelet":"charm bracelet | oval link bracelet","the lennox bracelet":"chain bracelet | pig nose bracelet","luna horn bracelet":"charm bracelet | country bracelet | stretchy bracelet","lucky streak bracelet":"charm bracelet | gold ball bracelet | gold fill ball bracelet | horseshoe bracelet | stretch bracelets","the classic bracelet":"gold ball bracelet | gold fill ball bracelet | stretch bracelets | stretchy bracelet","the valencia bracelet":"chain bracelet | dainty chain bracelet","the dainty staple bracelet":"chain bracelet | dainty paperclip bracelet | gold fill paperclip bracelet | paperclip bracelet | staple paperclip bracelet","twinkle studs":"cubic zirconia studs","the box hoops":"gold hoops","the essential studs":"cubic zirconia studs | gold large studs | large studs | zirconia studs","the boulevard huggies":"baguette huggies | cz huggies","mini luxe huggies":"cubic zirconia hoops | cz huggies | gold fill earrings | gold hoops | hip huggies","duo link earrings":"gold double hoops | gold fill earrings | gold hoops | hip huggies | paperclip earrings","forever hiuggies":"gold hoops | hip huggies","the baby studs":"baby studs | cubic zirconia studs | gold fill earrings | zirconia studs","the soho hoop":"gold fill earrings | gold hoops | rectangle hoops","nova hoops":"chunky hoops | hoop earrings | silver earrings | silver hoops","l.o.v.e necklace":"chunky necklace | heart charm | hip heart necklace | love charm","luna horn necklace":"allergen free necklace | crescent beaded necklace | gold crescent necklace | gold fill beaded necklace","nova oval bezel huggie":"chunky hoops | chunky huggies with bezel cz | chunky silver huggies | cubic zirconia hoops | gold hoops","moonlight hoops":"moon shape hoops | silver hoops","north star duo necklace":"cz necklace | north star necklace | north star pendant","the golden studs":"baby studs | cubic zirconia studs | zirconia studs","golden promise necklace":"lock and key charm | lock and key necklace | pave lock charm necklace | trendy necklace","everly lariat necklace":"bar necklace | paperclip chain | pave toggle necklace | toggle necklace","slow drip necklace":"lariat necklace | pave pig nose charm","ocean muse necklace":"blue stone bezel cz necklace | cz necklace | natural blue stone necklace","opal sky necklace":"aquamarine necklace | beaded necklace","soleil necklace":"18k gold fill pendant necklace | medallion necklace","golden girl necklace":"pave sun charm | sun necklace pendant","sunbeam heart bracelet":"chain bracelet | charm bracelet | chunky bracelet | heart charm | heart charm bracelet | rolo chain bracelet","the maren bracelet":"bracelet | chain bracelet","classic cuban":"chain bracelet | cuban chain | cuban chain bracelet | popular bracelet","legacy link bracelet":"chain bracelet | charm | charm bracelet | key charm bracelet | trendy bracelet","true north compass necklace":"chunky necklace | compass necklace | cz necklace | gold fill chain | medallion charm necklace","wild luck necklace":"18k gold fill pendant necklace | pave horseshoe necklace","everleaf necklace":"charm | gold leaf necklace | pave leaf charm","evergreen star pearl necklace":"color pearl necklace | green pearl necklace | olive pearl necklace | starburst pearl necklace | sunburst charm necklace","pearl essence necklace":"18k gold fill pendant necklace | freshwater pearls | mother of pearl pendant | pearl necklace statement piece | pearl necklace with charm","the halo necklace":"ball chain | charm | cz necklace | halo cz necklace | small ball necklace","golden wings necklace":"butterfly charm | butterfly necklace | gold fill chain","free spirit necklace":"butterfly necklace | silver butterfly | silver charm necklace | silver pave butterfly charm","pearl confetti anklet":"anklet | beaded anklet | gold disc","midnight muse":"beaded anklet | turquoise blue crystal anklet","golden drift necklace":"gold chain necklace | gold leaf necklace","the evermore necklace":"bold chain | chunky gold fill chain","the maren necklace":"chunky chain necklace | paperclip necklace","the crescent necklace":"crescent moon | moon necklace","the promise huggies":"cz huggies | gold hoops | hip huggies | hoop earrings | huggie earrings | huggies","classic pearl huggies":"gold hoops","silver luster hoops":"oval cz hoops | pave hoops | silver hoops","starfall huggies":"cz huggies | gold fill earrings | gold hoops | star huggies","forever yours locket":"heart locket | heart necklace | hip heart necklace | keepsake necklace | long necklace","laguna":"anklet | clear crystal anklet","turquoise tide":"anklet | turquoise beaded bracelet","sun kissed":"anklet | champagne beaded anklet","fortune found necklace":"large pave horseshoe necklace | pave horseshoe charm","turquoise star":"turquoise crystals","harbor light":"blue crystal beads","first bloom":"18 fill and crystal necklace | allergen free necklace | cz flower | flower beaded necklace | summer necklace","blush heart":"allergen free necklace | bubble heart necklace | pink crystal necklace | pink heart necklace | summer necklace","guiding light":"mother of pearl pendant | north star necklace","sunlit sage pearl necklace":"color pearl necklace | green pearls | pearl necklace | peridot cz | peridot pearl necklace","blue lagoon pearl necklace":"blue pearl necklace | color pearl necklace | freshwater pearl necklace","cosmic keepsake necklace":"charm necklace | crescent moon | medallion charm necklace | moon necklace | moon shape hoops | sun necklace","chasing feathers bracelet":"bracelet | leaf bracelet","petals of pearl necklace":"floral necklace | mother of pearl flower | mother of pearl necklace | trendy necklace","lucky charm necklace":"clear clover charm necklace | green clover charm | green clover necklace | trendy necklaces","a little love necklace":"pave heart necklace","tiny miracles necklace":"hummingbird necklace","forever rooted necklace":"18k gold fill pendant necklace | allergen free necklace | silver tree necklace | tree necklace","golden rhythm necklace":"ball chain | beaded necklace | bold chain","desert darling necklace":"cactus necklace | country necklace | desert necklace","autumn bloom pearl necklace":"brown pearl necklace | flower charm necklace | freshwater pearl necklace | pearl necklace | pearl necklace statement piece","faithfully yours necklace":"faith necklace | religious jewelry | silver cross | silver cross necklace with cz's","little faith necklace":"ball chain | cross necklace | cz necklace | faith necklace | gold cross necklace | religious jewelry","social butterfly necklace":"butterfly necklace | cz necklace | gold butterfly necklace | pave butterfly necklace | silver butterfly necklace","champagne toast necklace":"beaded necklace | champagne crystal necklace | crystal beaded necklace | gold bezel necklace","silver linings necklace":"baroque pearl necklace | pearl necklace | pearl pendant necklace | silver pearl necklace","simple blessing necklace":"cross necklace | dainty cross necklace | faith necklace | gold cross necklace | religious jewelry","bright side necklace":"bezel necklace | cz station necklace | dainty necklace | station necklace","turquoise rays necklace":"heart necklace | statement heart necklace | sunburst heart necklace | turquoise heart necklace | turquoise necklace","evergreen dreams necklace":"beaded necklace | dainty beaded necklace | forest green necklace | green beaded necklace | olive green necklace | seed bead necklace","square deal necklace":"bezel necklace | birthstone style necklace | colored stone necklace | paperclip chain necklace | square stone necklace","wise eyes necklace":"dainty owl necklace | good luck necklace | owl charm necklace | owl necklace | pave owl necklace","covered in grace necklace":"colored cross necklace | cross necklace | faith necklace | gemstone cross necklace","good karma necklace":"evil eye necklace | religious jewelry","off script necklace":"blue lapis necklace | north star necklace | north star pendant","tiny paws necklace":"dog paw necklace | paw necklace | rhodium plated necklace","free rein necklace":"country western necklace | pave horseshoe necklace | silver horseshoe necklace","gold digger heart necklace":"carabiner necklace | gold cuban link | gold fill chain | pave carabiner","golden spur necklace":"country western necklace | cowgirl boot | cuban chain | gold cuban link","lucky lady horseshoe necklace":"horseshoe | pave horseshoe necklace","melted heart necklace":"18k gold fill pendant necklace | gold heart necklace","golden grin necklaces":"pave bar necklace","sunbeam necklace":"gold heart necklace | heart statement necklace | unique heart necklace","the outlaw necklace":"cowboy hat necklace | pave cowgirl hat necklace","green affair locket necklace":"forest green necklace | freshwater pearl necklace | green pearl necklace | half pearl half chain necklace | locket necklace","blue devotion necklace":"beaded jewish star necklace | beaded necklace | blue beaded necklace | blue jewish star necklace | star of david necklace","evil eye":"ball chain | charm | charm necklace | evil eye necklace","moon and star":"crescent moon | gold crescent necklace | moon and star necklace","off duty necklace":"bar necklace | country inspired jewelry | t bar necklace | western jewelry"};
+  var WEB_DESC = {"pacific starfish necklace":"starfish pendant pave stones sun sea beach ocean","wild spirit bracelet":"mother of pearl beads longhorn charm stretchy layered","golden dagger huggies":"statement pave spike drop dangle","classic chunky hoops":"sleek polished staple","the catalina hoops":"huggie hoops cubic zirconia sparkle everyday","the awakening necklace":"11:11 alignment new beginnings zirconia angel number","twist of luck bracelet":"textured chain twist link","the lennox bracelet":"link bracelet stacking contemporary","luna horn bracelet":"solid gold beads crescent horn charm stacked","lucky streak bracelet":"bead bracelet white blue zirconia horseshoe charm stacking","the classic bracelet":"ball beaded bracelet 5mm stackable","the valencia bracelet":"textured oval links extender sparkle","the dainty staple bracelet":"paper clip link layering everyday","twinkle studs":"zirconia climber studs dainty","the box hoops":"square hoops modern","the essential studs":"large zirconia studs sparkle","the boulevard huggies":"baguette cut zirconia stones sleek modern","mini luxe huggies":"dainty small pave zirconia ear stack","duo link earrings":"connected links paper clip dangling dangle","forever hiuggies":"rounded chunky classic huggies","the baby studs":"baby pair studs stacking tiny","the soho hoop":"rectangular hoops polished","nova hoops":"silver filled chunky hoop","l.o.v.e necklace":"love heart spiked sculptural pendant cubic zirconia romance edge","luna horn necklace":"crescent charm beaded intuition protection hand strung zirconia","goddess hoops":"cubic zirconia sparkle staple","nova oval bezel huggie":"chunky bezel set zirconia rhodium plated","moonlight hoops":"sculpted silver polished day to night","golden trio huggies":"vintage bezel set stones","north star duo necklace":"double north star pendant pave cubic zirconia layering","the golden studs":"three cubic zirconia stones studs delicate","golden promise necklace":"lock and key pave","everly lariat necklace":"pave toggle bar lariat drop","slow drip necklace":"lariat pave connector drop dainty oval","ocean muse necklace":"blue natural stone pendant snake chain coastal","opal sky necklace":"aquamarine rondelle beads silver north star charm opal celestial rhodium milky","soleil necklace":"sunburst medallion emerald cut crystal zirconia paperclip chain sunray sun","golden girl necklace":"sun charm warmth confidence joy light shine heart of she's golden","sunbeam heart bracelet":"textured heart sunset charm","the maren bracelet":"oversized elongated links oval paperclip","classic cuban":"cuban chain bracelet curb","legacy link bracelet":"polished links key charm unlocking potential","true north compass necklace":"compass medallion guidance adventure pave add charms","wild luck necklace":"luck pave horseshoe charm","everleaf necklace":"leaf pave nature growth hope sparkling","evergreen star pearl necklace":"olive pearls starburst pendant multi color zirconia freshwater statement green","pearl essence necklace":"hand strung freshwater pearls mother of pearl pendant zirconia classic pearl","the halo necklace":"cushion cut stone pave halo zirconia ball chain dainty","camille lariat necklace":"lariat long 40 inch freshwater pearls wrap","golden wings necklace":"butterfly charm transformation hope","free spirit necklace":"butterfly pave zirconia silver rhodium plated chain","pearl confetti anklet":"pearls gold discs faux pearls summer playful","midnight muse":"navy blue faceted beads turquoise beaded wire anklet gold accents minimalist","golden drift necklace":"gold drops strand polished layering","the evermore necklace":"articulated links fluid bold","the maren necklace":"modern link bold chain","the crescent necklace":"crescent moon pendant growth resilience","the promise huggies":"zirconia huggies subtle sparkle","classic pearl huggies":"pearl drop huggies coast","silver luster hoops":"rhodium plated cubic zirconia pave huggie stacking silver","starfall huggies":"starburst zirconia celestial polished huggies stacking","forever yours locket":"love locket keepsake memories large heart long chain","laguna":"clear crystal beads faceted clarity confidence anklet bracelet","turquoise tide":"turquoise beads crystal beaded anklet summer water","olive grove":"olive green beaded wire anklet calm grounded","sun kissed":"champagne beads pearls beaded wire anklet","fortune found necklace":"horse shoe horseshoe zirconia luck confidence","turquoise star":"turquoise czech glass beads compass star oval zirconia hand strung","harbor light":"navy beads faceted gemstone anchor charm calm waters nautical","first bloom":"crystal flower charm zirconia czech glass beads feminine","blush heart":"pink gemstone beads bubble heart romantic czech glass","guiding light":"blush champagne beads mother of pearl zirconia north star charm czech glass","sunlit sage pearl necklace":"olive freshwater pearls peridot gemstone green calming","blue lagoon pearl necklace":"blue pearls freshwater coast calm hand strung","cosmic keepsake necklace":"celestial sun moon stars trio oval zirconia charm dreams","chasing feathers bracelet":"feather zirconia centerpiece gold link chain","the golden standard necklace":"golden beads solid balls square zirconia crystal pendant bezel golden hour worth","petals of pearl necklace":"mother of pearl beads flower pendant carved bezel zirconia bloom","lucky charm necklace":"four leaf clover charm emerald green stones green zirconia luck","a little love necklace":"open heart pendant cubic zirconia layering","tiny miracles necklace":"hummingbird humming bird charm joy resilience","forever rooted necklace":"golden tree zirconia roots strength grounded rooted in light","golden rhythm necklace":"marquise cut stones ball beads zirconia layering","desert darling necklace":"cactus pendant zirconia southwest","autumn bloom pearl necklace":"brown pearls earthy floral pendant flower fall","faithfully yours necklace":"cross pave sparkling faith","little faith necklace":"tiny cross pave ball chain dainty","social butterfly necklace":"butterfly baguette pave stones","champagne toast necklace":"champagne crystals faceted golden beads bezel pendant","silver linings necklace":"baroque pearl pendant iridescent zirconia bail silver chain rhodium","simple blessing necklace":"polished gold cross faith layered","bright side necklace":"clear oval stones bezels fine chain zirconia stations station","turquoise rays necklace":"sunburst heart turquoise stones golden rays open heart","evergreen dreams necklace":"olive seed bead green beads spacers earthy moss","square deal necklace":"bezel square stone pendant paperclip chain colors clear yellow pink olive forest green navy blue red purple","wise eyes necklace":"owl pave blue eyes good luck charm","covered in grace necklace":"cross zirconia stones color faith","free rein necklace":"sparkling horseshoe curved silhouette bar detail lucky charm luck pave","tiny paws necklace":"paw print paw charm pave dog pet love silver tone chain rhodium","gold digger heart necklace":"heart shaped carabiner closure clasp curb chain pave crystals statement minimalist layer cuban","golden spur necklace":"cowboy boot charm spur pave crystal curb chain rodeo","golden grin necklaces":"curved pave crystal bar smile dainty collarbone","melted heart necklace":"hammered molten textured heart pendant pave crystal bail romantic","good karma necklace":"sparkling evil eye charm golden beads pave good energy","off script necklace":"lapis blue compass pendant zirconia paperclip chain wanderlust","off duty necklace":"t-bar pendant twisted rope detailing alternating links vintage","sunbeam necklace":"sunburst sculpted heart rounded links vintage","the outlaw necklace":"cowgirl hat pendant stone lined brim country","green affair locket necklace":"green pearls gold links sparkling medallion statement vintage zirconia locket","blue devotion necklace":"navy beads star of david jewish faith pave"};
+  function itemTags(it) {
+    var k = bname(it).toLowerCase(), k2 = k.split(" - ")[0];
+    /* Names like "Guiding Light - Harmony Necklace" are tagged on the website as "Guiding Light" */
+    return (WEB_TAGS[k] || WEB_TAGS[k2] || "") + " " + (WEB_DESC[k] || WEB_DESC[k2] || "");
+  }
+  function matchesQuery(it, q) {
+    var hay = (it.name + " " + it.id + " " + itemTags(it)).toLowerCase();
+    var words = q.split(/\s+/);
+    for (var i = 0; i < words.length; i++) if (words[i] && hay.indexOf(words[i]) === -1) return false;
+    return true;
+  }
+  var pickShown = [];
   function renderPicker() {
     var q = $("pick-q").value.trim().toLowerCase();
     var list = $("pick-list");
     list.innerHTML = "";
     var shown = 0;
+    pickShown = [];
     catalog.forEach(function (it) {
       if (pickCat !== "All" && it.cat !== pickCat) return;
-      if (q && it.name.toLowerCase().indexOf(q) === -1 && String(it.id).toLowerCase().indexOf(q) === -1) return;
+      if (q && !matchesQuery(it, q)) return;
       shown++;
+      pickShown.push(it);
       var li = document.createElement("li");
       var b = document.createElement("button");
       b.type = "button";
@@ -12010,7 +12284,13 @@ function findAlignmentPattern(matrix, alignmentPatternQuads, topRight, topLeft, 
       m.textContent = it.cat + " · " + it.id;
       if (it.sold) { var t = document.createElement("span"); t.className = "tagsold"; t.textContent = " · Sold out"; m.appendChild(t); }
       b.appendChild(makeThumb(it.id)); b.appendChild(n); b.appendChild(pr); b.appendChild(m);
-      b.addEventListener("click", function () { openZoom(it, function () { pickItem(it); }); });
+      b.addEventListener("click", function () {
+        var snap = pickShown.slice();
+        openZoom(it, function () { pickItem(it); }, {
+          list: snap.map(function (x) { return { it: x, add: function () { pickItem(x); } }; }),
+          i: Math.max(0, snap.indexOf(it))
+        });
+      });
       var plus = document.createElement("button");
       plus.type = "button"; plus.className = "pick-plus"; plus.textContent = "+";
       plus.setAttribute("aria-label", "Add " + it.name);
@@ -12060,11 +12340,11 @@ function findAlignmentPattern(matrix, alignmentPatternQuads, topRight, topLeft, 
     $("pick-msg").textContent = "Added: " + it.name + " " + money.format(it.price) + (it.sold ? " (marked sold out)" : "") + "   (" + pickCount + " added)";
     try { if (navigator.vibrate) navigator.vibrate(40); } catch (e) {}
   }
-  function openPicker() {
+  function openPicker(q) {
     pickCount = 0;
     pickCat = "All";
-    $("pick-q").value = "";
-    $("pick-msg").textContent = "Tap + to add an item. Tap the row to see its photo.";
+    $("pick-q").value = typeof q === "string" ? q : "";
+    $("pick-msg").textContent = typeof q === "string" ? "Tap + on the color you are selling." : "Tap + to add an item. Tap the row to see its photo.";
     renderCats();
     renderPicker();
     renderRecent();
@@ -12078,7 +12358,7 @@ function findAlignmentPattern(matrix, alignmentPatternQuads, topRight, topLeft, 
     document.body.style.overflow = "";
     $("pick-open").focus();
   }
-  $("pick-open").addEventListener("click", openPicker);
+  $("pick-open").addEventListener("click", function () { openPicker(); });
   $("pick-done").addEventListener("click", closePicker);
   $("pick-q").addEventListener("input", function () { renderPicker(); renderRecent(); });
   document.addEventListener("keydown", function (e) { if (e.key === "Escape" && !$("picker").hidden) closePicker(); });
@@ -12102,7 +12382,9 @@ function findAlignmentPattern(matrix, alignmentPatternQuads, topRight, topLeft, 
     var m = /^SGID\|([A-Za-z0-9-]+)$/.exec(String(text || "").trim());
     if (m) {
       var it = findItem(m[1]);
-      return it ? { id: it.id, name: it.name, price: it.price.toFixed(2), sold: it.sold } : { missing: m[1].toUpperCase() };
+      if (it) return { id: it.id, name: it.name, price: it.price.toFixed(2), sold: it.sold };
+      var vs = variantsOf(m[1]);
+      return vs.length ? { pickColor: bname(vs[0]) } : { missing: m[1].toUpperCase() };
     }
     return parseItem(text);
   }
@@ -12127,6 +12409,9 @@ function findAlignmentPattern(matrix, alignmentPatternQuads, topRight, topLeft, 
       all[all.length - 1].querySelector(".name").value = item.name;
       all[all.length - 1].setAttribute("data-id", item.id || "");
     }
+    /* Keep one blank row ready at the end, so the next item can be typed straight in */
+    var after = rows(), lastRow = after[after.length - 1];
+    if (lastRow && (lastRow.querySelector(".price").value.trim() || lastRow.querySelector(".name").value.trim())) addRow("", false);
   }
   function handleCode(text) {
     var now = Date.now();
@@ -12136,6 +12421,7 @@ function findAlignmentPattern(matrix, alignmentPatternQuads, topRight, topLeft, 
     lastCode = text;
     lastAt = now;
     if (!item) { scanMsg.textContent = "That QR code isn't a She's Golden item."; return false; }
+    if (item.pickColor) { closeScanner(); openPicker(item.pickColor); return false; }
     if (item.missing) { scanMsg.textContent = "Item " + item.missing + " isn't in your item list. Check the Products tab in your sheet."; return false; }
     addScanned(item);
     addedCount++;
@@ -12267,53 +12553,120 @@ function findAlignmentPattern(matrix, alignmentPatternQuads, topRight, topLeft, 
   $("a-cash").addEventListener("focus", function () { var el = this; setTimeout(function () { try { el.select(); } catch (e) {} }, 0); });
 
   /* ---------- Location ---------- */
-  var LOC_KEY = "last-location", LOC_RECENT = "recent-locations";
+  var LOC_KEY = "last-location", LOC_RECENT = "recent-locations", LOCS_KEY = "sg-locs", LOCOPS_KEY = "sg-loc-ops";
   function recentLocs() { try { var a = JSON.parse(localStorage.getItem(LOC_RECENT) || "[]"); return Array.isArray(a) ? a : []; } catch (e) { return []; } }
-  function renderLocList() {
-    var dl = $("loc-list");
-    dl.innerHTML = "";
-    recentLocs().forEach(function (n) { var o = document.createElement("option"); o.value = n; dl.appendChild(o); });
-    renderLocChips();
-  }
-  function renderLocChips() {
-    var box = $("loc-chips"), list = recentLocs(), cur = currentLoc().toLowerCase();
-    box.innerHTML = "";
-    box.hidden = !list.length;
-    list.forEach(function (n) {
-      var c = document.createElement("span"); c.className = "locchip" + (n.toLowerCase() === cur ? " on" : "");
-      var u = document.createElement("button"); u.type = "button"; u.className = "lc-use"; u.textContent = n;
-      u.addEventListener("click", function () { $("a-loc").value = n; rememberLoc(); updateCtx(); syncLocClear(); });
-      var x = document.createElement("button"); x.type = "button"; x.className = "lc-x"; x.textContent = "\u00d7"; x.setAttribute("aria-label", "Remove " + n);
-      x.addEventListener("click", function () {
-        var l = recentLocs().filter(function (q) { return q !== n; });
-        try { localStorage.setItem(LOC_RECENT, JSON.stringify(l)); } catch (e) {}
-        renderLocList();
-      });
-      c.appendChild(u); c.appendChild(x); box.appendChild(c);
+  /* ---------- Location list: shared through the "Locations" tab of your spreadsheet, same idea as the tax list ---------- */
+  var locs = [];
+  function cleanLocs(list) {
+    var seen = {}, out = [];
+    (Array.isArray(list) ? list : []).forEach(function (n) {
+      n = String(n == null ? "" : n).replace(/\s+/g, " ").trim().slice(0, 40);
+      if (n && !seen[n.toLowerCase()]) { seen[n.toLowerCase()] = 1; out.push(n); }
     });
+    out.sort(function (a, b) { return a.toLowerCase() < b.toLowerCase() ? -1 : a.toLowerCase() > b.toLowerCase() ? 1 : 0; });
+    return out;
   }
+  function saveLocs() { try { localStorage.setItem(LOCS_KEY, JSON.stringify(locs)); } catch (e) {} }
+  function readLocOps() { try { var a = JSON.parse(localStorage.getItem(LOCOPS_KEY) || "[]"); return Array.isArray(a) ? a : []; } catch (e) { return []; } }
+  function writeLocOps(a) { try { localStorage.setItem(LOCOPS_KEY, JSON.stringify(a)); } catch (e) {} }
   function currentLoc() { return $("a-loc").value.trim().slice(0, 40); }
+  (function loadLocs() {
+    var base = [];
+    try { var raw = JSON.parse(localStorage.getItem(LOCS_KEY) || "null"); base = Array.isArray(raw) ? raw : recentLocs(); } catch (e) { base = recentLocs(); }
+    var cur = ""; try { cur = localStorage.getItem(LOC_KEY) || ""; } catch (e) {}
+    $("a-loc").value = cur;
+    if (cur.trim()) base = base.concat([cur]);
+    locs = cleanLocs(base);
+  })();
+  function selectedLocIdx() {
+    var cur = currentLoc().toLowerCase(), i;
+    for (i = 0; i < locs.length; i++) if (locs[i].toLowerCase() === cur) return i;
+    return -1;
+  }
+  function renderLocSel() {
+    var sel = $("loc-sel"), idx = selectedLocIdx(), h = '<option value="">No location chosen</option>', i;
+    for (i = 0; i < locs.length; i++) h += '<option value="' + i + '">' + locs[i].replace(/&/g, "&amp;").replace(/</g, "&lt;") + "</option>";
+    h += '<option value="add">+ Add location...</option>';
+    sel.innerHTML = h;
+    sel.value = idx >= 0 ? String(idx) : "";
+    $("loc-rm").hidden = idx < 0;
+  }
   function rememberLoc() {
     var n = currentLoc();
     try { localStorage.setItem(LOC_KEY, $("a-loc").value); } catch (e) {}
-    if (!n) return;
-    var list = recentLocs().filter(function (x) { return x.toLowerCase() !== n.toLowerCase(); });
-    list.unshift(n);
-    try { localStorage.setItem(LOC_RECENT, JSON.stringify(list.slice(0, 8))); } catch (e) {}
-    renderLocList();
+    if (n && selectedLocIdx() < 0) { locs = cleanLocs(locs.concat([n])); saveLocs(); }
+    renderLocSel();
   }
-  try { $("a-loc").value = localStorage.getItem(LOC_KEY) || ""; } catch (e) {}
-  $("a-loc").addEventListener("change", rememberLoc);
-  function syncLocClear() { $("loc-clear").hidden = !$("a-loc").value; }
-  $("a-loc").addEventListener("input", function () { updateCtx(); renderLocChips(); syncLocClear(); });
-  $("loc-clear").addEventListener("click", function () {
-    $("a-loc").value = "";
-    try { localStorage.setItem(LOC_KEY, ""); } catch (e) {}
-    updateCtx(); renderLocChips(); syncLocClear();
+  function chooseLoc(n) { $("a-loc").value = n || ""; rememberLoc(); updateCtx(); }
+  function locSyncNote(t) { $("loc-sync").textContent = t; }
+  var locSyncing = false;
+  function syncLocs() {
+    var cfg = getCfg();
+    if (!cfg || locSyncing) return;
+    if (!navigator.onLine) { if (readLocOps().length) locSyncNote("Waiting to share your location changes (offline)."); return; }
+    locSyncing = true;
+    (function next() {
+      var ops = readLocOps();
+      if (ops.length) {
+        var op = ops[0];
+        taxPost(op.op === "add" ? { locAdd: { name: op.name } } : { locRemove: { name: op.name } }).then(function () {
+          writeLocOps(readLocOps().slice(1));
+          next();
+        }, function () { locSyncing = false; locSyncNote("Couldn't share your location change yet. It will retry."); });
+        return;
+      }
+      fetch(cfg.url + (cfg.url.indexOf("?") === -1 ? "?" : "&") + "action=locations&key=" + encodeURIComponent(cfg.key), { redirect: "follow", cache: "no-store" })
+        .then(function (r) { return r.json(); })
+        .then(function (j) {
+          if (j && j.ok && Array.isArray(j.locations)) {
+            var cur = currentLoc();
+            locs = cleanLocs(j.locations.concat(cur ? [cur] : []));
+            saveLocs(); renderLocSel(); locSyncNote("");
+          }
+        })
+        .catch(function () {})
+        .then(function () { locSyncing = false; });
+    })();
+  }
+  function showLocAdd(on) {
+    $("loc-add").hidden = !on;
+    $("loc-msg").hidden = true;
+    if (on) { $("loc-new-name").value = ""; $("loc-new-name").focus(); }
+    else renderLocSel();
+  }
+  $("loc-sel").addEventListener("change", function () {
+    var v = this.value;
+    if (v === "add") { showLocAdd(true); return; }
+    $("loc-add").hidden = true;
+    chooseLoc(v === "" ? "" : locs[Number(v)]);
   });
-  $("a-loc").addEventListener("change", syncLocClear);
-  syncLocClear();
-  renderLocList();
+  $("loc-cancel").addEventListener("click", function () { showLocAdd(false); });
+  $("loc-save").addEventListener("click", function () {
+    var name = $("loc-new-name").value.replace(/\s+/g, " ").trim().slice(0, 40), msg = $("loc-msg");
+    if (!name) { msg.textContent = "Type a name for this location."; msg.hidden = false; return; }
+    var found = -1;
+    locs.forEach(function (n, i) { if (n.toLowerCase() === name.toLowerCase()) found = i; });
+    var useName = found >= 0 ? locs[found] : name;
+    if (found < 0) {
+      locs = cleanLocs(locs.concat([name])); saveLocs();
+      var ops = readLocOps(); ops.push({ op: "add", name: name }); writeLocOps(ops);
+    }
+    $("loc-add").hidden = true;
+    chooseLoc(useName);
+    syncLocs();
+  });
+  $("loc-rm").addEventListener("click", function () {
+    var i = selectedLocIdx();
+    if (i < 0) return;
+    if (!confirm("Remove " + locs[i] + " from the list on every phone? Past sales keep their location.")) return;
+    var ops = readLocOps(); ops.push({ op: "remove", name: locs[i] }); writeLocOps(ops);
+    locs.splice(i, 1); saveLocs();
+    chooseLoc("");
+    syncLocs();
+  });
+  renderLocSel();
+  $("menu-btn").addEventListener("click", syncLocs);
+  window.addEventListener("online", syncLocs);
 
   /* ---------- Receipt ---------- */
   var RW = 40;
@@ -12489,9 +12842,9 @@ function findAlignmentPattern(matrix, alignmentPatternQuads, topRight, topLeft, 
     if (cash) cashEl.textContent = cash.change < 0 ? "Still owed " + money.format(-cash.change) : "Change due " + money.format(cash.change) + " (received " + money.format(cash.given) + ")";
     function stillQueued() { return readQ().some(function (q) { return q.id === rc.id; }); }
     function setSheet() {
-      if (!getCfg()) { sheet.className = "sp-sheet bad"; sheet.textContent = "Not sent: Google Sheet not connected"; return true; }
-      if (stillQueued()) { sheet.className = "sp-sheet"; sheet.textContent = "Sending to Google Sheet\u2026"; return false; }
-      sheet.className = "sp-sheet"; sheet.textContent = "\u2713 Saved to Google Sheet"; return true;
+      if (!getCfg()) { sheet.className = "sp-sheet bad"; sheet.textContent = "Not sent: Spreadsheet not connected"; return true; }
+      if (stillQueued()) { sheet.className = "sp-sheet"; sheet.textContent = "Sending to spreadsheet\u2026"; return false; }
+      sheet.className = "sp-sheet"; sheet.textContent = "\u2713 Saved to spreadsheet"; return true;
     }
     var done = setSheet();
     var keepOpen = setupShare(rc);
@@ -12549,7 +12902,7 @@ function findAlignmentPattern(matrix, alignmentPatternQuads, topRight, topLeft, 
     }
     if (!getCfg()) {
       m.className = "note warn";
-      m.textContent = "Google Sheet isn't connected.";
+      m.textContent = "Spreadsheet isn't connected.";
       return;
     }
     rememberLoc();
@@ -12611,7 +12964,7 @@ function findAlignmentPattern(matrix, alignmentPatternQuads, topRight, topLeft, 
     });
   });
 
-  /* ---------- Google Sheet sync ---------- */
+  /* ---------- Spreadsheet sync ---------- */
   var SHEET_URL_KEY = "sheet-url", SHEET_KEY_KEY = "sheet-key", QUEUE_KEY = "sheet-queue";
   function lsGet(k) { try { return localStorage.getItem(k); } catch (e) { return null; } }
   function lsSet(k, v) { try { localStorage.setItem(k, v); } catch (e) {} }
@@ -12636,9 +12989,9 @@ function findAlignmentPattern(matrix, alignmentPatternQuads, topRight, topLeft, 
   }
   function idleStatus() {
     var q = readQ();
-    if (!getCfg()) { sheetStatus("Google Sheet: not connected"); return; }
-    if (q.length) sheetStatus("Google Sheet: " + q.length + " receipt" + (q.length > 1 ? "s" : "") + " waiting to send", "bad");
-    else sheetStatus("Google Sheet: connected", "ok");
+    if (!getCfg()) { sheetStatus("Spreadsheet: not connected"); return; }
+    if (q.length) sheetStatus("Spreadsheet: " + q.length + " receipt" + (q.length > 1 ? "s" : "") + " waiting to send", "bad");
+    else sheetStatus("Spreadsheet: connected", "ok");
   }
 
   function collectReceipt() {
@@ -12669,11 +13022,13 @@ function findAlignmentPattern(matrix, alignmentPatternQuads, topRight, topLeft, 
     return {
       location: currentLoc(),
       payment: payLabel(),
+      salesperson: (lsGet(CLOVER_NAME_KEY) || "").trim(),
       customer: customer(),
       surcharge: fee / 100,
       surchargePct: fee > 0 ? CARD_FEE_PCT : 0,
-      id: "r" + Date.now().toString(36) + Math.random().toString(36).slice(2, 6),
+      id: saleId || (saleId = "r" + Date.now().toString(36) + Math.random().toString(36).slice(2, 6)),
       time: new Date().toISOString(),
+      cloverOrder: cloverSent ? cloverSent.orderId : "",
       items: items,
       subtotal: before / 100,
       discountPct: bogo ? (before ? Math.round((before - after) / before * 10000) / 100 : 0) : pct,
@@ -12703,10 +13058,10 @@ function findAlignmentPattern(matrix, alignmentPatternQuads, topRight, topLeft, 
     var cfg = getCfg();
     if (!cfg || flushing || !readQ().length) { idleStatus(); return; }
     flushing = true;
-    sheetStatus("Google Sheet: sending...");
+    sheetStatus("Spreadsheet: sending...");
     (function next() {
       var q = readQ();
-      if (!q.length) { flushing = false; sheetStatus("Google Sheet: receipt added", "ok"); return; }
+      if (!q.length) { flushing = false; sheetStatus("Spreadsheet: receipt added", "ok"); return; }
       postReceipt(cfg, q[0]).then(function (res) {
         if (res && res.ok) {
           writeQ(readQ().filter(function (x) { return x.id !== q[0].id; }));
@@ -12714,11 +13069,11 @@ function findAlignmentPattern(matrix, alignmentPatternQuads, topRight, topLeft, 
         } else {
           flushing = false;
           var why = res && res.error ? res.error : "unknown problem";
-          sheetStatus("Google Sheet: not added (" + why + "). Receipt is saved on this phone and will retry.", "bad");
+          sheetStatus("Spreadsheet: not added (" + why + "). Receipt is saved on this phone and will retry.", "bad");
         }
       }, function () {
         flushing = false;
-        sheetStatus("Google Sheet: offline. " + readQ().length + " receipt" + (readQ().length > 1 ? "s" : "") + " will send when you're back online.", "bad");
+        sheetStatus("Spreadsheet: offline. " + readQ().length + " receipt" + (readQ().length > 1 ? "s" : "") + " will send when you're back online.", "bad");
       });
     })();
   }
@@ -12729,6 +13084,87 @@ function findAlignmentPattern(matrix, alignmentPatternQuads, topRight, topLeft, 
     writeQ(q);
     flushQueue();
   }
+
+
+  /* ---------- Clover: send the sale as an open order ---------- */
+  var CLOVER_ON_KEY = "clover-on", CLOVER_NAME_KEY = "clover-name";
+  function cloverEnabled() { return lsGet(CLOVER_ON_KEY) === "1" && !!getCfg(); }
+  function cloverEligible() { var t = payType(); return t === "credit" || t === "debit"; }
+  function cloverPayload() {
+    var rc = collectReceipt();
+    if (!rc) return null;
+    return {
+      receiptId: rc.id,
+      name: (lsGet(CLOVER_NAME_KEY) || "").trim(),
+      location: rc.location || "",
+      payment: rc.payment || "",
+      items: rc.items.map(function (it) { return { name: it.name, cents: Math.round(it.after * 100) }; }),
+      shippingCents: Math.round((rc.shipping || 0) * 100),
+      taxPct: rc.taxPct,
+      taxName: currentTaxName(),
+      expectedCents: Math.round((rc.total - (rc.surcharge || 0)) * 100),
+      replaces: cloverSent ? cloverSent.orderId : ""
+    };
+  }
+  function cloverSig(p) { return JSON.stringify([p.items, p.shippingCents, p.location, p.name, p.taxPct]); }
+  function syncCloverBtn() {
+    var b = $("send-clover");
+    if (!b) return;
+    var show = cloverEnabled() && cloverEligible() && !!buildReceipt();
+    b.hidden = !show;
+    if (!show) return;
+    var p = cloverPayload();
+    var same = cloverSent && p && cloverSent.sig === cloverSig(p);
+    b.className = "savebtn cloverbtn" + (same ? " sent" : "");
+    b.textContent = same ? "Sent to Clover ✓ (order " + cloverSent.shortId + ")" : (cloverSent ? "Cart changed. Send again" : "Send to Clover");
+  }
+  $("send-clover").addEventListener("click", function () {
+    var msg = $("save-msg"), btn = this;
+    msg.className = "note"; msg.textContent = "";
+    var cfg = getCfg(), p = cloverPayload();
+    if (!cfg || !p) { msg.className = "note warn"; msg.textContent = "Enter at least one price first."; return; }
+    var sig = cloverSig(p);
+    if (cloverSent && cloverSent.sig === sig) { msg.textContent = "Already sent to Clover (order " + cloverSent.shortId + ")."; return; }
+    var rcNow = collectReceipt(), cashNow = cashInfo(), feeNote = cloverFeeNote();
+    btn.disabled = true; btn.textContent = "Sending to Clover...";
+    var body = JSON.stringify({ key: cfg.key, clover: p });
+    fetch(cfg.url, { method: "POST", body: body, redirect: "follow" }).then(function (res) {
+      return res.json();
+    }).then(function (j) {
+      btn.disabled = false;
+      if (j && j.ok) {
+        cloverSent = { sig: sig, orderId: j.orderId, shortId: j.shortId || "" };
+        var cents = j.totalCents, diff = Math.abs(cents - p.expectedCents);
+        if (diff > 1) {
+          msg.className = "note warn";
+          msg.textContent = "Sent, but Clover's total is " + money.format(cents / 100) + " and this app has " + money.format(p.expectedCents / 100) + ". Check the tax rate in Clover before charging. The sale was NOT saved or cleared. Fix it, then tap Save Sale.";
+        } else {
+          /* Good send: save the sale to the sheet, then clear the screen for the next customer. */
+          rememberLoc();
+          sendToSheet(rcNow);
+          msg.className = "note";
+          msg.textContent = "Sent to Clover and saved. Open it in Orders on the device and charge " + money.format(cents / 100) + feeNote + " (order " + (j.shortId || "") + ").";
+          try { if (document.activeElement && document.activeElement.blur) document.activeElement.blur(); } catch (e) {}
+          showSaved(rcNow, false, cashNow);
+          clearSale(true);
+        }
+      } else {
+        msg.className = "note warn";
+        msg.textContent = "Not sent to Clover" + (j && j.error ? " (" + j.error + ")" : "") + ". Nothing was created. Enter the sale on the device as usual.";
+      }
+      syncCloverBtn();
+    }, function () {
+      btn.disabled = false;
+      msg.className = "note warn";
+      msg.textContent = "Couldn't reach Clover. Check your signal. Nothing was created. Enter the sale on the device as usual.";
+      syncCloverBtn();
+    });
+  });
+  function cloverFeeNote() { return payType() === "credit" ? " (Clover adds the " + pctText(CARD_FEE_PCT) + " card fee)" : ""; }
+  $("cl-name").value = lsGet(CLOVER_NAME_KEY) || "";
+  $("cl-on").checked = lsGet(CLOVER_ON_KEY) === "1";
+  $("cl-name").addEventListener("input", function () { lsSet(CLOVER_NAME_KEY, $("cl-name").value.trim()); updateCtx(); });
+  $("cl-on").addEventListener("change", function () { lsSet(CLOVER_ON_KEY, $("cl-on").checked ? "1" : "0"); calcA(); });
 
   $("sheet-toggle").addEventListener("click", function () {
     var form = $("sheet-form");
@@ -12786,6 +13222,153 @@ function findAlignmentPattern(matrix, alignmentPatternQuads, topRight, topLeft, 
     var savedTax = localStorage.getItem(TAX_KEY);
     if (savedTax !== null && isFinite(parseFloat(savedTax))) { $("a-tax").value = savedTax; taxRate = savedTax; }
   } catch (e) {}
+  /* ---------- Sales tax list: shared through the "Taxes" tab of your spreadsheet ---------- */
+  var TAXES_KEY = "sg-taxes", TAXSEL_KEY = "sg-tax-sel", TAXOPS_KEY = "sg-tax-ops";
+  var taxes = [];
+  function cleanTaxes(list) {
+    if (!Array.isArray(list)) return [];
+    return list.filter(function (t) { return t && typeof t.name === "string" && t.name.trim() && isFinite(Number(t.pct)) && Number(t.pct) >= 0 && Number(t.pct) <= 30; })
+      .map(function (t) { return { name: t.name.trim().slice(0, 30), pct: Number(t.pct) }; });
+  }
+  (function loadTaxes() {
+    var raw = lsGet(TAXES_KEY);
+    if (raw === null) { taxes = [{ name: "Fresno", pct: 8.35 }, { name: "Lancaster", pct: 11.25 }]; return; }
+    try { taxes = cleanTaxes(JSON.parse(raw)); } catch (e) {}
+  })();
+  function saveTaxes() { lsSet(TAXES_KEY, JSON.stringify(taxes)); }
+  function readTaxOps() { try { var a = JSON.parse(lsGet(TAXOPS_KEY) || "[]"); return Array.isArray(a) ? a : []; } catch (e) { return []; } }
+  function writeTaxOps(a) { lsSet(TAXOPS_KEY, JSON.stringify(a)); }
+  function pctLabel(p) { return String(Math.round(Number(p) * 100) / 100); }
+  function selectedTaxIdx() {
+    var cur = num($("a-tax").value), nm = lsGet(TAXSEL_KEY) || "", i;
+    for (i = 0; i < taxes.length; i++) if (taxes[i].name === nm && taxes[i].pct === cur) return i;
+    for (i = 0; i < taxes.length; i++) if (taxes[i].pct === cur) return i;
+    return -1;
+  }
+  function currentTaxName() { var i = selectedTaxIdx(); return i >= 0 ? taxes[i].name : ""; }
+  function taxSyncNote(t) { $("tax-sync").textContent = t; }
+  function renderTaxSel() {
+    var sel = $("tax-sel"), idx = selectedTaxIdx(), h = "", i;
+    for (i = 0; i < taxes.length; i++) h += '<option value="' + i + '">' + taxes[i].name.replace(/&/g, "&amp;").replace(/</g, "&lt;") + " (" + pctLabel(taxes[i].pct) + "%)</option>";
+    if (idx < 0) h = '<option value="c">Other (' + pctLabel(num($("a-tax").value) || 0) + "%)</option>" + h;
+    h += '<option value="add">+ Add new tax...</option>';
+    sel.innerHTML = h;
+    sel.value = idx >= 0 ? String(idx) : "c";
+    $("tax-rm").hidden = idx < 0;
+  }
+  function applyTax(t) {
+    $("a-tax").value = String(t.pct);
+    lsSet(TAXSEL_KEY, t.name);
+    $("a-tax").dispatchEvent(new Event("input"));
+    renderTaxSel();
+  }
+  function taxPost(body) {
+    var cfg = getCfg();
+    if (!cfg) return Promise.reject(new Error("no sheet"));
+    body.key = cfg.key;
+    return fetch(cfg.url, { method: "POST", body: JSON.stringify(body), redirect: "follow" })
+      .then(function (r) { return r.json(); })
+      .then(function (j) { if (!j || !j.ok) throw new Error((j && j.error) || "not accepted"); return j; });
+  }
+  /* ---------- Send report button ---------- */
+  var repBusy = false;
+  $("rep-btn").addEventListener("click", function () {
+    if (repBusy) return;
+    var msg = $("rep-msg");
+    if (!getCfg()) { msg.textContent = "Connect your spreadsheet first."; msg.className = "note warn"; return; }
+    if (!navigator.onLine) { msg.textContent = "You are offline. Try again when you have a connection."; msg.className = "note warn"; return; }
+    if (!window.confirm("Email Sales Report now?")) return;
+    repBusy = true;
+    var btn = $("rep-btn"); btn.disabled = true; btn.textContent = "Sending...";
+    msg.className = "note taxnote"; msg.textContent = "Sending the report...";
+    taxPost({ sendReport: true }).then(function () {
+      msg.className = "note taxnote"; msg.textContent = "Report sent " + timeText(Date.now()) + ".";
+    }).catch(function (e) {
+      var m = String(e && e.message || "");
+      msg.className = "note warn";
+      msg.textContent = /Wrong password/.test(m) ? "The password does not match the sheet."
+        : /REPORT_TO|DailyReport/.test(m) ? "The report is not set up in the sheet yet (" + m + ")."
+        : /Failed to fetch|NetworkError|not accepted|Unexpected/.test(m) ? "Could not send. Update the sheet script (Code.gs) and try again."
+        : "Could not send: " + m;
+    }).then(function () { repBusy = false; btn.disabled = false; btn.textContent = "Email Sales Report"; });
+  });
+
+  function useServerTaxes(list) {
+    var clean = cleanTaxes(list);
+    taxes = clean;
+    saveTaxes();
+    var nm = lsGet(TAXSEL_KEY) || "", i;
+    for (i = 0; i < taxes.length; i++) {
+      if (taxes[i].name === nm && taxes[i].pct !== num($("a-tax").value)) { applyTax(taxes[i]); break; }   // someone changed this tax's percent in the sheet
+    }
+    renderTaxSel();
+  }
+  var taxSyncing = false;
+  function syncTaxes() {
+    var cfg = getCfg();
+    if (!cfg || taxSyncing) return;
+    if (!navigator.onLine) { if (readTaxOps().length) taxSyncNote("Waiting to share your tax changes (offline)."); return; }
+    taxSyncing = true;
+    (function next() {
+      var ops = readTaxOps();
+      if (ops.length) {
+        var op = ops[0];
+        taxPost(op.op === "add" ? { taxAdd: { name: op.name, pct: op.pct } } : { taxRemove: { name: op.name } }).then(function () {
+          writeTaxOps(readTaxOps().slice(1));
+          next();
+        }, function () { taxSyncing = false; taxSyncNote("Couldn't share your tax change yet. It will retry."); });
+        return;
+      }
+      fetch(cfg.url + (cfg.url.indexOf("?") === -1 ? "?" : "&") + "action=taxes&key=" + encodeURIComponent(cfg.key), { redirect: "follow", cache: "no-store" })
+        .then(function (r) { return r.json(); })
+        .then(function (j) { if (j && j.ok && Array.isArray(j.taxes)) { useServerTaxes(j.taxes); taxSyncNote(""); } })
+        .catch(function () {})
+        .then(function () { taxSyncing = false; });
+    })();
+  }
+  function showTaxAdd(on) {
+    $("tax-add").hidden = !on;
+    $("tax-msg").hidden = true;
+    if (on) { $("tax-new-name").value = ""; $("tax-new-pct").value = ""; $("tax-new-name").focus(); }
+    else renderTaxSel();
+  }
+  $("tax-sel").addEventListener("change", function () {
+    var v = this.value;
+    if (v === "add") { showTaxAdd(true); return; }
+    $("tax-add").hidden = true;
+    if (v === "c") return;
+    applyTax(taxes[Number(v)]);
+  });
+  $("tax-cancel").addEventListener("click", function () { showTaxAdd(false); });
+  $("tax-save").addEventListener("click", function () {
+    var name = $("tax-new-name").value.replace(/\s+/g, " ").trim().slice(0, 30), pct = num($("tax-new-pct").value), msg = $("tax-msg");
+    if (!name) { msg.textContent = "Type a name for this tax."; msg.hidden = false; return; }
+    if (!isFinite(pct) || pct < 0 || pct > 30) { msg.textContent = "Type the percent, like 8.35."; msg.hidden = false; return; }
+    pct = Math.round(pct * 1000) / 1000;
+    var found = -1;
+    taxes.forEach(function (t, i) { if (t.name.toLowerCase() === name.toLowerCase()) found = i; });
+    if (found >= 0) taxes[found] = { name: taxes[found].name, pct: pct }; else taxes.push({ name: name, pct: pct });
+    saveTaxes();
+    var ops = readTaxOps(); ops.push({ op: "add", name: found >= 0 ? taxes[found].name : name, pct: pct }); writeTaxOps(ops);
+    $("tax-add").hidden = true;
+    applyTax(taxes[found >= 0 ? found : taxes.length - 1]);
+    syncTaxes();
+  });
+  $("tax-rm").addEventListener("click", function () {
+    var i = selectedTaxIdx();
+    if (i < 0) return;
+    if (!confirm("Remove " + taxes[i].name + " from the list on every phone? Clover keeps its copy.")) return;
+    var ops = readTaxOps(); ops.push({ op: "remove", name: taxes[i].name }); writeTaxOps(ops);
+    taxes.splice(i, 1);
+    saveTaxes();
+    renderTaxSel();
+    syncTaxes();
+  });
+  renderTaxSel();
+  $("menu-btn").addEventListener("click", syncTaxes);
+  window.addEventListener("online", syncTaxes);
+  syncTaxes();
+  syncLocs();
   var BOGO_KEY = "discount-bogo-pct";
   function updateBogoTitle() {
     $("bogo-btn").title = "Buy one, get one " + pctText(BOGO_PCT) + " off the cheapest";
@@ -12793,16 +13376,41 @@ function findAlignmentPattern(matrix, alignmentPatternQuads, topRight, topLeft, 
   }
   try {
     var savedBogo = parseFloat(localStorage.getItem(BOGO_KEY));
-    if (isFinite(savedBogo) && savedBogo >= 0 && savedBogo <= 100) { BOGO_PCT = savedBogo; $("bogo-pct").value = String(savedBogo); }
+    if (isFinite(savedBogo) && savedBogo >= 0 && savedBogo <= 100) BOGO_PCT = savedBogo;
   } catch (e) {}
   updateBogoTitle();
-  $("bogo-pct").addEventListener("input", function () {
-    var v = num($("bogo-pct").value);
-    if (isFinite(v) && v >= 0 && v <= 100) {
-      BOGO_PCT = v;
-      try { localStorage.setItem(BOGO_KEY, String(v)); } catch (e) {}
-      updateBogoTitle();
+  /* ---------- BOGO pop-up: tap BOGO on, pick how much off; the last amount is remembered ---------- */
+  function syncBogoPresets() {
+    var v = num($("bogo-amt").value), pre = document.querySelectorAll(".bogo-pre"), i;
+    for (i = 0; i < pre.length; i++) pre[i].classList.toggle("on", Number(pre[i].getAttribute("data-pct")) === v);
+  }
+  function openBogoPop() {
+    $("bogo-amt").value = String(BOGO_PCT);
+    $("bogo-hint").className = "mhint";
+    $("bogo-hint").textContent = "";
+    syncBogoPresets();
+    $("bogo-pop").hidden = false;
+  }
+  function closeBogoPop() { $("bogo-pop").hidden = true; }
+  Array.prototype.forEach.call(document.querySelectorAll(".bogo-pre"), function (b) {
+    b.addEventListener("click", function () { $("bogo-amt").value = b.getAttribute("data-pct"); $("bogo-hint").className = "mhint"; $("bogo-hint").textContent = ""; syncBogoPresets(); });
+  });
+  $("bogo-amt").addEventListener("input", syncBogoPresets);
+  $("bogo-cancel").addEventListener("click", closeBogoPop);
+  $("bogo-pop").addEventListener("click", function (e) { if (e.target === this) closeBogoPop(); });
+  document.addEventListener("keydown", function (e) { if (e.key === "Escape" && !$("bogo-pop").hidden) closeBogoPop(); });
+  $("bogo-apply").addEventListener("click", function () {
+    var v = num($("bogo-amt").value);
+    if (!isFinite(v) || v <= 0 || v > 100) {
+      $("bogo-hint").className = "mhint warn";
+      $("bogo-hint").textContent = "Type a percent from 1 to 100.";
+      return;
     }
+    BOGO_PCT = v;
+    try { localStorage.setItem(BOGO_KEY, String(v)); } catch (e) {}
+    updateBogoTitle();
+    closeBogoPop();
+    setBogo(true);
     calcA();
   });
   applyTaxMode();
