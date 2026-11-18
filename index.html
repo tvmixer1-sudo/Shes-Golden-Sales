@@ -765,6 +765,10 @@ footer { color: var(--muted); font-size: 0.8rem; }
 #pick-list .pick-item .pm { display: none; }
 #pick-list .pick-item .pp { padding-bottom: 8px; }
 .qbadge { position: absolute; top: 8px; right: 42px; z-index: 2; min-width: 26px; padding: 2px 7px; border-radius: 999px; background: var(--accent); color: var(--accent-fg); font: 700 0.78rem var(--font-body); text-align: center; box-shadow: 0 1px 4px rgba(0,0,0,0.35); pointer-events: none; }
+.sugg .sg-bar { grid-column: 1 / -1; position: sticky; top: -4px; z-index: 5; box-sizing: border-box; height: 48px; display: flex; align-items: center; justify-content: space-between; gap: 8px; margin: -4px -4px 0; padding: 0 8px 0 12px; background: var(--surface); border-bottom: 1px solid var(--line); font: 500 0.82rem var(--font-body); color: var(--muted); }
+.sugg .sg-bar span { white-space: nowrap; }
+.sugg .sg-bar button.sg-done { display: block; flex: 0 0 auto; width: auto; min-height: 36px; height: 36px; padding: 0 20px; border: 0; border-radius: 10px; background: var(--accent); color: var(--accent-fg); font: 700 0.9rem var(--font-body); cursor: pointer; }
+.sugg .sh { top: 44px; }
 </style>
 </head>
 <body>
@@ -911,7 +915,7 @@ footer { color: var(--muted); font-size: 0.8rem; }
       </div>
       <div class="statrow">
         <span class="sheetstat" id="sheet-stat" role="status">Spreadsheet: not connected</span>
-        <span class="ver"><span id="app-ver">Version 4.8.19Clover</span></span>
+        <span class="ver"><span id="app-ver">Version 4.8.20Clover</span></span>
       </div>
     </div>
   </section>
@@ -11413,6 +11417,12 @@ function findAlignmentPattern(matrix, alignmentPatternQuads, topRight, topLeft, 
       sg.className = "sugg";
       sg.setAttribute("role", "listbox");
       hits = hits.slice(0, 30);
+      /* A Done bar that stays at the top of the list, so it is easy to close after adding items */
+      var bar = document.createElement("div"); bar.className = "sg-bar";
+      var barTxt = document.createElement("span"); barTxt.textContent = "Tap + to add items";
+      var done = document.createElement("button"); done.type = "button"; done.className = "sg-done"; done.textContent = "Done";
+      done.addEventListener("click", function (e) { e.preventDefault(); e.stopPropagation(); hideSugg(); try { name.blur(); } catch (er) {} });
+      bar.appendChild(barTxt); bar.appendChild(done); sg.appendChild(bar);
       var cats = (typeof CATEGORY_ORDER !== "undefined" ? CATEGORY_ORDER.slice() : []);
       hits.forEach(function (h) { if (cats.indexOf(h.it.cat || "Other") === -1) cats.push(h.it.cat || "Other"); });
       var ordered = [];
