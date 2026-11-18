@@ -904,7 +904,7 @@ footer { color: var(--muted); font-size: 0.8rem; }
       </div>
       <div class="statrow">
         <span class="sheetstat" id="sheet-stat" role="status">Spreadsheet: not connected</span>
-        <span class="ver"><span id="app-ver">Version 4.8.8Clover</span></span>
+        <span class="ver"><span id="app-ver">Version 4.8.10Clover</span></span>
       </div>
     </div>
   </section>
@@ -11358,7 +11358,7 @@ function findAlignmentPattern(matrix, alignmentPatternQuads, topRight, topLeft, 
       if (!sg || !sg.parentNode) return;
       var vv = window.visualViewport, vh = vv ? vv.height : window.innerHeight, top = vv ? vv.offsetTop : 0;
       var rr = row.getBoundingClientRect();
-      sg.style.maxHeight = Math.max(130, Math.min(480, vh - (rr.bottom - top) - 14)) + "px";
+      sg.style.maxHeight = Math.max(130, vh - (rr.bottom - top) - 8) + "px";
     }
     function placeLoop() {
       clearTimeout(placeTimer);
@@ -12384,6 +12384,13 @@ function findAlignmentPattern(matrix, alignmentPatternQuads, topRight, topLeft, 
     }
     $("pick-foot").textContent = catalog.length + " items. " + catalogSource + ".";
   }
+  /* Scrolling the Find item list puts the phone keyboard away; the list stays put */
+  (function () {
+    var pl = $("pick-list"), pq = $("pick-q");
+    if (!pl || !pq) return;
+    var away = function () { if (document.activeElement === pq) { try { pq.blur(); } catch (e) {} } };
+    pl.addEventListener("touchmove", away, { passive: true });
+  })();
   var SRCH_KEY = "recent-searches";
   function recentSearches() { try { var a = JSON.parse(localStorage.getItem(SRCH_KEY) || "[]"); return Array.isArray(a) ? a : []; } catch (e) { return []; } }
   function saveSearches(l) { try { localStorage.setItem(SRCH_KEY, JSON.stringify(l.slice(0, 8))); } catch (e) {} }
