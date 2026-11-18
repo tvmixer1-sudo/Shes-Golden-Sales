@@ -904,7 +904,7 @@ footer { color: var(--muted); font-size: 0.8rem; }
       </div>
       <div class="statrow">
         <span class="sheetstat" id="sheet-stat" role="status">Spreadsheet: not connected</span>
-        <span class="ver"><span id="app-ver">Version 4.8.7Clover</span></span>
+        <span class="ver"><span id="app-ver">Version 4.8.8Clover</span></span>
       </div>
     </div>
   </section>
@@ -11378,6 +11378,9 @@ function findAlignmentPattern(matrix, alignmentPatternQuads, topRight, topLeft, 
       row._pick = it.name;
       calcA();
       try { name.blur(); } catch (e) {}
+      /* Keep one blank row ready at the end for the next item */
+      var rs = rows();
+      if (rs[rs.length - 1] === row) addRow("", false);
     }
     function showSugg() {
       var q = name.value.trim().toLowerCase();
@@ -11437,6 +11440,10 @@ function findAlignmentPattern(matrix, alignmentPatternQuads, topRight, topLeft, 
         });
       });
       sg.addEventListener("mousedown", function (e) { e.preventDefault(); });
+      /* Scrolling the list puts the phone keyboard away so more of the list is visible. The list stays open. */
+      var sgDrag = function () { if (document.activeElement === name) { try { name.blur(); } catch (e) {} } };
+      sg.addEventListener("touchmove", sgDrag, { passive: true });
+      sg.addEventListener("scroll", function () { if (Date.now() - focusAt > 400) sgDrag(); }, { passive: true });
       row.appendChild(sg);
       document.body.classList.add("sugg-open");
       placeSugg();
