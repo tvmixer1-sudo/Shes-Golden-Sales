@@ -764,6 +764,7 @@ footer { color: var(--muted); font-size: 0.8rem; }
 .zoom-count { margin-top: 0; }
 #pick-list .pick-item .pm { display: none; }
 #pick-list .pick-item .pp { padding-bottom: 8px; }
+.qbadge { position: absolute; top: 8px; right: 42px; z-index: 2; min-width: 26px; padding: 2px 7px; border-radius: 999px; background: var(--accent); color: var(--accent-fg); font: 700 0.78rem var(--font-body); text-align: center; box-shadow: 0 1px 4px rgba(0,0,0,0.35); pointer-events: none; }
 </style>
 </head>
 <body>
@@ -910,7 +911,7 @@ footer { color: var(--muted); font-size: 0.8rem; }
       </div>
       <div class="statrow">
         <span class="sheetstat" id="sheet-stat" role="status">Spreadsheet: not connected</span>
-        <span class="ver"><span id="app-ver">Version 4.8.18Clover</span></span>
+        <span class="ver"><span id="app-ver">Version 4.8.19Clover</span></span>
       </div>
     </div>
   </section>
@@ -11388,6 +11389,7 @@ function findAlignmentPattern(matrix, alignmentPatternQuads, topRight, topLeft, 
       var rs = rows();
       if (rs[rs.length - 1] === row) addRow("", false);
     }
+    var sgAdded = false, sgCount = {};
     function showSugg() {
       var q = name.value.trim().toLowerCase();
       hideSugg(true);
@@ -11431,7 +11433,24 @@ function findAlignmentPattern(matrix, alignmentPatternQuads, topRight, topLeft, 
           b.appendChild(sgp);
           b.addEventListener("click", function (e) {
             var tg = e.target;
-            if (tg && tg.classList && tg.classList.contains("sg-plus")) { e.preventDefault(); chooseSugg(h.it); return; }
+            if (tg && tg.classList && tg.classList.contains("sg-plus")) {
+              e.preventDefault();
+              /* First tap fills this row; every further tap adds another one. The list stays open for more. */
+              if (!sgAdded) {
+                sgAdded = true;
+                name.value = h.it.name; price.value = Number(h.it.price).toFixed(2);
+                row.setAttribute("data-id", h.it.id || ""); row.removeAttribute("data-sample"); row._pick = h.it.name;
+                calcA();
+                var rs0 = rows(); if (rs0[rs0.length - 1] === row) addRow("", false);
+              } else {
+                addScanned({ id: h.it.id, name: h.it.name, price: Number(h.it.price).toFixed(2) });
+              }
+              sgCount[h.it.id] = (sgCount[h.it.id] || 0) + 1;
+              qBadge(b, sgCount[h.it.id]);
+              sgp.textContent = "\u2713"; sgp.classList.add("ok");
+              setTimeout(function () { sgp.textContent = "+"; sgp.classList.remove("ok"); }, 600);
+              return;
+            }
             /* Only the + adds the item. Tapping anywhere else on the tile shows it larger. */
             e.preventDefault();
             openZoom(h.it, function () { chooseSugg(h.it); }, {
@@ -12256,6 +12275,12 @@ function findAlignmentPattern(matrix, alignmentPatternQuads, topRight, topLeft, 
   function largeUrl(id) { return "img/large/" + photoKey(id) + ".webp"; }
   var zoomAdd = null;
   var zoomNav = null, zoomSwiped = 0;
+  /* Small "x2" count on a tile after tapping its + more than once */
+  function qBadge(host, n) {
+    var qb = host.querySelector(".qbadge");
+    if (!qb) { qb = document.createElement("span"); qb.className = "qbadge"; host.appendChild(qb); }
+    qb.textContent = "\u00d7" + n;
+  }
   function showZoom(it) {
     var im = $("zoom-img");
     im.onerror = function () { im.onerror = null; im.src = photoUrl(it.id); };
@@ -12372,8 +12397,10 @@ function findAlignmentPattern(matrix, alignmentPatternQuads, topRight, topLeft, 
       var plus = document.createElement("button");
       plus.type = "button"; plus.className = "pick-plus"; plus.textContent = "+";
       plus.setAttribute("aria-label", "Add " + it.name);
+      var pcount = 0;
       plus.addEventListener("click", function () {
         pickItem(it);
+        qBadge(li, ++pcount);
         plus.textContent = "\u2713"; plus.classList.add("ok");
         setTimeout(function () { plus.textContent = "+"; plus.classList.remove("ok"); }, 700);
       });
