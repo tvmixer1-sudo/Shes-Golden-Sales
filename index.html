@@ -904,7 +904,7 @@ footer { color: var(--muted); font-size: 0.8rem; }
       </div>
       <div class="statrow">
         <span class="sheetstat" id="sheet-stat" role="status">Spreadsheet: not connected</span>
-        <span class="ver"><span id="app-ver">Version 4.8.12Clover</span></span>
+        <span class="ver"><span id="app-ver">Version 4.8.13Clover</span></span>
       </div>
     </div>
   </section>
@@ -11426,15 +11426,12 @@ function findAlignmentPattern(matrix, alignmentPatternQuads, topRight, topLeft, 
           b.addEventListener("click", function (e) {
             var tg = e.target;
             if (tg && tg.classList && tg.classList.contains("sg-plus")) { e.preventDefault(); chooseSugg(h.it); return; }
-            if (tg && tg.classList && tg.classList.contains("thumb") && !tg.classList.contains("none")) {
-              e.preventDefault();
-              openZoom(h.it, function () { chooseSugg(h.it); }, {
-                list: ordered.map(function (x) { return { it: x, add: function () { chooseSugg(x); } }; }),
-                i: Math.max(0, ordered.indexOf(h.it))
-              });
-              return;
-            }
-            chooseSugg(h.it);
+            /* Only the + adds the item. Tapping anywhere else on the tile shows it larger. */
+            e.preventDefault();
+            openZoom(h.it, function () { chooseSugg(h.it); }, {
+              list: ordered.map(function (x) { return { it: x, add: function () { chooseSugg(x); } }; }),
+              i: Math.max(0, ordered.indexOf(h.it))
+            });
           });
           sg.appendChild(b);
         });
