@@ -719,6 +719,45 @@ footer { color: var(--muted); font-size: 0.8rem; }
 .pcam-bar { position: absolute; left: 16px; right: 16px; bottom: calc(env(safe-area-inset-bottom, 0px) + 18px); display: flex; gap: 10px; align-items: center; }
 .pcam-snap { flex: 0 0 auto; width: 72px; height: 72px; border-radius: 50%; border: 4px solid #fff; background: var(--gold, #c3a665); cursor: pointer; }
 .pcam-snap:disabled { opacity: .5; }
+
+/* ---- Photo tiles: item search list and Find item (3 across) ---- */
+.sugg { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; padding: 8px; align-content: start; }
+.sugg .sh { grid-column: 1 / -1; margin: 0 -8px; }
+.sugg button { position: relative; display: flex; flex-direction: column; align-items: stretch; gap: 0; padding: 0; min-height: 0; border: 1px solid var(--line); border-bottom: 1px solid var(--line); border-radius: 12px; overflow: hidden; background: var(--surface); }
+.sugg button:last-child { border-bottom: 1px solid var(--line); }
+.sugg .thumb { width: 100%; height: auto; aspect-ratio: 1; border-radius: 0; object-fit: cover; background: var(--accent-soft); }
+.sugg .sn { grid-column: auto; white-space: normal; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 4; -webkit-box-orient: vertical; padding: 6px 8px 0; font-size: 0.72rem; line-height: 1.2; min-height: 2.4em; }
+.sugg .sp { grid-column: auto; padding: 2px 8px 8px; font-size: 0.78rem; }
+.sugg button.sold .thumb { opacity: 0.55; }
+.sbadge, #pick-list .pick-item.sold::after { position: absolute; top: 6px; left: 6px; padding: 2px 6px; border-radius: 6px; background: rgba(0,0,0,0.62); color: #fff; font: 700 0.62rem var(--font-body); letter-spacing: 0.04em; text-transform: uppercase; }
+.picker-list { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; align-content: start; }
+#pick-list .picker-empty { grid-column: 1 / -1; }
+#pick-list .pick-item { display: flex; flex-direction: column; align-items: stretch; gap: 0; padding: 0; min-height: 0; overflow: hidden; position: relative; text-align: left; }
+#pick-list .pick-item .thumb { width: 100%; height: auto; aspect-ratio: 1; border-radius: 0; object-fit: cover; background: var(--accent-soft); }
+#pick-list .pick-item .pn { padding: 6px 8px 0; font-size: 0.72rem; line-height: 1.2; min-height: 2.4em; display: -webkit-box; -webkit-line-clamp: 4; -webkit-box-orient: vertical; overflow: hidden; }
+#pick-list .pick-item .pp { padding: 2px 8px 0; font-size: 0.78rem; }
+#pick-list .pick-item .pm { padding: 0 8px 8px; font-size: 0.66rem; }
+#pick-list .pick-item .pm .tagsold { display: none; }
+#pick-list .pick-item.sold { opacity: 1; }
+#pick-list .pick-item.sold .thumb { opacity: 0.55; }
+#pick-list .pick-item.sold::after { content: "Sold out"; }
+.pick-plus { top: 6px; right: 6px; transform: none; width: 34px; height: 34px; font-size: 1.4rem; box-shadow: 0 1px 4px rgba(0,0,0,0.35); }
+#pick-list li { display: flex; }
+#pick-list .pick-item { height: 100%; }
+#pick-list .pick-item.sold::after { top: 46px; }
+/* Edge-to-edge photos */
+.sugg { gap: 4px; padding: 4px; }
+.sugg .sh { margin: 0 -4px; }
+.sugg button, #pick-list .pick-item { border-radius: 8px; }
+.sugg .thumb, #pick-list .pick-item .thumb { aspect-ratio: 3 / 4; object-fit: cover; }
+.picker-list { gap: 4px; }
+#pick-list .pick-plus { top: 4px; right: 4px; }
+#pick-list { margin-left: -12px; margin-right: -12px; padding: 0 4px; }
+.sugg .thumb, #pick-list .pick-item .thumb { aspect-ratio: 1 / 1; }
+#pick-list .pick-item.sold::after { top: 6px; }
+.sbadge, #pick-list .pick-item.sold::after { top: 4px; left: 4px; padding: 2px 5px; font-size: 0.55rem; }
+#pick-list .pick-plus { width: 30px; height: 30px; }
+.sugg .sg-plus { top: 4px; right: 4px; width: 30px; height: 30px; font-size: 1.4rem; }
 </style>
 </head>
 <body>
@@ -865,7 +904,7 @@ footer { color: var(--muted); font-size: 0.8rem; }
       </div>
       <div class="statrow">
         <span class="sheetstat" id="sheet-stat" role="status">Spreadsheet: not connected</span>
-        <span class="ver"><span id="app-ver">Version 4.8.6Clover</span></span>
+        <span class="ver"><span id="app-ver">Version 4.8.7Clover</span></span>
       </div>
     </div>
   </section>
@@ -11378,9 +11417,12 @@ function findAlignmentPattern(matrix, alignmentPatternQuads, topRight, topLeft, 
           var n = document.createElement("span"); n.className = "sn"; n.textContent = h.it.name;
           var p = document.createElement("span"); p.className = "sp"; p.textContent = money.format(h.it.price);
           b.appendChild(makeThumb(h.it.id)); b.appendChild(n); b.appendChild(p);
-          if (h.it.sold) { n.textContent += " \u00b7 Sold out"; n.classList.add("dim"); }
+          if (h.it.sold) { n.classList.add("dim"); b.classList.add("sold"); b.setAttribute("aria-label", h.it.name + ", sold out"); var sb = document.createElement("span"); sb.className = "sbadge"; sb.textContent = "Sold out"; b.appendChild(sb); }
+          var sgp = document.createElement("span"); sgp.className = "pick-plus sg-plus"; sgp.textContent = "+"; sgp.setAttribute("aria-hidden", "true");
+          b.appendChild(sgp);
           b.addEventListener("click", function (e) {
             var tg = e.target;
+            if (tg && tg.classList && tg.classList.contains("sg-plus")) { e.preventDefault(); chooseSugg(h.it); return; }
             if (tg && tg.classList && tg.classList.contains("thumb") && !tg.classList.contains("none")) {
               e.preventDefault();
               openZoom(h.it, function () { chooseSugg(h.it); }, {
@@ -12305,7 +12347,7 @@ function findAlignmentPattern(matrix, alignmentPatternQuads, topRight, topLeft, 
       var n = document.createElement("span"); n.className = "pn"; n.textContent = it.name;
       var pr = document.createElement("span"); pr.className = "pp"; pr.textContent = money.format(it.price);
       var m = document.createElement("span"); m.className = "pm";
-      m.textContent = it.cat + " · " + it.id;
+      m.textContent = it.id;
       if (it.sold) { var t = document.createElement("span"); t.className = "tagsold"; t.textContent = " · Sold out"; m.appendChild(t); }
       b.appendChild(makeThumb(it.id)); b.appendChild(n); b.appendChild(pr); b.appendChild(m);
       b.addEventListener("click", function () {
@@ -12368,7 +12410,7 @@ function findAlignmentPattern(matrix, alignmentPatternQuads, topRight, topLeft, 
     pickCount = 0;
     pickCat = "All";
     $("pick-q").value = typeof q === "string" ? q : "";
-    $("pick-msg").textContent = typeof q === "string" ? "Tap + on the color you are selling." : "Tap + to add an item. Tap the row to see its photo.";
+    $("pick-msg").textContent = typeof q === "string" ? "Tap + on the color you are selling." : "Tap + to add an item. Tap a photo to see it bigger.";
     renderCats();
     renderPicker();
     renderRecent();
