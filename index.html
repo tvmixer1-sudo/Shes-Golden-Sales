@@ -904,7 +904,7 @@ footer { color: var(--muted); font-size: 0.8rem; }
       </div>
       <div class="statrow">
         <span class="sheetstat" id="sheet-stat" role="status">Spreadsheet: not connected</span>
-        <span class="ver"><span id="app-ver">Version 4.8.10Clover</span></span>
+        <span class="ver"><span id="app-ver">Version 4.8.11Clover</span></span>
       </div>
     </div>
   </section>
@@ -11462,6 +11462,8 @@ function findAlignmentPattern(matrix, alignmentPatternQuads, topRight, topLeft, 
       if (!sg) return;
       var t = e.target;
       if (row.contains(t) || sg.contains(t) || Date.now() - focusAt < 500) return;
+      /* Tapping the enlarged photo (to close it) must leave the list open behind it */
+      if (t && t.closest && t.closest("#zoom")) return;
       hideSugg();
     }
     document.addEventListener("click", tapOutside, true);
