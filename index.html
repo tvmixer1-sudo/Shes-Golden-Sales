@@ -915,7 +915,7 @@ footer { color: var(--muted); font-size: 0.8rem; }
       </div>
       <div class="statrow">
         <span class="sheetstat" id="sheet-stat" role="status">Spreadsheet: not connected</span>
-        <span class="ver"><span id="app-ver">Version 4.8.25Clover</span></span>
+        <span class="ver"><span id="app-ver">Version 4.8.26Clover</span></span>
       </div>
     </div>
   </section>
@@ -11576,6 +11576,7 @@ function findAlignmentPattern(matrix, alignmentPatternQuads, topRight, topLeft, 
     updateChange();
     updateCtx();
     try { syncCloverBtn(); } catch (e) {}
+    schedDraft();
   }
   function openMenu() { $("menu").hidden = false; }
   function closeMenu() { $("menu").hidden = true; updateCtx(); }
@@ -13552,8 +13553,63 @@ function findAlignmentPattern(matrix, alignmentPatternQuads, topRight, topLeft, 
     updateDefaultUI(p);
   });
 
-  addRow("", false);
+  /* ---------- Sale in progress: kept on this phone, so closing the app by accident does not lose it ---------- */
+  var DRAFT_KEY = "sale-draft", DRAFT_MAX_MS = 6 * 3600 * 1000, draftTimer = null, draftReady = false;
+  function draftState() {
+    var rs = [];
+    Array.prototype.forEach.call(rows(), function (r) {
+      if (r.hasAttribute("data-sample")) return;
+      rs.push({ n: r.querySelector(".name").value, p: r.querySelector(".price").value, id: r.getAttribute("data-id") || "", pk: r._pick || "" });
+    });
+    return { t: Date.now(), pct: $("a-pct").value, bogo: bogo, pay: $("a-pay").value, ship: $("a-ship").value, cash: $("a-cash").value, loc: $("a-loc").value, cust: customer(), notes: $("notes").open, saleId: saleId, rows: rs };
+  }
+  function draftHasData(d) {
+    var c = d.cust || {};
+    return d.rows.some(function (x) { return (x.n || "").trim() || (x.p || "").trim(); }) || (d.ship || "").trim() || (d.cash || "").trim() || c.name || c.email || c.phone || c.note;
+  }
+  function saveDraft() {
+    if (!draftReady) return;
+    try {
+      var d = draftState();
+      if (draftHasData(d)) localStorage.setItem(DRAFT_KEY, JSON.stringify(d)); else localStorage.removeItem(DRAFT_KEY);
+    } catch (e) {}
+  }
+  function schedDraft() { clearTimeout(draftTimer); draftTimer = setTimeout(saveDraft, 300); }
+  function restoreDraft() {
+    var d = null;
+    try { d = JSON.parse(localStorage.getItem(DRAFT_KEY) || "null"); } catch (e) { d = null; }
+    if (!d || !Array.isArray(d.rows) || !(Date.now() - d.t < DRAFT_MAX_MS) || !draftHasData(d)) { try { localStorage.removeItem(DRAFT_KEY); } catch (e) {} return false; }
+    d.rows.forEach(function (x) {
+      addRow(x.p, false);
+      var all = rows(), r = all[all.length - 1];
+      r.querySelector(".name").value = x.n || "";
+      if (x.id) r.setAttribute("data-id", x.id);
+      if (x.pk) r._pick = x.pk;
+    });
+    var rl = rows(), last = rl[rl.length - 1];
+    if (!last || last.querySelector(".price").value.trim() || last.querySelector(".name").value.trim()) addRow("", false);
+    if (d.pct != null && String(d.pct) !== "") $("a-pct").value = String(d.pct);
+    setBogo(d.bogo);
+    if (d.pay && $("a-pay").querySelector('option[value="' + d.pay + '"]')) $("a-pay").value = d.pay;
+    $("a-ship").value = d.ship || "";
+    $("a-cash").value = d.cash || "";
+    if (d.loc != null && String(d.loc).trim()) { $("a-loc").value = d.loc; try { renderLocSel(); } catch (e) {} }
+    setCustomer(d.cust || {});
+    $("notes").open = !!d.notes;
+    saleId = d.saleId || null;
+    return true;
+  }
+  document.addEventListener("input", schedDraft);
+  document.addEventListener("change", schedDraft);
+  document.addEventListener("click", schedDraft, true);
+  document.addEventListener("visibilitychange", function () { if (document.hidden) saveDraft(); });
+  window.addEventListener("pagehide", saveDraft);
+
+  var restoredSale = restoreDraft();
+  if (!restoredSale) addRow("", false);
+  draftReady = true;
   calcA();
+  if (restoredSale) { try { $("save-msg").className = "note"; $("save-msg").textContent = "Restored your sale in progress."; } catch (e) {} }
 })();
 </script>
 <script>
