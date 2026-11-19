@@ -1013,7 +1013,7 @@ footer { color: var(--muted); font-size: 0.8rem; }
       </div>
       <div class="statrow">
         <span class="sheetstat" id="sheet-stat" role="status">Spreadsheet: not connected</span>
-        <span class="ver"><span id="app-ver">Version 4.9.2Clover</span></span>
+        <span class="ver"><span id="app-ver">Version 4.9.3Clover</span></span>
       </div>
     </div>
   </section>
@@ -13595,7 +13595,7 @@ function findAlignmentPattern(matrix, alignmentPatternQuads, topRight, topLeft, 
       .then(function (j) { if (!j || !j.ok) throw new Error((j && j.error) || "not accepted"); return j; });
   }
   /* ---------- Sales report (4.9.0): any date range, added up on the phone from the sheet ---------- */
-  var rptRange = "this", rptSeq = 0, rptText = "", rptPin = "", rptPinAt = 0;
+  var rptRange = "this", rptSeq = 0, rptText = "", rptPin = "", rptPinAt = 0, rptModel = null;
   /* The code is checked by the sheet's script (REPORT_PIN in its settings). It is only kept in memory here, never saved, and is forgotten after 5 idle minutes. */
   function rptShowLock(msg, bad) {
     $("rpt-main").hidden = true; $("rpt-lock").hidden = false;
@@ -13693,6 +13693,9 @@ function findAlignmentPattern(matrix, alignmentPatternQuads, topRight, topLeft, 
     var itemRows = top.map(function (k) {
       return '<div class="rpt-it"><span class="k">' + rptEsc(k) + '</span><span class="q">x' + byItem[k].q + '</span><span class="v">' + rptMoney0(byItem[k].d) + "</span></div>";
     }).join("") + '<div class="rpt-it misc"><span class="k">Miscellaneous (typed in)</span><span class="q">x' + miscQ + '</span><span class="v">' + rptMoney0(miscD) + "</span></div>";
+    var dayLab = {}; Object.keys(byDay).forEach(function (k) { dayLab[new Date(k + "T12:00:00").toLocaleDateString("en-US", { month: "short", day: "numeric" })] = byDay[k]; });
+    rptModel = { a: a, b: b, n: rs.length, net: net, disc: disc, tax: tax, tot: tot, byDay: byDay, byLoc: byLoc, byPay: byPay, byCat: byCat,
+      top: top.map(function (k) { return [k, byItem[k].q, byItem[k].d]; }), miscQ: miscQ, miscD: miscD };
     var label = a.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }) + " to " + b.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
     var avg = rs.length ? net / rs.length : 0;
     $("rpt-body").innerHTML = rs.length
@@ -13706,6 +13709,7 @@ function findAlignmentPattern(matrix, alignmentPatternQuads, topRight, topLeft, 
         '<h4 class="rpt-h">Collected</h4><div class="rpt-g two"><div><small>Sales tax</small><b>' + rptMoney(tax) + '</b></div><div><small>Total collected</small><b>' + rptMoney(tot) + '</b></div></div>' +
         '<p class="rpt-note">Total collected includes tax, card surcharges and shipping. Items typed in by hand are grouped as Miscellaneous.</p>'
       : '<p class="mhint">No sales between ' + rptEsc(label) + ".</p>";
+    if (!rs.length) rptModel = null;
     if (rs.length) {
       var t = ["She's Golden sales report", label, "", "Net sales: " + rptMoney(net), "Sales: " + rs.length + "   Average: " + rptMoney(avg), "Discounts: " + rptMoney(disc), "Sales tax: " + rptMoney(tax), "Total collected: " + rptMoney(tot), ""];
       [["By location", byLoc], ["By payment", byPay], ["By category", byCat]].forEach(function (g) {
@@ -13741,7 +13745,82 @@ function findAlignmentPattern(matrix, alignmentPatternQuads, topRight, topLeft, 
     if (navigator.share) { navigator.share({ title: "She's Golden sales report", text: rptText }).catch(function () {}); return; }
     window.location.href = "mailto:?subject=" + encodeURIComponent("She's Golden sales report") + "&body=" + encodeURIComponent(rptText);
   });
-  $("rpt-print").addEventListener("click", function () { try { window.print(); } catch (e) {} });
+  /* Real PDF of the report (letter size), shared through the phone's share sheet so there is no print prompt. */
+  function rptPdf(m) {
+    var P = window.PDFLib;
+    if (!P) return Promise.reject(new Error("PDF library missing"));
+    var clean = function (t) { return String(t).replace(/[^\x20-\x7E\xA0-\xFF]/g, "?"); };
+    var W = 612, H = 792, M = 48, INK = P.rgb(0.11, 0.16, 0.2), MUTE = P.rgb(0.42, 0.48, 0.52), ACC = P.rgb(0.235, 0.376, 0.435), SOFT = P.rgb(0.91, 0.933, 0.941);
+    var fmtD = function (d) { return d.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }); };
+    return P.PDFDocument.create().then(function (doc) {
+      return Promise.all([doc.embedFont(P.StandardFonts.Helvetica), doc.embedFont(P.StandardFonts.HelveticaBold), logo ? doc.embedPng(logo.url) : Promise.resolve(null)]).then(function (r) {
+        var reg = r[0], bold = r[1], img = r[2], page, y;
+        function newPage() { page = doc.addPage([W, H]); y = H - M; }
+        function need(h) { if (y - h < M) newPage(); }
+        function text(t, x, size, font, color) { page.drawText(clean(t), { x: x, y: y, size: size, font: font || reg, color: color || INK }); }
+        function right(t, xr, size, font) { var f = font || reg; page.drawText(clean(t), { x: xr - f.widthOfTextAtSize(clean(t), size), y: y, size: size, font: f, color: INK }); }
+        newPage();
+        if (img) { var k = Math.min(120 / logo.w, 48 / logo.h), lw = logo.w * k, lh = logo.h * k; page.drawImage(img, { x: M, y: y - lh, width: lw, height: lh }); }
+        y -= 14; text("Sales Report", M + (img ? 140 : 0), 22, bold, ACC);
+        y -= 20; text(fmtD(m.a) + (m.a.getTime() === m.b.getTime() ? "" : " to " + fmtD(m.b)), M + (img ? 140 : 0), 11, reg, MUTE);
+        y -= 40;
+        page.drawRectangle({ x: M, y: y - 52, width: W - 2 * M, height: 66, color: ACC });
+        y -= 4; page.drawText("NET SALES (AFTER DISCOUNTS, BEFORE TAX)", { x: M + 14, y: y, size: 8.5, font: bold, color: P.rgb(1, 1, 1) });
+        y -= 30; page.drawText(clean(rptMoney(m.net)), { x: M + 14, y: y, size: 28, font: bold, color: P.rgb(1, 1, 1) });
+        y -= 78;
+        var boxW = (W - 2 * M - 20) / 3;
+        [["SALES", String(m.n)], ["AVG SALE", rptMoney(m.n ? m.net / m.n : 0)], ["DISCOUNTS", rptMoney(m.disc)]].forEach(function (c, i) {
+          var x = M + i * (boxW + 10);
+          page.drawRectangle({ x: x, y: y - 6, width: boxW, height: 38, borderColor: SOFT, borderWidth: 1 });
+          page.drawText(c[0], { x: x + 10, y: y + 20, size: 7.5, font: bold, color: MUTE });
+          page.drawText(clean(c[1]), { x: x + 10, y: y + 4, size: 14, font: bold, color: INK });
+        });
+        y -= 24;
+        function section(title, map, kind) {
+          var keys = Object.keys(map), max = 0;
+          keys.forEach(function (q) { if (map[q] > max) max = map[q]; });
+          if (kind === "day") keys.sort(); else keys.sort(function (x, z) { return map[z] - map[x]; });
+          need(40); y -= 22; text(title.toUpperCase(), M, 8.5, bold, MUTE); y -= 6;
+          keys.forEach(function (q) {
+            need(18); y -= 15;
+            var lab = kind === "day" ? new Date(q + "T12:00:00").toLocaleDateString("en-US", { month: "short", day: "numeric" }) : q;
+            text(lab, M, 10, q === "Miscellaneous" ? reg : reg, INK);
+            var bx = M + 130, bw = W - 2 * M - 130 - 80;
+            page.drawRectangle({ x: bx, y: y - 1, width: bw, height: 8, color: SOFT });
+            if (max > 0) page.drawRectangle({ x: bx, y: y - 1, width: Math.max(2, bw * map[q] / max), height: 8, color: ACC });
+            right(rptMoney(map[q]), W - M, 10, bold);
+          });
+        }
+        section("By day", m.byDay, "day"); section("By location", m.byLoc); section("By payment", m.byPay); section("By category", m.byCat);
+        need(40); y -= 22; text("TOP ITEMS", M, 8.5, bold, MUTE); y -= 6;
+        m.top.concat([["Miscellaneous (typed in)", m.miscQ, m.miscD]]).forEach(function (t) {
+          need(18); y -= 15; text(t[0], M, 10); right("x" + t[1], W - M - 80, 10, reg); right(rptMoney(t[2]), W - M, 10, bold);
+        });
+        need(70); y -= 26; text("COLLECTED", M, 8.5, bold, MUTE); y -= 18;
+        text("Sales tax", M, 10); right(rptMoney(m.tax), W - M, 10, bold); y -= 15;
+        text("Total collected (tax, card surcharges and shipping included)", M, 10); right(rptMoney(m.tot), W - M, 10, bold);
+        y -= 28; text("Items typed in by hand are grouped as Miscellaneous.  Made " + new Date().toLocaleString("en-US", { month: "short", day: "numeric", year: "numeric", hour: "numeric", minute: "2-digit" }), M, 8, reg, MUTE);
+        return doc.save();
+      });
+    });
+  }
+  $("rpt-print").addEventListener("click", function () {
+    var btn = this, m = rptModel;
+    if (!m || btn.disabled) return;
+    btn.disabled = true; var old = btn.textContent; btn.textContent = "Making PDF...";
+    var z = function (n) { return (n < 10 ? "0" : "") + n; }, dk = function (d) { return d.getFullYear() + "-" + z(d.getMonth() + 1) + "-" + z(d.getDate()); };
+    var name = "She-s-Golden-sales-report-" + dk(m.a) + (dk(m.a) === dk(m.b) ? "" : "_to_" + dk(m.b)) + ".pdf";
+    var done = function () { btn.disabled = false; btn.textContent = old; };
+    rptPdf(m).then(function (bytes) {
+      var file = null;
+      try { file = new File([bytes], name, { type: "application/pdf" }); } catch (e) {}
+      if (file && navigator.canShare && navigator.share && navigator.canShare({ files: [file] })) {
+        return navigator.share({ files: [file] }).then(done, function () { done(); });
+      }
+      var link = blobLink(name, bytes, "Open report PDF"); link.style.display = "none"; document.body.appendChild(link); link.click();
+      setTimeout(function () { if (link.parentNode) link.parentNode.removeChild(link); }, 4000); done();
+    }, function () { btn.textContent = "Could not make the PDF"; setTimeout(done, 2500); });
+  });
 
   function useServerTaxes(list) {
     var clean = cleanTaxes(list);
