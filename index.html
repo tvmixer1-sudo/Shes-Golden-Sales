@@ -801,6 +801,13 @@ footer { color: var(--muted); font-size: 0.8rem; }
 .sugg .sg-body .sh { top: 0; }
 .sugg .sg-body { grid-auto-rows: max-content; }
 .sugg .sg-body > button { height: auto; min-height: 0; }
+
+/* Search list tiles: white card with dark text in light and dark mode (4.8.39) */
+.sugg .sg-body > button, #pick-list .pick-item { background: #fff; color: #1d2a33; border-color: #e6e0d4; }
+.sugg .sg-body > button .sn, .sugg .sg-body > button .sp, #pick-list .pick-item .pn, #pick-list .pick-item .pp { color: #1d2a33; }
+#pick-list .pick-item .pm { color: #5b6a73; }
+.sugg .sg-body > button .thumb, #pick-list .pick-item .thumb { background: #fff; }
+.sugg .sg-body > button:active, #pick-list .pick-item:active { background: #f1efe9; }
 </style>
 </head>
 <body>
@@ -947,7 +954,7 @@ footer { color: var(--muted); font-size: 0.8rem; }
       </div>
       <div class="statrow">
         <span class="sheetstat" id="sheet-stat" role="status">Spreadsheet: not connected</span>
-        <span class="ver"><span id="app-ver">Version 4.8.38Clover</span></span>
+        <span class="ver"><span id="app-ver">Version 4.8.39Clover</span></span>
       </div>
     </div>
   </section>
