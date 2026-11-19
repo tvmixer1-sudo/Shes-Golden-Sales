@@ -783,6 +783,11 @@ footer { color: var(--muted); font-size: 0.8rem; }
 /* Enlarged photo card: white in light and dark mode, dark text, so the photo blends in and the name stays readable (4.8.33) */
 .zoom-card { background: #fff; }
 .zoom-card .zoom-name, .zoom-card .zoom-price { color: #1d2a33; text-shadow: 0 0 6px #fff, 0 0 3px #fff; }
+
+/* Photo arrows sit in the bottom corners of the photo, clear of the product (4.8.34) */
+.zoom-card { container-type: inline-size; }
+.zoom-card .zoom-nav { top: 62%; }
+@supports (width: 1cqw) { .zoom-card .zoom-nav { top: calc(12px + min(100cqw - 24px, 58vh) - 54px); } }
 </style>
 </head>
 <body>
@@ -929,7 +934,7 @@ footer { color: var(--muted); font-size: 0.8rem; }
       </div>
       <div class="statrow">
         <span class="sheetstat" id="sheet-stat" role="status">Spreadsheet: not connected</span>
-        <span class="ver"><span id="app-ver">Version 4.8.33Clover</span></span>
+        <span class="ver"><span id="app-ver">Version 4.8.34Clover</span></span>
       </div>
     </div>
   </section>
