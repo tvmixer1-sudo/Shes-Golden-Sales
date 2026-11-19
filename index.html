@@ -929,7 +929,7 @@ footer { color: var(--muted); font-size: 0.8rem; }
       </div>
       <div class="statrow">
         <span class="sheetstat" id="sheet-stat" role="status">Spreadsheet: not connected</span>
-        <span class="ver"><span id="app-ver">Version 4.8.31Clover</span></span>
+        <span class="ver"><span id="app-ver">Version 4.8.32Clover</span></span>
       </div>
     </div>
   </section>
@@ -11459,6 +11459,7 @@ function findAlignmentPattern(matrix, alignmentPatternQuads, topRight, topLeft, 
           }
           showSugg();
         });
+        sgInput.addEventListener("focus", function () { focusAt = Date.now(); placeLoop(); });
         sgInput.addEventListener("keydown", function (e) {
           if (e.key === "Enter") { e.preventDefault(); try { sgInput.blur(); } catch (er) {} }
           if (e.key === "Escape") { hideSugg(); try { sgInput.blur(); } catch (er) {} }
@@ -11524,7 +11525,8 @@ function findAlignmentPattern(matrix, alignmentPatternQuads, topRight, topLeft, 
           sg.appendChild(b);
         });
       });
-      sg.addEventListener("mousedown", function (e) { e.preventDefault(); });
+      /* Keep taps on tiles from stealing focus, but let a tap on the search box focus it */
+      sg.addEventListener("mousedown", function (e) { if (e.target && e.target.classList && e.target.classList.contains("sg-q")) return; e.preventDefault(); });
       /* Scrolling the list puts the phone keyboard away so more of the list is visible. The list stays open. */
       var sgDrag = function () { var a = document.activeElement; if (a === name || (sgInput && a === sgInput)) { try { a.blur(); } catch (e) {} } };
       sg.addEventListener("touchmove", sgDrag, { passive: true });
