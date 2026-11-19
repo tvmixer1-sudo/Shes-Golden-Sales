@@ -161,7 +161,7 @@ label, .label {
 .topsplit .big { padding-top: 2px; white-space: nowrap; flex: none; font-size: clamp(1.8rem, 8.6vw, 2.2rem); }
 .bd { display: grid; grid-template-columns: auto auto; column-gap: 12px; row-gap: 1px; margin-top: 30px; font: 400 0.8rem/1.35 var(--font-body); color: var(--muted); font-variant-numeric: tabular-nums; text-align: right; white-space: nowrap; min-width: 0; }
 .bd:empty { display: none; }
-.topsplit:has(.cloverline:not([hidden])) .bd { margin-top: 48px; }
+.topsplit:has(.cloverline:not([hidden])) .bd { margin-top: 0; margin-bottom: -3.5px; align-self: flex-end; align-content: space-between; }
 .bd span:nth-child(odd) { text-align: right; }
 .bd .bd-neg { color: var(--save); }
 .tag .row, .tag .taxline { display: none !important; }
@@ -11906,6 +11906,8 @@ function findAlignmentPattern(matrix, alignmentPatternQuads, topRight, topLeft, 
       cl.querySelector(".cl-amt").textContent = money.format(afterCents / 100);
       cl.querySelector(".cl-txt span").textContent = "Clover adds tax" + (withFee ? " + " + pctText(CARD_FEE_PCT) : "") + (withShip ? "\nShipping " + money.format(shipC / 100) + " extra" : "");
     }
+    var bdBox = $("a-bd");
+    if (bdBox) bdBox.style.height = (inClover && bdBox.children.length >= 4 && cl.offsetHeight) ? (cl.offsetHeight + 5) + "px" : "";
     if (withTax || withFee || withShip) {
       var txt = money.format(afterCents / 100);
       if (withTax) txt += " + " + money.format(taxCents / 100) + " tax (" + pctText(taxPct) + ")";
