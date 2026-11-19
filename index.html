@@ -777,6 +777,12 @@ footer { color: var(--muted); font-size: 0.8rem; }
 /* Search box inside the item search list (4.8.29) */
 .sugg .sg-bar input.sg-q { flex: 1 1 auto; min-width: 0; height: 36px; box-sizing: border-box; padding: 0 10px; border: 1.5px solid var(--accent); border-radius: 10px; background: var(--bg); color: var(--fg); font: 500 16px var(--font-body); outline: none; }
 .sugg .sg-note { grid-column: 1 / -1; padding: 14px 8px; color: var(--muted); font: 500 0.85rem var(--font-body); text-align: center; }
+
+/* Item counter: small pill in the top-left corner of the enlarged photo (4.8.31) */
+.zoom-card .zoom-count { position: absolute; top: 20px; left: 20px; z-index: 2; margin: 0; padding: 3px 10px; border-radius: 999px; background: rgba(0,0,0,0.55); color: #fff; font: 600 0.72rem var(--font-body); letter-spacing: 0.02em; text-shadow: none; }
+/* Dark mode: name sits just under the photo, not over it (light text on the white photo was hard to read) */
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .zoom-card img { margin-bottom: 0; } }
+:root[data-theme="dark"] .zoom-card img { margin-bottom: 0; }
 </style>
 </head>
 <body>
@@ -923,7 +929,7 @@ footer { color: var(--muted); font-size: 0.8rem; }
       </div>
       <div class="statrow">
         <span class="sheetstat" id="sheet-stat" role="status">Spreadsheet: not connected</span>
-        <span class="ver"><span id="app-ver">Version 4.8.30Clover</span></span>
+        <span class="ver"><span id="app-ver">Version 4.8.31Clover</span></span>
       </div>
     </div>
   </section>
@@ -12372,7 +12378,7 @@ function findAlignmentPattern(matrix, alignmentPatternQuads, topRight, topLeft, 
     $("zoom-prev").hidden = !many; $("zoom-next").hidden = !many; $("zoom-count").hidden = !many;
     if (!many) return;
     $("zoom-prev").disabled = n.i <= 0; $("zoom-next").disabled = n.i >= n.list.length - 1;
-    $("zoom-count").textContent = (n.i + 1) + " of " + n.list.length + " \u00b7 swipe for the next item";
+    $("zoom-count").textContent = (n.i + 1) + " / " + n.list.length;
   }
   /* nav (optional): { list: [{it, add}], i } so you can swipe through the list the photo came from */
   function openZoom(it, addFn, nav) {
