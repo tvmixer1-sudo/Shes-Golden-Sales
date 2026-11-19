@@ -823,6 +823,9 @@ footer { color: var(--muted); font-size: 0.8rem; }
 .pr-item:active { background: #f1efe9; }
 .pr-item.best::after { content: "Best guess"; position: absolute; top: 4px; left: 4px; padding: 2px 5px; border-radius: 6px; background: var(--accent); color: var(--accent-fg); font: 700 0.55rem var(--font-body); letter-spacing: 0.04em; text-transform: uppercase; }
 .pr-list .pick-plus { top: auto; bottom: 5px; right: 5px; transform: none; width: 28px; height: 28px; font-size: 1.3rem; box-shadow: 0 1px 4px rgba(0,0,0,0.35); }
+.addrow .addbtn.clearbtn { color: #ffd0c8; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .addrow .addbtn.clearbtn { color: #7a1208; } }
+:root[data-theme="dark"] .addrow .addbtn.clearbtn { color: #7a1208; }
 </style>
 </head>
 <body>
@@ -969,7 +972,7 @@ footer { color: var(--muted); font-size: 0.8rem; }
       </div>
       <div class="statrow">
         <span class="sheetstat" id="sheet-stat" role="status">Spreadsheet: not connected</span>
-        <span class="ver"><span id="app-ver">Version 4.8.51Clover</span></span>
+        <span class="ver"><span id="app-ver">Version 4.8.52Clover</span></span>
       </div>
     </div>
   </section>
