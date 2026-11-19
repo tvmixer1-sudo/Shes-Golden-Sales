@@ -780,9 +780,9 @@ footer { color: var(--muted); font-size: 0.8rem; }
 
 /* Item counter: small pill in the top-left corner of the enlarged photo (4.8.31) */
 .zoom-card .zoom-count { position: absolute; top: 20px; left: 20px; z-index: 2; margin: 0; padding: 3px 10px; border-radius: 999px; background: rgba(0,0,0,0.55); color: #fff; font: 600 0.72rem var(--font-body); letter-spacing: 0.02em; text-shadow: none; }
-/* Dark mode: name sits just under the photo, not over it (light text on the white photo was hard to read) */
-@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .zoom-card img { margin-bottom: 0; } }
-:root[data-theme="dark"] .zoom-card img { margin-bottom: 0; }
+/* Enlarged photo card: white in light and dark mode, dark text, so the photo blends in and the name stays readable (4.8.33) */
+.zoom-card { background: #fff; }
+.zoom-card .zoom-name, .zoom-card .zoom-price { color: #1d2a33; text-shadow: 0 0 6px #fff, 0 0 3px #fff; }
 </style>
 </head>
 <body>
@@ -929,7 +929,7 @@ footer { color: var(--muted); font-size: 0.8rem; }
       </div>
       <div class="statrow">
         <span class="sheetstat" id="sheet-stat" role="status">Spreadsheet: not connected</span>
-        <span class="ver"><span id="app-ver">Version 4.8.32Clover</span></span>
+        <span class="ver"><span id="app-ver">Version 4.8.33Clover</span></span>
       </div>
     </div>
   </section>
