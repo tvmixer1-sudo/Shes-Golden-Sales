@@ -788,6 +788,11 @@ footer { color: var(--muted); font-size: 0.8rem; }
 .zoom-card { container-type: inline-size; }
 .zoom-card .zoom-nav { top: 62%; }
 @supports (width: 1cqw) { .zoom-card .zoom-nav { top: calc(12px + min(100cqw - 24px, 58vh) - 54px); } }
+
+/* Photo arrows: white circle with a thin arrow (4.8.35) */
+.zoom-card .zoom-nav { width: 40px; height: 40px; border-radius: 50%; background: rgba(255,255,255,0.92); color: #2b3a44; box-shadow: 0 1px 6px rgba(0,0,0,0.3); }
+.zoom-card .zoom-nav svg { display: block; pointer-events: none; }
+@supports (width: 1cqw) { .zoom-card .zoom-nav { top: calc(12px + min(100cqw - 24px, 58vh) - 56px); } }
 </style>
 </head>
 <body>
@@ -934,7 +939,7 @@ footer { color: var(--muted); font-size: 0.8rem; }
       </div>
       <div class="statrow">
         <span class="sheetstat" id="sheet-stat" role="status">Spreadsheet: not connected</span>
-        <span class="ver"><span id="app-ver">Version 4.8.34Clover</span></span>
+        <span class="ver"><span id="app-ver">Version 4.8.35Clover</span></span>
       </div>
     </div>
   </section>
@@ -1070,8 +1075,8 @@ footer { color: var(--muted); font-size: 0.8rem; }
 <div class="zoom" id="zoom" hidden role="dialog" aria-modal="true" aria-label="Photo">
   <div class="zoom-card" id="zoom-card">
     <img id="zoom-img" alt="" draggable="false">
-    <button class="zoom-nav zprev" type="button" id="zoom-prev" aria-label="Previous item" hidden>&#8249;</button>
-    <button class="zoom-nav znext" type="button" id="zoom-next" aria-label="Next item" hidden>&#8250;</button>
+    <button class="zoom-nav zprev" type="button" id="zoom-prev" aria-label="Previous item" hidden><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg></button>
+    <button class="zoom-nav znext" type="button" id="zoom-next" aria-label="Next item" hidden><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 5l7 7-7 7"/></svg></button>
     <div class="zoom-count" id="zoom-count" hidden></div>
     <div class="zoom-name" id="zoom-name"></div>
     <div class="zoom-price" id="zoom-price"></div>
