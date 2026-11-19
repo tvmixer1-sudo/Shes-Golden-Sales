@@ -769,6 +769,9 @@ footer { color: var(--muted); font-size: 0.8rem; }
 .sugg .sg-bar span { white-space: nowrap; }
 .sugg .sg-bar button.sg-done { display: flex; flex-direction: row; align-items: center; justify-content: center; text-align: center; line-height: 1; box-sizing: border-box; flex: 0 0 auto; width: auto; min-height: 36px; height: 36px; padding: 0 20px; border: 0; border-radius: 10px; background: var(--accent); color: var(--accent-fg); font: 700 0.9rem var(--font-body); cursor: pointer; }
 .sugg .sh { top: 44px; }
+
+/* Item search list: fixed, near full screen (4.8.28) */
+.sugg { position: fixed; left: 8px; right: 8px; top: calc(env(safe-area-inset-top, 0px) + 8px); margin-top: 0; z-index: 95; max-height: calc(100vh - 16px); }
 </style>
 </head>
 <body>
@@ -915,7 +918,7 @@ footer { color: var(--muted); font-size: 0.8rem; }
       </div>
       <div class="statrow">
         <span class="sheetstat" id="sheet-stat" role="status">Spreadsheet: not connected</span>
-        <span class="ver"><span id="app-ver">Version 4.8.27Clover</span></span>
+        <span class="ver"><span id="app-ver">Version 4.8.28Clover</span></span>
       </div>
     </div>
   </section>
@@ -11369,7 +11372,9 @@ function findAlignmentPattern(matrix, alignmentPatternQuads, topRight, topLeft, 
       if (!sg || !sg.parentNode) return;
       var vv = window.visualViewport, vh = vv ? vv.height : window.innerHeight, top = vv ? vv.offsetTop : 0;
       var rr = row.getBoundingClientRect();
-      sg.style.maxHeight = Math.max(130, vh - (rr.bottom - top) - 8) + "px";
+      /* Near full screen, like Find item: the list fills the phone screen above the keyboard, whichever item row is being typed in */
+      sg.style.top = "calc(env(safe-area-inset-top, 0px) + " + (top + 8) + "px)";
+      sg.style.maxHeight = "calc(" + Math.max(160, vh - 16) + "px - env(safe-area-inset-top, 0px))";
     }
     function placeLoop() {
       clearTimeout(placeTimer);
@@ -11419,7 +11424,7 @@ function findAlignmentPattern(matrix, alignmentPatternQuads, topRight, topLeft, 
       hits = hits.slice(0, 30);
       /* A Done bar that stays at the top of the list, so it is easy to close after adding items */
       var bar = document.createElement("div"); bar.className = "sg-bar";
-      var barTxt = document.createElement("span"); barTxt.textContent = "Tap + to add items";
+      var barTxt = document.createElement("span"); barTxt.textContent = "Tap + to add \u00b7 \u201c" + name.value.trim().slice(0, 18) + "\u201d";
       var done = document.createElement("button"); done.type = "button"; done.className = "sg-done"; done.textContent = "Done";
       done.addEventListener("click", function (e) { e.preventDefault(); e.stopPropagation(); hideSugg(); try { name.blur(); } catch (er) {} });
       bar.appendChild(barTxt); bar.appendChild(done); sg.appendChild(bar);
