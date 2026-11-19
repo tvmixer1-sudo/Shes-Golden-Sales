@@ -861,6 +861,12 @@ footer { color: var(--muted); font-size: 0.8rem; }
   #rpt-pop .menucard { box-shadow: none; max-height: none; overflow: visible; width: 100%; }
   .rpt-chips, .rpt-btns, .rpt-x { display: none !important; }
 }
+.rpt-pin { display: block; width: 100%; box-sizing: border-box; margin: 6px 0 4px; min-height: 56px; border: 1.5px solid var(--line); border-radius: 12px; background: transparent; color: var(--fg); text-align: center; font: 700 1.8rem var(--font-mono); letter-spacing: 0.5em; padding-left: 0.5em; }
+.rpt-pin:focus { outline: 2px solid var(--accent); border-color: var(--accent); }
+#rpt-lock[hidden], #rpt-main[hidden] { display: none; }
+.rpt-bad { color: #b3261e !important; font-weight: 600; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .rpt-bad { color: #ff9a8f !important; } }
+:root[data-theme="dark"] .rpt-bad { color: #ff9a8f !important; }
 </style>
 </head>
 <body>
@@ -1007,7 +1013,7 @@ footer { color: var(--muted); font-size: 0.8rem; }
       </div>
       <div class="statrow">
         <span class="sheetstat" id="sheet-stat" role="status">Spreadsheet: not connected</span>
-        <span class="ver"><span id="app-ver">Version 4.9.1Clover</span></span>
+        <span class="ver"><span id="app-ver">Version 4.9.2Clover</span></span>
       </div>
     </div>
   </section>
@@ -1097,6 +1103,12 @@ footer { color: var(--muted); font-size: 0.8rem; }
 <div class="menu" id="rpt-pop" hidden>
   <div class="menucard details mset rptcard" role="dialog" aria-modal="true" aria-labelledby="rpt-title">
     <div class="menuhead"><span class="label" id="rpt-title">Sales report</span><button class="rpt-x" type="button" id="rpt-close" aria-label="Close">Close</button></div>
+    <div id="rpt-lock" hidden>
+      <p class="mhint" id="rpt-lock-msg">Enter your 4-digit code to see the sales report.</p>
+      <input id="rpt-pin" class="rpt-pin" type="password" inputmode="numeric" pattern="[0-9]*" maxlength="4" autocomplete="off" aria-label="4-digit code">
+      <button class="mbtn solid" type="button" id="rpt-unlock">Unlock</button>
+    </div>
+    <div id="rpt-main">
     <div class="rpt-chips" role="group" aria-label="Date range">
       <button type="button" class="rpt-chip" data-r="today">Today</button>
       <button type="button" class="rpt-chip on" data-r="this">This month</button>
@@ -1111,6 +1123,7 @@ footer { color: var(--muted); font-size: 0.8rem; }
     <div class="rpt-btns" id="rpt-btns" hidden>
       <button class="mbtn solid" type="button" id="rpt-share">Share report</button>
       <button class="mbtn" type="button" id="rpt-print">Print / PDF</button>
+    </div>
     </div>
   </div>
 </div>
@@ -13582,7 +13595,27 @@ function findAlignmentPattern(matrix, alignmentPatternQuads, topRight, topLeft, 
       .then(function (j) { if (!j || !j.ok) throw new Error((j && j.error) || "not accepted"); return j; });
   }
   /* ---------- Sales report (4.9.0): any date range, added up on the phone from the sheet ---------- */
-  var rptRange = "this", rptSeq = 0, rptText = "";
+  var rptRange = "this", rptSeq = 0, rptText = "", rptPin = "", rptPinAt = 0;
+  /* The code is checked by the sheet's script (REPORT_PIN in its settings). It is only kept in memory here, never saved, and is forgotten after 5 idle minutes. */
+  function rptShowLock(msg, bad) {
+    $("rpt-main").hidden = true; $("rpt-lock").hidden = false;
+    $("rpt-lock-msg").textContent = msg || "Enter your 4-digit code to see the sales report.";
+    $("rpt-lock-msg").classList.toggle("rpt-bad", !!bad);
+    $("rpt-pin").value = "";
+    try { $("rpt-pin").focus(); } catch (e) {}
+  }
+  function rptOpen() {
+    $("rpt-pop").hidden = false;
+    if (rptPin && Date.now() - rptPinAt < 300000) { $("rpt-lock").hidden = true; $("rpt-main").hidden = false; rptSetRange("this"); }
+    else { rptPin = ""; rptShowLock("", false); }
+  }
+  function rptTryUnlock() {
+    var v = $("rpt-pin").value.replace(/\D/g, "");
+    if (v.length !== 4) { rptShowLock("Enter all 4 digits.", true); return; }
+    rptPin = v; rptPinAt = Date.now();
+    $("rpt-lock").hidden = true; $("rpt-main").hidden = false;
+    rptSetRange("this");
+  }
   function rptDay(d) { var z = function (n) { return (n < 10 ? "0" : "") + n; }; return d.getFullYear() + "-" + z(d.getMonth() + 1) + "-" + z(d.getDate()); }
   function rptParse(v) { var m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(v || ""); return m ? new Date(+m[1], +m[2] - 1, +m[3]) : null; }
   function rptMoney(n) { var neg = n < -0.005; var t = Math.abs(n).toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ","); return (neg ? "-$" : "$") + t; }
@@ -13608,12 +13641,14 @@ function findAlignmentPattern(matrix, alignmentPatternQuads, topRight, topLeft, 
     if (!navigator.onLine) { body.innerHTML = '<p class="mhint">You are offline. The report needs a connection.</p>'; return; }
     body.innerHTML = '<p class="mhint">Loading...</p>';
     var from = a.getTime(), to = new Date(b.getFullYear(), b.getMonth(), b.getDate(), 23, 59, 59, 999).getTime();
-    taxPost({ salesReport: { from: from, to: to } }).then(function (j) {
+    taxPost({ salesReport: { from: from, to: to, pin: rptPin } }).then(function (j) {
       if (seq !== rptSeq) return;
+      rptPinAt = Date.now();
       rptRender(j, a, b);
     }).catch(function (e) {
       if (seq !== rptSeq) return;
       var m = String(e && e.message || "");
+      if (/BAD_PIN|LOCKED|PIN_NOT_SET/.test(m)) { rptPin = ""; rptShowLock(/LOCKED/.test(m) ? "Too many wrong tries. Try again in 15 minutes." : /PIN_NOT_SET/.test(m) ? "No code is set yet. Add REPORT_PIN in the script's settings first." : "That code is not right. Try again.", true); return; }
       body.innerHTML = '<p class="mhint">' + (/Bad receipt/.test(m)
         ? "The sheet's script needs the newest version before it can send the report. Paste in the latest Code.gs and redeploy."
         : "Could not load the report (" + rptEsc(m.slice(0, 80)) + ").") + "</p>";
@@ -13680,8 +13715,11 @@ function findAlignmentPattern(matrix, alignmentPatternQuads, topRight, topLeft, 
     }
     $("rpt-btns").hidden = !rs.length;
   }
-  $("rpt-open").addEventListener("click", function () { closeMenu(); $("rpt-pop").hidden = false; rptSetRange("this"); });
-  $("rpt-close").addEventListener("click", function () { $("rpt-pop").hidden = true; });
+  $("rpt-open").addEventListener("click", function () { closeMenu(); rptOpen(); });
+  $("rpt-unlock").addEventListener("click", rptTryUnlock);
+  $("rpt-pin").addEventListener("input", function () { this.value = this.value.replace(/\D/g, "").slice(0, 4); if (this.value.length === 4) rptTryUnlock(); });
+  $("rpt-pin").addEventListener("keydown", function (e) { if (e.key === "Enter") rptTryUnlock(); });
+  $("rpt-close").addEventListener("click", function () { $("rpt-pop").hidden = true; rptText = ""; });
   $("rpt-pop").addEventListener("click", function (e) { if (e.target === this) this.hidden = true; });
   document.addEventListener("keydown", function (e) { if (e.key === "Escape" && !$("rpt-pop").hidden) $("rpt-pop").hidden = true; });
   Array.prototype.forEach.call(document.querySelectorAll(".rpt-chip"), function (b) {
