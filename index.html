@@ -915,7 +915,7 @@ footer { color: var(--muted); font-size: 0.8rem; }
       </div>
       <div class="statrow">
         <span class="sheetstat" id="sheet-stat" role="status">Spreadsheet: not connected</span>
-        <span class="ver"><span id="app-ver">Version 4.8.26Clover</span></span>
+        <span class="ver"><span id="app-ver">Version 4.8.27Clover</span></span>
       </div>
     </div>
   </section>
@@ -11857,6 +11857,23 @@ function findAlignmentPattern(matrix, alignmentPatternQuads, topRight, topLeft, 
     }
     return im;
   }
+  /* Warm up every list photo shortly after the app opens, so the search lists show them instantly */
+  (function warmThumbs() {
+    var done = false;
+    function go() {
+      if (done) return; done = true;
+      var ids = {}, list = [];
+      catalog.forEach(function (it) { var k = photoKey(it.id); if (!ids[k]) { ids[k] = 1; list.push(k); } });
+      var i = 0;
+      (function next() {
+        if (i >= list.length) return;
+        var im = new Image(); im.decoding = "async"; im.src = "img/" + encodeURIComponent(list[i++]) + ".webp";
+        setTimeout(next, 25);
+      })();
+    }
+    if (window.requestIdleCallback) window.addEventListener("load", function () { requestIdleCallback(go, { timeout: 3000 }); });
+    else window.addEventListener("load", function () { setTimeout(go, 1500); });
+  })();
   /* ---------- Find by photo (on-device look-alike search; no internet needed) ---------- */
   var VS_RES = 192, VS_S = 56, VS_N = 7;
   var VS_W = { hue: 1.5, low: 1.0, dens: 1.0, cl: 0.15, hog: 0.8, asp: 0.3 };
