@@ -772,6 +772,10 @@ footer { color: var(--muted); font-size: 0.8rem; }
 
 /* Item search list: fixed, near full screen (4.8.28) */
 .sugg { position: fixed; left: 8px; right: 8px; top: calc(env(safe-area-inset-top, 0px) + 8px); margin-top: 0; z-index: 95; max-height: calc(100vh - 16px); }
+
+/* Search box inside the item search list (4.8.29) */
+.sugg .sg-bar input.sg-q { flex: 1 1 auto; min-width: 0; height: 36px; box-sizing: border-box; padding: 0 10px; border: 1.5px solid var(--accent); border-radius: 10px; background: var(--bg); color: var(--fg); font: 500 16px var(--font-body); outline: none; }
+.sugg .sg-note { grid-column: 1 / -1; padding: 14px 8px; color: var(--muted); font: 500 0.85rem var(--font-body); text-align: center; }
 </style>
 </head>
 <body>
@@ -918,7 +922,7 @@ footer { color: var(--muted); font-size: 0.8rem; }
       </div>
       <div class="statrow">
         <span class="sheetstat" id="sheet-stat" role="status">Spreadsheet: not connected</span>
-        <span class="ver"><span id="app-ver">Version 4.8.28Clover</span></span>
+        <span class="ver"><span id="app-ver">Version 4.8.29Clover</span></span>
       </div>
     </div>
   </section>
@@ -11350,8 +11354,8 @@ function findAlignmentPattern(matrix, alignmentPatternQuads, topRight, topLeft, 
     var sg = null;
     function hideSugg(keep) {
       if (sg && sg.parentNode) sg.parentNode.removeChild(sg);
-      sg = null;
       if (keep) return;
+      sg = null; sgInput = null; sgAdded = false; sgCount = {};
       /* Moving from one item name to another: keep the layout steady (no jump) */
       var ae = document.activeElement;
       if (ae && ae !== name && ae.classList && ae.classList.contains("name")) return;
@@ -11386,6 +11390,12 @@ function findAlignmentPattern(matrix, alignmentPatternQuads, topRight, topLeft, 
       })();
     }
     function chooseSugg(it) {
+      if (sgAdded) {
+        /* Already added from this list: this one becomes another line */
+        addScanned({ id: it.id, name: it.name, price: Number(it.price).toFixed(2) });
+        hideSugg(); try { name.blur(); } catch (e) {}
+        return;
+      }
       hideSugg();
       name.value = it.name;
       price.value = Number(it.price).toFixed(2);
@@ -11398,12 +11408,19 @@ function findAlignmentPattern(matrix, alignmentPatternQuads, topRight, topLeft, 
       var rs = rows();
       if (rs[rs.length - 1] === row) addRow("", false);
     }
-    var sgAdded = false, sgCount = {};
+    var sgInput = null, sgAdded = false, sgCount = {};
+    function sgNote(txt) {
+      var n = document.createElement("div"); n.className = "sg-note"; n.textContent = txt; sg.appendChild(n);
+    }
     function showSugg() {
-      var q = name.value.trim().toLowerCase();
-      hideSugg(true);
-      if (document.activeElement !== name) { hideSugg(); return; }
-      if (q.length < 2) return;
+      var ae = document.activeElement;
+      if (ae !== name && !(sgInput && ae === sgInput)) { hideSugg(); return; }
+      var q = (sg && sgInput ? sgInput.value : name.value).trim().toLowerCase();
+      /* The list stays put while the search box above it is cleared for the next item */
+      if (q.length < 2) {
+        if (sg && sgInput && !sgAdded) { while (sg.children.length > 1) sg.removeChild(sg.lastChild); sgNote("Type at least 2 letters to search."); }
+        return;
+      }
       var toks = q.split(/\s+/), hits = [];
       catalog.forEach(function (it, i) {
         var hay = (it.name + " " + it.id + " " + (it.cat || "")).toLowerCase();
@@ -11416,18 +11433,39 @@ function findAlignmentPattern(matrix, alignmentPatternQuads, topRight, topLeft, 
         /* Matches on the name come first; matches that only come from the website tags follow */
         hits.push({ it: it, k: (it.sold ? 10 : 0) + (!byName ? 3 : at === 0 ? 0 : (hay.charAt(at - 1) === " " ? 1 : 2)), i: i });
       });
-      if (!hits.length) return;
+      var fresh = !sg;
+      if (fresh) {
+        if (!hits.length) return;
+        sg = document.createElement("div");
+        sg.className = "sugg";
+        sg.setAttribute("role", "listbox");
+        /* The top bar holds the search box (what you type) and Done, and stays at the top while the list scrolls */
+        var bar = document.createElement("div"); bar.className = "sg-bar";
+        sgInput = document.createElement("input"); sgInput.type = "text"; sgInput.className = "sg-q";
+        sgInput.setAttribute("autocomplete", "off"); sgInput.setAttribute("autocorrect", "off"); sgInput.setAttribute("autocapitalize", "off"); sgInput.setAttribute("spellcheck", "false"); sgInput.setAttribute("enterkeyhint", "done");
+        sgInput.placeholder = "Item " + (Array.prototype.indexOf.call(rows(), row) + 1);
+        sgInput.value = name.value;
+        sgInput.addEventListener("input", function () {
+          if (!sgAdded) {
+            name.value = sgInput.value;
+            if (row._pick && name.value !== row._pick) { row.removeAttribute("data-id"); row._pick = null; }
+          }
+          showSugg();
+        });
+        sgInput.addEventListener("keydown", function (e) {
+          if (e.key === "Enter") { e.preventDefault(); try { sgInput.blur(); } catch (er) {} }
+          if (e.key === "Escape") { hideSugg(); try { sgInput.blur(); } catch (er) {} }
+        });
+        var done = document.createElement("button"); done.type = "button"; done.className = "sg-done"; done.textContent = "Done";
+        done.addEventListener("click", function (e) { e.preventDefault(); e.stopPropagation(); var si = sgInput; hideSugg(); try { name.blur(); if (si) si.blur(); } catch (er) {} });
+        bar.appendChild(sgInput); bar.appendChild(done); sg.appendChild(bar);
+      } else {
+        while (sg.children.length > 1) sg.removeChild(sg.lastChild);
+        sg.scrollTop = 0;
+      }
+      if (!hits.length) { sgNote("No matches. Tap Done to keep what you typed."); return; }
       hits.sort(function (a, b) { return a.k - b.k || a.i - b.i; });
-      sg = document.createElement("div");
-      sg.className = "sugg";
-      sg.setAttribute("role", "listbox");
       hits = hits.slice(0, 30);
-      /* A Done bar that stays at the top of the list, so it is easy to close after adding items */
-      var bar = document.createElement("div"); bar.className = "sg-bar";
-      var barTxt = document.createElement("span"); barTxt.textContent = "Tap + to add \u00b7 \u201c" + name.value.trim().slice(0, 18) + "\u201d";
-      var done = document.createElement("button"); done.type = "button"; done.className = "sg-done"; done.textContent = "Done";
-      done.addEventListener("click", function (e) { e.preventDefault(); e.stopPropagation(); hideSugg(); try { name.blur(); } catch (er) {} });
-      bar.appendChild(barTxt); bar.appendChild(done); sg.appendChild(bar);
       var cats = (typeof CATEGORY_ORDER !== "undefined" ? CATEGORY_ORDER.slice() : []);
       hits.forEach(function (h) { if (cats.indexOf(h.it.cat || "Other") === -1) cats.push(h.it.cat || "Other"); });
       var ordered = [];
@@ -11446,6 +11484,7 @@ function findAlignmentPattern(matrix, alignmentPatternQuads, topRight, topLeft, 
           if (h.it.sold) { n.classList.add("dim"); b.classList.add("sold"); b.setAttribute("aria-label", h.it.name + ", sold out"); var sb = document.createElement("span"); sb.className = "sbadge"; sb.textContent = "Sold out"; b.appendChild(sb); }
           var sgp = document.createElement("span"); sgp.className = "pick-plus sg-plus"; sgp.textContent = "+"; sgp.setAttribute("aria-hidden", "true");
           b.appendChild(sgp);
+          if (sgCount[h.it.id]) qBadge(b, sgCount[h.it.id]);
           b.addEventListener("click", function (e) {
             var tg = e.target;
             if (tg && tg.classList && tg.classList.contains("sg-plus")) {
@@ -11462,6 +11501,8 @@ function findAlignmentPattern(matrix, alignmentPatternQuads, topRight, topLeft, 
               }
               sgCount[h.it.id] = (sgCount[h.it.id] || 0) + 1;
               qBadge(b, sgCount[h.it.id]);
+              /* The search box at the top moves on to the next (empty) item line */
+              if (sgInput) { sgInput.value = ""; sgInput.placeholder = "Item " + rows().length; }
               sgp.textContent = "\u2713"; sgp.classList.add("ok");
               setTimeout(function () { sgp.textContent = "+"; sgp.classList.remove("ok"); }, 600);
               return;
@@ -11478,12 +11519,16 @@ function findAlignmentPattern(matrix, alignmentPatternQuads, topRight, topLeft, 
       });
       sg.addEventListener("mousedown", function (e) { e.preventDefault(); });
       /* Scrolling the list puts the phone keyboard away so more of the list is visible. The list stays open. */
-      var sgDrag = function () { if (document.activeElement === name) { try { name.blur(); } catch (e) {} } };
+      var sgDrag = function () { var a = document.activeElement; if (a === name || (sgInput && a === sgInput)) { try { a.blur(); } catch (e) {} } };
       sg.addEventListener("touchmove", sgDrag, { passive: true });
       sg.addEventListener("scroll", function () { if (Date.now() - focusAt > 400) sgDrag(); }, { passive: true });
-      row.appendChild(sg);
-      document.body.classList.add("sugg-open");
-      placeSugg();
+      if (fresh) {
+        row.appendChild(sg);
+        document.body.classList.add("sugg-open");
+        placeSugg();
+        /* Typing carries on in the search box at the top of the list */
+        try { sgInput.focus(); var L = sgInput.value.length; sgInput.setSelectionRange(L, L); } catch (e) {}
+      }
     }
     name.addEventListener("input", function () {
       if (row._pick && name.value !== row._pick) { row.removeAttribute("data-id"); row._pick = null; }
