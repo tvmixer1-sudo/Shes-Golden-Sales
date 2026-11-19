@@ -799,6 +799,8 @@ footer { color: var(--muted); font-size: 0.8rem; }
 .sugg .sg-bar { position: static; flex: 0 0 auto; margin: 0; }
 .sugg .sg-body { flex: 1 1 auto; min-height: 0; overflow-y: auto; -webkit-overflow-scrolling: touch; overscroll-behavior: contain; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 4px; padding: 4px; align-content: start; }
 .sugg .sg-body .sh { top: 0; }
+.sugg .sg-body { grid-auto-rows: max-content; }
+.sugg .sg-body > button { height: auto; min-height: 0; }
 </style>
 </head>
 <body>
@@ -945,7 +947,7 @@ footer { color: var(--muted); font-size: 0.8rem; }
       </div>
       <div class="statrow">
         <span class="sheetstat" id="sheet-stat" role="status">Spreadsheet: not connected</span>
-        <span class="ver"><span id="app-ver">Version 4.8.36Clover</span></span>
+        <span class="ver"><span id="app-ver">Version 4.8.37Clover</span></span>
       </div>
     </div>
   </section>
