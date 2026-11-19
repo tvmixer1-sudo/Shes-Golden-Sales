@@ -826,6 +826,43 @@ footer { color: var(--muted); font-size: 0.8rem; }
 .addrow .addbtn.clearbtn { color: #ffd0c8; }
 @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .addrow .addbtn.clearbtn { color: #7a1208; } }
 :root[data-theme="dark"] .addrow .addbtn.clearbtn { color: #7a1208; }
+/* ---- Sales report (4.9.0) ---- */
+.rptcard { padding-top: 2px; }
+.rpt-x { border: 0; background: transparent; color: var(--accent); font: 600 0.9rem var(--font-body); padding: 10px 4px; cursor: pointer; }
+.rpt-chips { display: flex; gap: 6px; margin: 10px 0; }
+.rpt-chip { flex: 1; min-height: 38px; border: 0; border-radius: 19px; background: var(--accent-soft); color: var(--accent); font: 600 0.82rem var(--font-body); cursor: pointer; }
+.rpt-chip.on { background: var(--accent); color: var(--accent-fg); }
+.rpt-range { display: flex; gap: 8px; margin-bottom: 12px; }
+.rpt-range label { flex: 1; display: block; border: 1px solid var(--line); border-radius: 10px; padding: 6px 10px; }
+.rpt-range small { display: block; font-size: 0.6rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); }
+.rpt-range input { width: 100%; border: 0; background: transparent; color: var(--fg); font: 500 0.9rem var(--font-body); padding: 2px 0 0; min-height: 24px; }
+.rpt-big { background: var(--accent); color: var(--accent-fg); border-radius: 14px; padding: 14px 16px; margin-bottom: 10px; }
+.rpt-big small { display: block; font-size: 0.68rem; letter-spacing: 0.06em; text-transform: uppercase; opacity: 0.85; }
+.rpt-big b { display: block; font: 700 2rem var(--font-body); margin-top: 2px; }
+.rpt-g { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; margin-bottom: 4px; }
+.rpt-g.two { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.rpt-g div { border: 1px solid var(--line); border-radius: 10px; padding: 8px 10px; }
+.rpt-g small { display: block; font-size: 0.58rem; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); }
+.rpt-g b { font: 700 1rem var(--font-body); }
+.rpt-h { margin: 16px 0 6px; font: 700 0.68rem var(--font-body); letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); }
+.rpt-r { display: flex; align-items: center; gap: 8px; margin: 5px 0; font-size: 0.82rem; }
+.rpt-r .k { flex: none; width: 108px; color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.rpt-r .bar { flex: 1; height: 12px; border-radius: 6px; background: var(--accent-soft); overflow: hidden; }
+.rpt-r .bar i { display: block; height: 100%; background: var(--accent); }
+.rpt-r .v { flex: none; min-width: 62px; text-align: right; font-weight: 700; }
+.rpt-it { display: flex; align-items: baseline; gap: 8px; margin: 6px 0; font-size: 0.82rem; }
+.rpt-it .k { flex: 1; color: var(--fg); }
+.rpt-it .q { flex: none; color: var(--muted); }
+.rpt-it .v { flex: none; min-width: 62px; text-align: right; font-weight: 700; }
+.rpt-r.misc .k, .rpt-it.misc .k { font-style: italic; }
+.rpt-note { margin: 10px 0 0; font-size: 0.74rem; line-height: 1.35; color: var(--muted); }
+.rpt-btns { margin-top: 8px; }
+@media print {
+  body > *:not(#rpt-pop) { display: none !important; }
+  #rpt-pop { position: static; background: #fff; display: block; padding: 0; }
+  #rpt-pop .menucard { box-shadow: none; max-height: none; overflow: visible; width: 100%; }
+  .rpt-chips, .rpt-btns, .rpt-x { display: none !important; }
+}
 </style>
 </head>
 <body>
@@ -972,7 +1009,7 @@ footer { color: var(--muted); font-size: 0.8rem; }
       </div>
       <div class="statrow">
         <span class="sheetstat" id="sheet-stat" role="status">Spreadsheet: not connected</span>
-        <span class="ver"><span id="app-ver">Version 4.8.52Clover</span></span>
+        <span class="ver"><span id="app-ver">Version 4.9.0Clover</span></span>
       </div>
     </div>
   </section>
@@ -1036,6 +1073,7 @@ footer { color: var(--muted); font-size: 0.8rem; }
 
     <section class="msec">
       <h3 class="mhd">Sales report</h3>
+      <button class="mbtn solid" type="button" id="rpt-open">View Sales Report</button>
       <button class="mbtn" type="button" id="rep-btn">Email Sales Report</button>
       <p class="mhint" id="rep-msg"></p>
     </section>
@@ -1058,6 +1096,25 @@ footer { color: var(--muted); font-size: 0.8rem; }
       </div>
       <p class="mhint" id="bogo-hint"></p>
     </section>
+  </div>
+</div>
+<div class="menu" id="rpt-pop" hidden>
+  <div class="menucard details mset rptcard" role="dialog" aria-modal="true" aria-labelledby="rpt-title">
+    <div class="menuhead"><span class="label" id="rpt-title">Sales report</span><button class="rpt-x" type="button" id="rpt-close" aria-label="Close">Close</button></div>
+    <div class="rpt-chips" role="group" aria-label="Date range">
+      <button type="button" class="rpt-chip on" data-r="this">This month</button>
+      <button type="button" class="rpt-chip" data-r="last">Last month</button>
+      <button type="button" class="rpt-chip" data-r="custom">Custom</button>
+    </div>
+    <div class="rpt-range">
+      <label><small>From</small><input type="date" id="rpt-from"></label>
+      <label><small>To</small><input type="date" id="rpt-to"></label>
+    </div>
+    <div id="rpt-body"><p class="mhint">Loading...</p></div>
+    <div class="rpt-btns" id="rpt-btns" hidden>
+      <button class="mbtn solid" type="button" id="rpt-share">Share report</button>
+      <button class="mbtn" type="button" id="rpt-print">Print / PDF</button>
+    </div>
   </div>
 </div>
 <div class="menu" id="clear-pop" hidden>
@@ -13549,6 +13606,129 @@ function findAlignmentPattern(matrix, alignmentPatternQuads, topRight, topLeft, 
         : "Could not send: " + m;
     }).then(function () { repBusy = false; btn.disabled = false; btn.textContent = "Email Sales Report"; });
   });
+
+  /* ---------- Sales report (4.9.0): any date range, added up on the phone from the sheet ---------- */
+  var rptRange = "this", rptSeq = 0, rptText = "";
+  function rptDay(d) { var z = function (n) { return (n < 10 ? "0" : "") + n; }; return d.getFullYear() + "-" + z(d.getMonth() + 1) + "-" + z(d.getDate()); }
+  function rptParse(v) { var m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(v || ""); return m ? new Date(+m[1], +m[2] - 1, +m[3]) : null; }
+  function rptMoney(n) { var neg = n < -0.005; var t = Math.abs(n).toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ","); return (neg ? "-$" : "$") + t; }
+  function rptMoney0(n) { return "$" + Math.round(n).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ","); }
+  function rptEsc(t) { return String(t).replace(/[&<>"]/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]; }); }
+  function rptSetRange(kind) {
+    rptRange = kind;
+    Array.prototype.forEach.call(document.querySelectorAll(".rpt-chip"), function (b) { b.classList.toggle("on", b.getAttribute("data-r") === kind); });
+    var now = new Date(), a, b;
+    if (kind === "this") { a = new Date(now.getFullYear(), now.getMonth(), 1); b = now; }
+    else if (kind === "last") { a = new Date(now.getFullYear(), now.getMonth() - 1, 1); b = new Date(now.getFullYear(), now.getMonth(), 0); }
+    if (a) { $("rpt-from").value = rptDay(a); $("rpt-to").value = rptDay(b); }
+    rptLoad();
+  }
+  function rptLoad() {
+    var body = $("rpt-body"), seq = ++rptSeq;
+    $("rpt-btns").hidden = true;
+    var a = rptParse($("rpt-from").value), b = rptParse($("rpt-to").value);
+    if (!a || !b) { body.innerHTML = '<p class="mhint">Pick a From and To date.</p>'; return; }
+    if (b < a) { body.innerHTML = '<p class="mhint">The To date is before the From date.</p>'; return; }
+    if (!getCfg()) { body.innerHTML = '<p class="mhint">Connect your spreadsheet first.</p>'; return; }
+    if (!navigator.onLine) { body.innerHTML = '<p class="mhint">You are offline. The report needs a connection.</p>'; return; }
+    body.innerHTML = '<p class="mhint">Loading...</p>';
+    var from = a.getTime(), to = new Date(b.getFullYear(), b.getMonth(), b.getDate(), 23, 59, 59, 999).getTime();
+    taxPost({ salesReport: { from: from, to: to } }).then(function (j) {
+      if (seq !== rptSeq) return;
+      rptRender(j, a, b);
+    }).catch(function (e) {
+      if (seq !== rptSeq) return;
+      var m = String(e && e.message || "");
+      body.innerHTML = '<p class="mhint">' + (/Bad receipt/.test(m)
+        ? "The sheet's script needs the newest version before it can send the report. Paste in the latest Code.gs and redeploy."
+        : "Could not load the report (" + rptEsc(m.slice(0, 80)) + ").") + "</p>";
+    });
+  }
+  function rptRender(j, a, b) {
+    var rs = (j.receipts || []).filter(function (r) { return r.sub > 0.005; });
+    var ok = {}; rs.forEach(function (r) { ok[r.id] = 1; });
+    var net = 0, disc = 0, tax = 0, tot = 0, byDay = {}, byLoc = {}, byPay = {};
+    rs.forEach(function (r) {
+      var n = r.sub - r.disc;
+      net += n; disc += r.disc; tax += r.tax; tot += r.total;
+      var dk = rptDay(new Date(r.t)); byDay[dk] = (byDay[dk] || 0) + n;
+      var lk = r.loc || "No location"; byLoc[lk] = (byLoc[lk] || 0) + n;
+      var pk = r.pay || "Unknown"; byPay[pk] = (byPay[pk] || 0) + n;
+    });
+    /* Items: catalog items are grouped by name (colors together); anything typed in goes to Miscellaneous.
+       Any gap between the item lines and the receipt totals is folded into Miscellaneous so the lists always add up to net sales. */
+    var byItem = {}, byCat = {}, itemSum = 0, miscQ = 0;
+    (j.items || []).forEach(function (x) {
+      if (!ok[x.r]) return;
+      itemSum += x.a;
+      var c = x.id ? findItem(x.id) : null;
+      if (c) {
+        var nm = bname(c), e = byItem[nm] || (byItem[nm] = { q: 0, d: 0 });
+        e.q++; e.d += x.a; byCat[c.cat] = (byCat[c.cat] || 0) + x.a;
+      } else { miscQ++; byCat.Miscellaneous = (byCat.Miscellaneous || 0) + x.a; }
+    });
+    var gap = net - itemSum;
+    if (Math.abs(gap) > 0.005) byCat.Miscellaneous = (byCat.Miscellaneous || 0) + gap;
+    var miscD = byCat.Miscellaneous || 0;
+    function rows(map, fmt, kind) {
+      var keys = Object.keys(map), max = 0;
+      keys.forEach(function (k) { if (map[k] > max) max = map[k]; });
+      if (kind === "day") keys.sort(); else keys.sort(function (x, y) { return map[y] - map[x]; });
+      return keys.map(function (k) {
+        var lab = kind === "day" ? new Date(k + "T12:00:00").toLocaleDateString("en-US", { month: "short", day: "numeric" }) : k;
+        return '<div class="rpt-r' + (k === "Miscellaneous" ? " misc" : "") + '"><span class="k">' + rptEsc(lab) + '</span><span class="bar"><i style="width:' + (max > 0 ? Math.max(2, Math.round(map[k] / max * 100)) : 0) + '%"></i></span><span class="v">' + fmt(map[k]) + "</span></div>";
+      }).join("");
+    }
+    var top = Object.keys(byItem).sort(function (x, y) { return byItem[y].d - byItem[x].d; }).slice(0, 10);
+    var itemRows = top.map(function (k) {
+      return '<div class="rpt-it"><span class="k">' + rptEsc(k) + '</span><span class="q">x' + byItem[k].q + '</span><span class="v">' + rptMoney0(byItem[k].d) + "</span></div>";
+    }).join("") + '<div class="rpt-it misc"><span class="k">Miscellaneous (typed in)</span><span class="q">x' + miscQ + '</span><span class="v">' + rptMoney0(miscD) + "</span></div>";
+    var label = a.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }) + " to " + b.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
+    var avg = rs.length ? net / rs.length : 0;
+    $("rpt-body").innerHTML = rs.length
+      ? '<div class="rpt-big"><small>Net sales (after discounts, before tax)</small><b>' + rptMoney(net) + '</b></div>' +
+        '<div class="rpt-g"><div><small>Sales</small><b>' + rs.length + '</b></div><div><small>Avg sale</small><b>' + rptMoney(avg) + '</b></div><div><small>Discounts</small><b>' + rptMoney(disc) + '</b></div></div>' +
+        '<h4 class="rpt-h">By day</h4>' + rows(byDay, rptMoney0, "day") +
+        '<h4 class="rpt-h">By location</h4>' + rows(byLoc, rptMoney0) +
+        '<h4 class="rpt-h">By payment</h4>' + rows(byPay, rptMoney0) +
+        '<h4 class="rpt-h">By category</h4>' + rows(byCat, rptMoney0) +
+        '<h4 class="rpt-h">Top items</h4>' + itemRows +
+        '<h4 class="rpt-h">Collected</h4><div class="rpt-g two"><div><small>Sales tax</small><b>' + rptMoney(tax) + '</b></div><div><small>Total collected</small><b>' + rptMoney(tot) + '</b></div></div>' +
+        '<p class="rpt-note">Total collected includes tax, card surcharges and shipping. Items typed in by hand are grouped as Miscellaneous.</p>'
+      : '<p class="mhint">No sales between ' + rptEsc(label) + ".</p>";
+    if (rs.length) {
+      var t = ["She's Golden sales report", label, "", "Net sales: " + rptMoney(net), "Sales: " + rs.length + "   Average: " + rptMoney(avg), "Discounts: " + rptMoney(disc), "Sales tax: " + rptMoney(tax), "Total collected: " + rptMoney(tot), ""];
+      [["By location", byLoc], ["By payment", byPay], ["By category", byCat]].forEach(function (g) {
+        t.push(g[0]); Object.keys(g[1]).sort(function (x, y) { return g[1][y] - g[1][x]; }).forEach(function (k) { t.push("  " + k + ": " + rptMoney(g[1][k])); }); t.push("");
+      });
+      rptText = t.join("\n");
+    }
+    $("rpt-btns").hidden = !rs.length;
+  }
+  $("rpt-open").addEventListener("click", function () { closeMenu(); $("rpt-pop").hidden = false; rptSetRange("this"); });
+  $("rpt-close").addEventListener("click", function () { $("rpt-pop").hidden = true; });
+  $("rpt-pop").addEventListener("click", function (e) { if (e.target === this) this.hidden = true; });
+  document.addEventListener("keydown", function (e) { if (e.key === "Escape" && !$("rpt-pop").hidden) $("rpt-pop").hidden = true; });
+  Array.prototype.forEach.call(document.querySelectorAll(".rpt-chip"), function (b) {
+    b.addEventListener("click", function () {
+      var k = b.getAttribute("data-r");
+      if (k === "custom") { rptRange = "custom"; Array.prototype.forEach.call(document.querySelectorAll(".rpt-chip"), function (x) { x.classList.toggle("on", x === b); }); try { $("rpt-from").focus(); } catch (e) {} }
+      else rptSetRange(k);
+    });
+  });
+  ["rpt-from", "rpt-to"].forEach(function (id) {
+    $(id).addEventListener("change", function () {
+      rptRange = "custom";
+      Array.prototype.forEach.call(document.querySelectorAll(".rpt-chip"), function (x) { x.classList.toggle("on", x.getAttribute("data-r") === "custom"); });
+      rptLoad();
+    });
+  });
+  $("rpt-share").addEventListener("click", function () {
+    if (!rptText) return;
+    if (navigator.share) { navigator.share({ title: "She's Golden sales report", text: rptText }).catch(function () {}); return; }
+    window.location.href = "mailto:?subject=" + encodeURIComponent("She's Golden sales report") + "&body=" + encodeURIComponent(rptText);
+  });
+  $("rpt-print").addEventListener("click", function () { try { window.print(); } catch (e) {} });
 
   function useServerTaxes(list) {
     var clean = cleanTaxes(list);
