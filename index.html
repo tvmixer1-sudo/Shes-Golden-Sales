@@ -915,7 +915,7 @@ footer { color: var(--muted); font-size: 0.8rem; }
       </div>
       <div class="statrow">
         <span class="sheetstat" id="sheet-stat" role="status">Spreadsheet: not connected</span>
-        <span class="ver"><span id="app-ver">Version 4.8.24Clover</span></span>
+        <span class="ver"><span id="app-ver">Version 4.8.25Clover</span></span>
       </div>
     </div>
   </section>
@@ -12470,15 +12470,20 @@ function findAlignmentPattern(matrix, alignmentPatternQuads, topRight, topLeft, 
     renderCats();
     renderPicker();
     renderRecent();
+    pickScrollY = window.pageYOffset || document.documentElement.scrollTop || 0;
     $("picker").hidden = false;
     document.body.style.overflow = "hidden";
     refreshCatalog();
     $("pick-q").focus();
   }
+  var pickScrollY = 0;
   function closePicker() {
     $("picker").hidden = true;
     document.body.style.overflow = "";
-    $("pick-open").focus();
+    try { $("pick-open").focus({ preventScroll: true }); } catch (e) {}
+    /* Back to where the screen was before the list opened, so the amount block is still in view */
+    window.scrollTo(0, pickScrollY);
+    setTimeout(function () { window.scrollTo(0, pickScrollY); }, 60);
   }
   $("pick-open").addEventListener("click", function () { openPicker(); });
   $("pick-done").addEventListener("click", closePicker);
