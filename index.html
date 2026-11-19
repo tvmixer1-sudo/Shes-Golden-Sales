@@ -812,6 +812,17 @@ footer { color: var(--muted); font-size: 0.8rem; }
 .sugg .sg-body .sp { margin-top: auto; min-height: 34px; box-sizing: border-box; padding: 6px 38px 6px 8px; display: flex; align-items: flex-end; }
 #pick-list .pick-plus { top: auto; bottom: 5px; right: 5px; width: 28px; height: 28px; font-size: 1.3rem; }
 #pick-list .pick-item .pp { margin-top: auto; min-height: 34px; box-sizing: border-box; padding: 6px 38px 6px 8px; display: flex; align-items: flex-end; }
+.pr-list { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; }
+.pr-list li { position: relative; display: flex; }
+.pr-item { position: relative; display: flex; flex-direction: column; align-items: stretch; gap: 0; padding: 0; overflow: hidden; border-radius: 8px; height: 100%; background: #fff; color: #1d2a33; border: 1px solid #e6e0d4; }
+.pr-item.best { border: 2px solid var(--accent); }
+.pr-item .thumb { width: 100%; height: auto; aspect-ratio: 1 / 1; border-radius: 0; object-fit: cover; background: #fff; }
+.pr-item .pn { padding: 6px 8px 0; font-size: 0.72rem; line-height: 1.2; min-height: 2.4em; color: #1d2a33; }
+.pr-item .pp { margin-top: auto; min-height: 34px; box-sizing: border-box; padding: 6px 38px 6px 8px; display: flex; align-items: flex-end; font: 500 0.78rem var(--font-mono); color: #1d2a33; }
+.pr-item .pm { display: none; }
+.pr-item:active { background: #f1efe9; }
+.pr-item.best::after { content: "Best guess"; position: absolute; top: 4px; left: 4px; padding: 2px 5px; border-radius: 6px; background: var(--accent); color: var(--accent-fg); font: 700 0.55rem var(--font-body); letter-spacing: 0.04em; text-transform: uppercase; }
+.pr-list .pick-plus { top: auto; bottom: 5px; right: 5px; transform: none; width: 28px; height: 28px; font-size: 1.3rem; box-shadow: 0 1px 4px rgba(0,0,0,0.35); }
 </style>
 </head>
 <body>
@@ -958,7 +969,7 @@ footer { color: var(--muted); font-size: 0.8rem; }
       </div>
       <div class="statrow">
         <span class="sheetstat" id="sheet-stat" role="status">Spreadsheet: not connected</span>
-        <span class="ver"><span id="app-ver">Version 4.8.48Clover</span></span>
+        <span class="ver"><span id="app-ver">Version 4.8.49Clover</span></span>
       </div>
     </div>
   </section>
@@ -12334,16 +12345,19 @@ function findAlignmentPattern(matrix, alignmentPatternQuads, topRight, topLeft, 
         var pr = document.createElement("span"); pr.className = "pp"; pr.textContent = money.format(x.it.price);
         var m = document.createElement("span"); m.className = "pm"; m.textContent = (res.weak ? "Closest guess" : (i === 0 ? "Best guess" : "Also close")) + " \u00b7 " + baseId(x.it.id) + (x.it.color ? " \u00b7 choose color" : "") + (x.it.sold ? " \u00b7 Sold out" : "");
         b.appendChild(makeThumb(x.it.id)); b.appendChild(n); b.appendChild(pr); b.appendChild(m);
-        b.addEventListener("click", function () {
-          openZoom(x.it, function () {
-            if (x.it.color) { closePhotoRes(); openPicker(bname(x.it)); return; }
-            addScanned({ id: x.it.id, name: x.it.name, price: x.it.price.toFixed(2) });
-            showAdded(x.it.name, x.it.price, 1, x.it.sold, x.it.id);
-            try { if (navigator.vibrate) navigator.vibrate(40); } catch (e) {}
-            closePhotoRes();
-          });
-        });
-        li.appendChild(b); list.appendChild(li);
+        var addIt = function () {
+          if (x.it.color) { closePhotoRes(); openPicker(bname(x.it)); return; }
+          addScanned({ id: x.it.id, name: x.it.name, price: x.it.price.toFixed(2) });
+          showAdded(x.it.name, x.it.price, 1, x.it.sold, x.it.id);
+          try { if (navigator.vibrate) navigator.vibrate(40); } catch (e) {}
+          closePhotoRes();
+        };
+        b.addEventListener("click", function () { openZoom(x.it, addIt); });
+        var plus = document.createElement("button");
+        plus.type = "button"; plus.className = "pick-plus"; plus.textContent = "+";
+        plus.setAttribute("aria-label", "Add " + x.it.name);
+        plus.addEventListener("click", addIt);
+        li.appendChild(b); li.appendChild(plus); list.appendChild(li);
       });
     }).catch(function () { tip.textContent = "Couldn't read that photo. Try again."; });
   }
