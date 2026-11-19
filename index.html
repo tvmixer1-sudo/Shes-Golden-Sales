@@ -507,8 +507,6 @@ body .tag { padding-top: 18px; padding-bottom: 18px; }
 .mset .mrow .input:focus-within { border-color: var(--accent); background: var(--surface); }
 .mset .mrow .input input { text-align: right; }
 .mhint { margin: 0 0 12px; font-size: 0.8rem; line-height: 1.35; color: var(--muted); }
-#rep-msg.warn { color: var(--danger, #b3261e); }
-#rep-msg:empty { display: none; }
 .mbtn { display: block; width: 100%; min-height: 46px; margin: 10px 0 8px; border: 1.5px solid var(--accent); border-radius: 10px; background: transparent; color: var(--accent); font: 600 1rem var(--font-body); cursor: pointer; }
 .mbtn:active { background: var(--accent-soft); }
 .mbtn:disabled { opacity: 0.55; cursor: default; }
@@ -829,8 +827,8 @@ footer { color: var(--muted); font-size: 0.8rem; }
 /* ---- Sales report (4.9.0) ---- */
 .rptcard { padding-top: 2px; }
 .rpt-x { border: 0; background: transparent; color: var(--accent); font: 600 0.9rem var(--font-body); padding: 10px 4px; cursor: pointer; }
-.rpt-chips { display: flex; gap: 6px; margin: 10px 0; }
-.rpt-chip { flex: 1; min-height: 38px; border: 0; border-radius: 19px; background: var(--accent-soft); color: var(--accent); font: 600 0.82rem var(--font-body); cursor: pointer; }
+.rpt-chips { display: flex; gap: 5px; margin: 10px 0; }
+.rpt-chip { flex: 1; min-height: 38px; border: 0; border-radius: 19px; background: var(--accent-soft); color: var(--accent); font: 600 0.74rem var(--font-body); cursor: pointer; padding: 0 4px; }
 .rpt-chip.on { background: var(--accent); color: var(--accent-fg); }
 .rpt-range { display: flex; gap: 8px; margin-bottom: 12px; }
 .rpt-range label { flex: 1; display: block; border: 1px solid var(--line); border-radius: 10px; padding: 6px 10px; }
@@ -1009,7 +1007,7 @@ footer { color: var(--muted); font-size: 0.8rem; }
       </div>
       <div class="statrow">
         <span class="sheetstat" id="sheet-stat" role="status">Spreadsheet: not connected</span>
-        <span class="ver"><span id="app-ver">Version 4.9.0Clover</span></span>
+        <span class="ver"><span id="app-ver">Version 4.9.1Clover</span></span>
       </div>
     </div>
   </section>
@@ -1074,8 +1072,6 @@ footer { color: var(--muted); font-size: 0.8rem; }
     <section class="msec">
       <h3 class="mhd">Sales report</h3>
       <button class="mbtn solid" type="button" id="rpt-open">View Sales Report</button>
-      <button class="mbtn" type="button" id="rep-btn">Email Sales Report</button>
-      <p class="mhint" id="rep-msg"></p>
     </section>
   </div>
 </div>
@@ -1102,6 +1098,7 @@ footer { color: var(--muted); font-size: 0.8rem; }
   <div class="menucard details mset rptcard" role="dialog" aria-modal="true" aria-labelledby="rpt-title">
     <div class="menuhead"><span class="label" id="rpt-title">Sales report</span><button class="rpt-x" type="button" id="rpt-close" aria-label="Close">Close</button></div>
     <div class="rpt-chips" role="group" aria-label="Date range">
+      <button type="button" class="rpt-chip" data-r="today">Today</button>
       <button type="button" class="rpt-chip on" data-r="this">This month</button>
       <button type="button" class="rpt-chip" data-r="last">Last month</button>
       <button type="button" class="rpt-chip" data-r="custom">Custom</button>
@@ -13584,29 +13581,6 @@ function findAlignmentPattern(matrix, alignmentPatternQuads, topRight, topLeft, 
       .then(function (r) { return r.json(); })
       .then(function (j) { if (!j || !j.ok) throw new Error((j && j.error) || "not accepted"); return j; });
   }
-  /* ---------- Send report button ---------- */
-  var repBusy = false;
-  $("rep-btn").addEventListener("click", function () {
-    if (repBusy) return;
-    var msg = $("rep-msg");
-    if (!getCfg()) { msg.textContent = "Connect your spreadsheet first."; msg.className = "note warn"; return; }
-    if (!navigator.onLine) { msg.textContent = "You are offline. Try again when you have a connection."; msg.className = "note warn"; return; }
-    if (!window.confirm("Email Sales Report now?")) return;
-    repBusy = true;
-    var btn = $("rep-btn"); btn.disabled = true; btn.textContent = "Sending...";
-    msg.className = "note taxnote"; msg.textContent = "Sending the report...";
-    taxPost({ sendReport: true }).then(function () {
-      msg.className = "note taxnote"; msg.textContent = "Report sent " + timeText(Date.now()) + ".";
-    }).catch(function (e) {
-      var m = String(e && e.message || "");
-      msg.className = "note warn";
-      msg.textContent = /Wrong password/.test(m) ? "The password does not match the sheet."
-        : /REPORT_TO|DailyReport/.test(m) ? "The report is not set up in the sheet yet (" + m + ")."
-        : /Failed to fetch|NetworkError|not accepted|Unexpected/.test(m) ? "Could not send. Update the sheet script (Code.gs) and try again."
-        : "Could not send: " + m;
-    }).then(function () { repBusy = false; btn.disabled = false; btn.textContent = "Email Sales Report"; });
-  });
-
   /* ---------- Sales report (4.9.0): any date range, added up on the phone from the sheet ---------- */
   var rptRange = "this", rptSeq = 0, rptText = "";
   function rptDay(d) { var z = function (n) { return (n < 10 ? "0" : "") + n; }; return d.getFullYear() + "-" + z(d.getMonth() + 1) + "-" + z(d.getDate()); }
@@ -13618,7 +13592,8 @@ function findAlignmentPattern(matrix, alignmentPatternQuads, topRight, topLeft, 
     rptRange = kind;
     Array.prototype.forEach.call(document.querySelectorAll(".rpt-chip"), function (b) { b.classList.toggle("on", b.getAttribute("data-r") === kind); });
     var now = new Date(), a, b;
-    if (kind === "this") { a = new Date(now.getFullYear(), now.getMonth(), 1); b = now; }
+    if (kind === "today") { a = now; b = now; }
+    else if (kind === "this") { a = new Date(now.getFullYear(), now.getMonth(), 1); b = now; }
     else if (kind === "last") { a = new Date(now.getFullYear(), now.getMonth() - 1, 1); b = new Date(now.getFullYear(), now.getMonth(), 0); }
     if (a) { $("rpt-from").value = rptDay(a); $("rpt-to").value = rptDay(b); }
     rptLoad();
