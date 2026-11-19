@@ -793,6 +793,12 @@ footer { color: var(--muted); font-size: 0.8rem; }
 .zoom-card .zoom-nav { width: 40px; height: 40px; border-radius: 50%; background: rgba(255,255,255,0.92); color: #2b3a44; box-shadow: 0 1px 6px rgba(0,0,0,0.3); }
 .zoom-card .zoom-nav svg { display: block; pointer-events: none; }
 @supports (width: 1cqw) { .zoom-card .zoom-nav { top: calc(12px + min(100cqw - 24px, 58vh) - 56px); } }
+
+/* Item search list: the search bar stays at the top; only the tiles scroll (4.8.36) */
+.sugg { display: flex; flex-direction: column; overflow: hidden; padding: 0; gap: 0; }
+.sugg .sg-bar { position: static; flex: 0 0 auto; margin: 0; }
+.sugg .sg-body { flex: 1 1 auto; min-height: 0; overflow-y: auto; -webkit-overflow-scrolling: touch; overscroll-behavior: contain; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 4px; padding: 4px; align-content: start; }
+.sugg .sg-body .sh { top: 0; }
 </style>
 </head>
 <body>
@@ -939,7 +945,7 @@ footer { color: var(--muted); font-size: 0.8rem; }
       </div>
       <div class="statrow">
         <span class="sheetstat" id="sheet-stat" role="status">Spreadsheet: not connected</span>
-        <span class="ver"><span id="app-ver">Version 4.8.35Clover</span></span>
+        <span class="ver"><span id="app-ver">Version 4.8.36Clover</span></span>
       </div>
     </div>
   </section>
@@ -11372,7 +11378,7 @@ function findAlignmentPattern(matrix, alignmentPatternQuads, topRight, topLeft, 
     function hideSugg(keep) {
       if (sg && sg.parentNode) sg.parentNode.removeChild(sg);
       if (keep) return;
-      sg = null; sgInput = null; sgAdded = false; sgCount = {};
+      sg = null; sgInput = null; sgBody = null; sgAdded = false; sgCount = {};
       /* Moving from one item name to another: keep the layout steady (no jump) */
       var ae = document.activeElement;
       if (ae && ae !== name && ae.classList && ae.classList.contains("name")) return;
@@ -11425,9 +11431,9 @@ function findAlignmentPattern(matrix, alignmentPatternQuads, topRight, topLeft, 
       var rs = rows();
       if (rs[rs.length - 1] === row) addRow("", false);
     }
-    var sgInput = null, sgAdded = false, sgCount = {};
+    var sgInput = null, sgBody = null, sgAdded = false, sgCount = {};
     function sgNote(txt) {
-      var n = document.createElement("div"); n.className = "sg-note"; n.textContent = txt; sg.appendChild(n);
+      var n = document.createElement("div"); n.className = "sg-note"; n.textContent = txt; sgBody.appendChild(n);
     }
     function showSugg() {
       var ae = document.activeElement;
@@ -11435,7 +11441,7 @@ function findAlignmentPattern(matrix, alignmentPatternQuads, topRight, topLeft, 
       var q = (sg && sgInput ? sgInput.value : name.value).trim().toLowerCase();
       /* The list stays put while the search box above it is cleared for the next item */
       if (q.length < 2) {
-        if (sg && sgInput && !sgAdded) { while (sg.children.length > 1) sg.removeChild(sg.lastChild); sgNote("Type at least 2 letters to search."); }
+        if (sg && sgInput && !sgAdded) { sgBody.innerHTML = ""; sgNote("Type at least 2 letters to search."); }
         return;
       }
       var toks = q.split(/\s+/), hits = [];
@@ -11477,9 +11483,11 @@ function findAlignmentPattern(matrix, alignmentPatternQuads, topRight, topLeft, 
         var done = document.createElement("button"); done.type = "button"; done.className = "sg-done"; done.textContent = "Done";
         done.addEventListener("click", function (e) { e.preventDefault(); e.stopPropagation(); var si = sgInput; hideSugg(); try { name.blur(); if (si) si.blur(); } catch (er) {} });
         bar.appendChild(sgInput); bar.appendChild(done); sg.appendChild(bar);
+        /* Only the tiles scroll; the search bar above them stays put */
+        sgBody = document.createElement("div"); sgBody.className = "sg-body"; sg.appendChild(sgBody);
       } else {
-        while (sg.children.length > 1) sg.removeChild(sg.lastChild);
-        sg.scrollTop = 0;
+        sgBody.innerHTML = "";
+        sgBody.scrollTop = 0;
       }
       if (!hits.length) { sgNote("No matches. Tap Done to keep what you typed."); return; }
       hits.sort(function (a, b) { return a.k - b.k || a.i - b.i; });
@@ -11492,7 +11500,7 @@ function findAlignmentPattern(matrix, alignmentPatternQuads, topRight, topLeft, 
         if (!grp.length) return;
         grp.forEach(function (h) { ordered.push(h.it); });
         var hd = document.createElement("div"); hd.className = "sh"; hd.textContent = c;
-        sg.appendChild(hd);
+        sgBody.appendChild(hd);
         grp.forEach(function (h) {
           var b = document.createElement("button");
           b.type = "button";
@@ -11532,15 +11540,17 @@ function findAlignmentPattern(matrix, alignmentPatternQuads, topRight, topLeft, 
               i: Math.max(0, ordered.indexOf(h.it))
             });
           });
-          sg.appendChild(b);
+          sgBody.appendChild(b);
         });
       });
       /* Keep taps on tiles from stealing focus, but let a tap on the search box focus it */
-      sg.addEventListener("mousedown", function (e) { if (e.target && e.target.classList && e.target.classList.contains("sg-q")) return; e.preventDefault(); });
+      if (fresh) sg.addEventListener("mousedown", function (e) { if (e.target && e.target.classList && e.target.classList.contains("sg-q")) return; e.preventDefault(); });
       /* Scrolling the list puts the phone keyboard away so more of the list is visible. The list stays open. */
       var sgDrag = function () { var a = document.activeElement; if (a === name || (sgInput && a === sgInput)) { try { a.blur(); } catch (e) {} } };
-      sg.addEventListener("touchmove", sgDrag, { passive: true });
-      sg.addEventListener("scroll", function () { if (Date.now() - focusAt > 400) sgDrag(); }, { passive: true });
+      if (fresh) {
+        sgBody.addEventListener("touchmove", sgDrag, { passive: true });
+        sgBody.addEventListener("scroll", function () { if (Date.now() - focusAt > 400) sgDrag(); }, { passive: true });
+      }
       if (fresh) {
         row.appendChild(sg);
         document.body.classList.add("sugg-open");
