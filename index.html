@@ -867,6 +867,51 @@ footer { color: var(--muted); font-size: 0.8rem; }
 .rpt-bad { color: #b3261e !important; font-weight: 600; }
 @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .rpt-bad { color: #ff9a8f !important; } }
 :root[data-theme="dark"] .rpt-bad { color: #ff9a8f !important; }
+/* ---- Mockup C: block widened to match Items; discount on one line ---- */
+#details { margin-left: -10px; margin-right: -10px; }
+.discwrap { flex-direction: column; align-items: stretch; gap: 4px; padding: 8px 0 10px; border-bottom: 0; border-top: 1px solid var(--line); }
+.discwrap .discline { display: contents; }
+.discwrap > label, .discwrap .discline > label { grid-area: l; }
+.discwrap { display: grid; grid-template-columns: 62px 1fr; grid-template-areas: "l l" "p c"; column-gap: 8px; row-gap: 4px; align-items: center; }
+.discwrap .discacts { grid-area: l; justify-self: end; align-self: start; margin: 0; }
+.discwrap .defbtn { min-height: 0; padding: 0; font-size: 0.75rem; line-height: 1.2; }
+.discwrap .pctin { grid-area: p; width: 62px; flex: none; height: 38px; padding: 0 8px; border: 1.5px solid var(--line); background: var(--bg, transparent); border-radius: 10px; }
+.discwrap .pctin input { text-align: right; }
+.discwrap .chips { grid-area: c; display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 4px; }
+.discwrap .chip { min-height: 38px; min-width: 0; padding: 0 1px; font-size: 0.78rem; }
+#details .drow label, .discwrap label { font-size: 0.75rem; }
+#notes { margin-left: -10px; margin-right: -10px; }
+/* ---- Mockup D: discount first, 0% on the right ---- */
+.discwrap { grid-template-columns: 1fr 62px; grid-template-areas: "l l" "c p"; border-top: 0; border-bottom: 1px solid var(--line); padding: 8px 0 10px; }
+.discwrap .chips { margin-right: 4px; }
+.discwrap .pctin { margin-right: 0; }
+/* ---- Mockup E: one-line discount, no visible label ---- */
+.discwrap { grid-template-columns: 1fr 68px; grid-template-areas: "c p"; column-gap: 6px; padding: 8px 0 10px; }
+.discwrap .discline > label { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+.discwrap .chips { margin-right: 0; gap: 4px; }
+.discwrap .chip { min-height: 38px; }
+.discwrap .pctin { margin-right: 6px; width: 62px; }
+/* ---- Mockup G: E layout, DISCOUNT label stacked over the 0% box ---- */
+.discwrap { grid-template-columns: 1fr 74px; grid-template-areas: "c l" "c p"; column-gap: 8px; row-gap: 2px; align-items: center; padding: 7px 0 8px; }
+.discwrap .chips { grid-area: c; align-self: center; }
+.discwrap .discline > label { position: static; width: auto; height: auto; overflow: visible; clip: auto; grid-area: l; justify-self: center; margin: 0 0 0 0; white-space: nowrap; font-size: 0.62rem; letter-spacing: 0.06em; line-height: 1; align-self: end; }
+.discwrap .pctin { grid-area: p; width: 74px; height: 30px; margin-right: 0; align-self: start; }
+/* ---- Mockup H: DISCOUNT label top-left, chips + 0% box on one line, divider kept ---- */
+.discwrap { grid-template-columns: 1fr 74px; grid-template-areas: "l l" "c p"; column-gap: 8px; row-gap: 3px; align-items: center; padding: 6px 0 10px; border-bottom: 1px solid var(--line); }
+.discwrap .discline > label { justify-self: start; align-self: start; font-size: 0.75rem; letter-spacing: 0.08em; margin: 0; line-height: 1.2; }
+.discwrap .pctin { align-self: center; height: 34px; }
+/* ---- Mockup I: tighter discount line ---- */
+.discwrap { row-gap: 1px; padding: 4px 0 6px; }
+.discwrap .discline > label { line-height: 1; margin: 0; }
+.discwrap .chip { min-height: 30px; height: 30px; font-size: 0.76rem; }
+.discwrap .bogochip { font-size: 0.7rem; line-height: 1; }
+.discwrap .pctin { height: 30px; }
+/* ---- Mockup J: narrower % box, wider buttons ---- */
+.discwrap { grid-template-columns: 1fr 64px; column-gap: 6px; }
+.discwrap .pctin { width: 64px; padding: 0 6px; }
+.discwrap .chips { gap: 4px; }
+/* ---- Mockup K: 3px shorter Discount box ---- */
+.discwrap { padding: 3px 0 4px; row-gap: 0; }
 </style>
 </head>
 <body>
@@ -920,10 +965,9 @@ footer { color: var(--muted); font-size: 0.8rem; }
       </div>
     </div>
 
-    <div class="field">
-      <div class="labelrow"><label for="a-pct">Discount</label><span class="discacts"><button class="linkbtn defbtn" type="button" id="set-default" hidden></button></span></div>
-      <div class="discrow">
-        <div class="input pctin"><input id="a-pct" inputmode="decimal" autocomplete="off" value="0" aria-label="Discount percent"><span>%</span></div>
+    <div class="details" id="details">
+      <div class="drow discwrap">
+        <div class="discline"><label for="a-pct">Discount</label><span class="discacts"><button class="linkbtn defbtn" type="button" id="set-default" hidden></button></span><div class="input pctin"><input id="a-pct" inputmode="decimal" autocomplete="off" value="0" aria-label="Discount percent"><span>%</span></div></div>
         <div class="chips" id="chips" aria-label="Common discounts">
           <button class="chip" type="button" data-pct="10" aria-pressed="false">10%</button>
           <button class="chip" type="button" data-pct="15" aria-pressed="false">15%</button>
@@ -933,10 +977,6 @@ footer { color: var(--muted); font-size: 0.8rem; }
           <button class="chip bogochip" type="button" id="bogo-btn" aria-pressed="false" title="Buy one, get one 25% off the cheapest">BOGO</button>
         </div>
       </div>
-    </div>
-
-
-    <div class="details" id="details">
       <div class="drow taxrow">
         <label>Sales tax <span class="taxpct" id="a-taxpct"></span></label>
         <div class="input amt"><span>$</span><span class="taxamt" id="a-taxamt" aria-live="polite">0.00</span></div>
@@ -1013,7 +1053,7 @@ footer { color: var(--muted); font-size: 0.8rem; }
       </div>
       <div class="statrow">
         <span class="sheetstat" id="sheet-stat" role="status">Spreadsheet: not connected</span>
-        <span class="ver"><span id="app-ver">Version 4.9.4Clover</span></span>
+        <span class="ver"><span id="app-ver">Version 4.9.5Clover</span></span>
       </div>
     </div>
   </section>
