@@ -1013,7 +1013,7 @@ footer { color: var(--muted); font-size: 0.8rem; }
       </div>
       <div class="statrow">
         <span class="sheetstat" id="sheet-stat" role="status">Spreadsheet: not connected</span>
-        <span class="ver"><span id="app-ver">Version 4.9.3Clover</span></span>
+        <span class="ver"><span id="app-ver">Version 4.9.4Clover</span></span>
       </div>
     </div>
   </section>
@@ -1121,8 +1121,7 @@ footer { color: var(--muted); font-size: 0.8rem; }
     </div>
     <div id="rpt-body"><p class="mhint">Loading...</p></div>
     <div class="rpt-btns" id="rpt-btns" hidden>
-      <button class="mbtn solid" type="button" id="rpt-share">Share report</button>
-      <button class="mbtn" type="button" id="rpt-print">Print / PDF</button>
+      <button class="mbtn solid" type="button" id="rpt-print">Share / Save PDF</button>
     </div>
     </div>
   </div>
@@ -13595,7 +13594,7 @@ function findAlignmentPattern(matrix, alignmentPatternQuads, topRight, topLeft, 
       .then(function (j) { if (!j || !j.ok) throw new Error((j && j.error) || "not accepted"); return j; });
   }
   /* ---------- Sales report (4.9.0): any date range, added up on the phone from the sheet ---------- */
-  var rptRange = "this", rptSeq = 0, rptText = "", rptPin = "", rptPinAt = 0, rptModel = null;
+  var rptRange = "this", rptSeq = 0, rptPin = "", rptPinAt = 0, rptModel = null;
   /* The code is checked by the sheet's script (REPORT_PIN in its settings). It is only kept in memory here, never saved, and is forgotten after 5 idle minutes. */
   function rptShowLock(msg, bad) {
     $("rpt-main").hidden = true; $("rpt-lock").hidden = false;
@@ -13710,20 +13709,13 @@ function findAlignmentPattern(matrix, alignmentPatternQuads, topRight, topLeft, 
         '<p class="rpt-note">Total collected includes tax, card surcharges and shipping. Items typed in by hand are grouped as Miscellaneous.</p>'
       : '<p class="mhint">No sales between ' + rptEsc(label) + ".</p>";
     if (!rs.length) rptModel = null;
-    if (rs.length) {
-      var t = ["She's Golden sales report", label, "", "Net sales: " + rptMoney(net), "Sales: " + rs.length + "   Average: " + rptMoney(avg), "Discounts: " + rptMoney(disc), "Sales tax: " + rptMoney(tax), "Total collected: " + rptMoney(tot), ""];
-      [["By location", byLoc], ["By payment", byPay], ["By category", byCat]].forEach(function (g) {
-        t.push(g[0]); Object.keys(g[1]).sort(function (x, y) { return g[1][y] - g[1][x]; }).forEach(function (k) { t.push("  " + k + ": " + rptMoney(g[1][k])); }); t.push("");
-      });
-      rptText = t.join("\n");
-    }
     $("rpt-btns").hidden = !rs.length;
   }
   $("rpt-open").addEventListener("click", function () { closeMenu(); rptOpen(); });
   $("rpt-unlock").addEventListener("click", rptTryUnlock);
   $("rpt-pin").addEventListener("input", function () { this.value = this.value.replace(/\D/g, "").slice(0, 4); if (this.value.length === 4) rptTryUnlock(); });
   $("rpt-pin").addEventListener("keydown", function (e) { if (e.key === "Enter") rptTryUnlock(); });
-  $("rpt-close").addEventListener("click", function () { $("rpt-pop").hidden = true; rptText = ""; });
+  $("rpt-close").addEventListener("click", function () { $("rpt-pop").hidden = true; });
   $("rpt-pop").addEventListener("click", function (e) { if (e.target === this) this.hidden = true; });
   document.addEventListener("keydown", function (e) { if (e.key === "Escape" && !$("rpt-pop").hidden) $("rpt-pop").hidden = true; });
   Array.prototype.forEach.call(document.querySelectorAll(".rpt-chip"), function (b) {
@@ -13739,11 +13731,6 @@ function findAlignmentPattern(matrix, alignmentPatternQuads, topRight, topLeft, 
       Array.prototype.forEach.call(document.querySelectorAll(".rpt-chip"), function (x) { x.classList.toggle("on", x.getAttribute("data-r") === "custom"); });
       rptLoad();
     });
-  });
-  $("rpt-share").addEventListener("click", function () {
-    if (!rptText) return;
-    if (navigator.share) { navigator.share({ title: "She's Golden sales report", text: rptText }).catch(function () {}); return; }
-    window.location.href = "mailto:?subject=" + encodeURIComponent("She's Golden sales report") + "&body=" + encodeURIComponent(rptText);
   });
   /* Real PDF of the report (letter size), shared through the phone's share sheet so there is no print prompt. */
   function rptPdf(m) {
