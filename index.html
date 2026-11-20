@@ -1053,7 +1053,7 @@ footer { color: var(--muted); font-size: 0.8rem; }
       </div>
       <div class="statrow">
         <span class="sheetstat" id="sheet-stat" role="status">Spreadsheet: not connected</span>
-        <span class="ver"><span id="app-ver">Version 4.9.6Clover</span></span>
+        <span class="ver"><span id="app-ver">Version 4.9.7Clover</span></span>
       </div>
     </div>
   </section>
@@ -11699,6 +11699,10 @@ function findAlignmentPattern(matrix, alignmentPatternQuads, topRight, topLeft, 
     var focusAt = 0;
     name.addEventListener("focus", function () { focusAt = Date.now(); document.body.classList.add("sugg-open"); showSugg(); placeLoop(); });
     if (window.visualViewport) window.visualViewport.addEventListener("resize", function () { if (sg) placeLoop(); });
+    /* Tapped an item box but never typed, so no list opened: when the keyboard closes, bring the Total block and the rest of the page back. */
+    name.addEventListener("blur", function () {
+      setTimeout(function () { if (!sg && row.isConnected) hideSugg(); }, 120);
+    });
     /* Closing the phone keyboard blurs the field, but the list stays open so it can be scrolled.
        It closes when an item is picked, on a tap anywhere outside it, or on Escape. */
     function tapOutside(e) {
