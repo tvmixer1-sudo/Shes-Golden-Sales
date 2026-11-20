@@ -1070,7 +1070,7 @@ body.cf-open { overflow: hidden; }
       </div>
       <div class="statrow">
         <span class="sheetstat" id="sheet-stat" role="status">Spreadsheet: not connected</span>
-        <span class="ver"><span id="app-ver">Version 4.9.9Clover</span></span>
+        <span class="ver"><span id="app-ver">Version 4.9.10Clover</span></span>
       </div>
     </div>
   </section>
@@ -1130,6 +1130,19 @@ body.cf-open { overflow: hidden; }
         <label for="cl-on">Show Send to Clover</label>
         <input id="cl-on" class="mswitch" type="checkbox" role="switch">
       </div>
+    </section>
+
+    <section class="msec">
+      <h3 class="mhd">Confirm window</h3>
+      <div class="mrow">
+        <label for="cf-save">Confirm before Save Sale</label>
+        <input id="cf-save" class="mswitch" type="checkbox" role="switch" checked>
+      </div>
+      <div class="mrow">
+        <label for="cf-pdf">Confirm before Save + PDF receipt</label>
+        <input id="cf-pdf" class="mswitch" type="checkbox" role="switch" checked>
+      </div>
+      <p class="note">Send to Clover always asks you to confirm.</p>
     </section>
 
     <section class="msec">
@@ -13624,10 +13637,19 @@ function findAlignmentPattern(matrix, alignmentPatternQuads, topRight, topLeft, 
       document.addEventListener("keydown", onKey, true);
       try { if (document.activeElement && document.activeElement.blur) document.activeElement.blur(); } catch (e) {}
     }
+    /* Switches in Settings for the two save buttons (on unless turned off). Send to Clover always confirms. */
+    var CF_KEYS = { "save-sale": "cf-save", "save-receipt": "cf-pdf" };
+    Object.keys(CF_KEYS).forEach(function (bid) {
+      var k = CF_KEYS[bid], sw = $(k);
+      if (!sw) return;
+      sw.checked = lsGet("confirm-" + k) !== "0";
+      sw.addEventListener("change", function () { lsSet("confirm-" + k, sw.checked ? "1" : "0"); });
+    });
     document.addEventListener("click", function (e) {
       var btn = e.target && e.target.closest ? e.target.closest("#send-clover, #save-sale, #save-receipt") : null;
       if (!btn || btn.disabled) return;
       if (confirmedBtn === btn) { confirmedBtn = null; return; }
+      if (CF_KEYS[btn.id] && lsGet("confirm-" + CF_KEYS[btn.id]) === "0") return;
       /* Anything the button would complain about (no location, no price, already sent) is left to the button itself */
       if (needLoc()) return;
       var rc = collectReceipt();
