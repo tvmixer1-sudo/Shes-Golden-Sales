@@ -912,6 +912,23 @@ footer { color: var(--muted); font-size: 0.8rem; }
 .discwrap .chips { gap: 4px; }
 /* ---- Mockup K: 3px shorter Discount box ---- */
 .discwrap { padding: 3px 0 4px; row-gap: 0; }
+/* ---- Confirm window (4.9.9) ---- */
+.cf-wrap { position: fixed; inset: 0; z-index: 90; background: rgba(20, 14, 6, 0.55); display: flex; align-items: center; justify-content: center; padding: 16px; }
+.cf-card { background: var(--surface); color: var(--fg); border-radius: 16px; width: 100%; max-width: 420px; max-height: calc(100vh - 32px); max-height: calc(100dvh - 32px); display: flex; flex-direction: column; padding: 16px 16px 14px; box-shadow: 0 12px 40px rgba(0, 0, 0, 0.35); }
+.cf-h { font: 600 1.15rem var(--font-body); }
+.cf-sub { color: var(--muted); font-size: 0.85rem; margin-top: 2px; }
+.cf-list { margin: 12px 0 4px; overflow-y: auto; min-height: 0; border-top: 1px solid var(--line); }
+.cf-row { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; padding: 7px 0; font-size: 0.95rem; }
+.cf-l { min-width: 0; overflow-wrap: anywhere; }
+.cf-r { flex: none; text-align: right; font-variant-numeric: tabular-nums; }
+.cf-item { border-bottom: 1px solid var(--line); }
+.cf-was { color: var(--muted); margin-right: 8px; font-size: 0.85rem; }
+.cf-tot { padding-top: 4px; }
+.cf-tot .cf-row { padding: 3px 0; color: var(--muted); font-size: 0.9rem; }
+.cf-disc .cf-r { color: var(--save); }
+.cf-tot .cf-total { color: var(--fg); font-weight: 700; font-size: 1.2rem; padding-top: 8px; margin-top: 4px; border-top: 1.5px solid var(--line); }
+.cf-btns { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 14px; }
+body.cf-open { overflow: hidden; }
 </style>
 </head>
 <body>
@@ -1053,7 +1070,7 @@ footer { color: var(--muted); font-size: 0.8rem; }
       </div>
       <div class="statrow">
         <span class="sheetstat" id="sheet-stat" role="status">Spreadsheet: not connected</span>
-        <span class="ver"><span id="app-ver">Version 4.9.8Clover</span></span>
+        <span class="ver"><span id="app-ver">Version 4.9.9Clover</span></span>
       </div>
     </div>
   </section>
@@ -13548,6 +13565,82 @@ function findAlignmentPattern(matrix, alignmentPatternQuads, topRight, topLeft, 
   $("cl-on").checked = lsGet(CLOVER_ON_KEY) === "1";
   $("cl-name").addEventListener("input", function () { lsSet(CLOVER_NAME_KEY, $("cl-name").value.trim()); updateCtx(); });
   $("cl-on").addEventListener("change", function () { lsSet(CLOVER_ON_KEY, $("cl-on").checked ? "1" : "0"); calcA(); });
+
+
+  /* ---------- Confirm window before Send to Clover / Save Sale / Save + PDF receipt ---------- */
+  (function () {
+    var wrap = null, confirmedBtn = null;
+    var TITLES = { "send-clover": "Send to Clover", "save-sale": "Save sale", "save-receipt": "Save + PDF receipt" };
+    function row(cls, left, right) {
+      var d = document.createElement("div"); d.className = "cf-row " + cls;
+      var a = document.createElement("span"); a.className = "cf-l"; a.textContent = left;
+      var b = document.createElement("span"); b.className = "cf-r";
+      if (right && right.nodeType) b.appendChild(right); else b.textContent = right || "";
+      d.appendChild(a); d.appendChild(b); return d;
+    }
+    function close() {
+      if (wrap && wrap.parentNode) wrap.parentNode.removeChild(wrap);
+      wrap = null; document.body.classList.remove("cf-open");
+      document.removeEventListener("keydown", onKey, true);
+    }
+    function onKey(e) { if (e.key === "Escape") { e.preventDefault(); close(); } }
+    function open(btn, rc) {
+      close();
+      wrap = document.createElement("div"); wrap.className = "cf-wrap";
+      wrap.setAttribute("role", "dialog"); wrap.setAttribute("aria-modal", "true"); wrap.setAttribute("aria-label", "Confirm sale");
+      var card = document.createElement("div"); card.className = "cf-card";
+      var h = document.createElement("div"); h.className = "cf-h"; h.textContent = "Confirm: " + (TITLES[btn.id] || "sale");
+      var sub = document.createElement("div"); sub.className = "cf-sub";
+      sub.textContent = [rc.payment, rc.location].filter(Boolean).join(" \u00b7 ");
+      var list = document.createElement("div"); list.className = "cf-list";
+      rc.items.forEach(function (it) {
+        var right;
+        if (it.after !== it.price) {
+          right = document.createElement("span");
+          var o = document.createElement("s"); o.className = "cf-was"; o.textContent = money.format(it.price);
+          var n = document.createElement("span"); n.textContent = money.format(it.after);
+          right.appendChild(o); right.appendChild(n);
+        } else right = money.format(it.after);
+        list.appendChild(row("cf-item", it.name, right));
+      });
+      var tot = document.createElement("div"); tot.className = "cf-tot";
+      if (rc.discountAmt > 0) {
+        tot.appendChild(row("", "Subtotal", money.format(rc.subtotal)));
+        tot.appendChild(row("cf-disc", "Discount" + (rc.promo ? " (" + rc.promo + ")" : " (" + pctText(rc.discountPct) + ")"), "\u2212" + money.format(rc.discountAmt)));
+      }
+      if (rc.tax > 0) tot.appendChild(row("", "Sales tax (" + pctText(rc.taxPct) + ")", money.format(rc.tax)));
+      if (rc.shipping > 0) tot.appendChild(row("", "Shipping", money.format(rc.shipping)));
+      if (rc.surcharge > 0) tot.appendChild(row("", "Card fee (" + pctText(rc.surchargePct) + ")", money.format(rc.surcharge)));
+      tot.appendChild(row("cf-total", "Total", money.format(rc.total)));
+      var btns = document.createElement("div"); btns.className = "cf-btns";
+      var cancel = document.createElement("button"); cancel.type = "button"; cancel.className = "savebtn alt"; cancel.textContent = "CANCEL";
+      var ok = document.createElement("button"); ok.type = "button"; ok.className = "savebtn"; ok.id = "cf-ok"; ok.textContent = "CONFIRM";
+      cancel.addEventListener("click", close);
+      ok.addEventListener("click", function () { close(); confirmedBtn = btn; btn.click(); });
+      btns.appendChild(cancel); btns.appendChild(ok);
+      card.appendChild(h); if (sub.textContent) card.appendChild(sub); card.appendChild(list); card.appendChild(tot); card.appendChild(btns);
+      wrap.appendChild(card);
+      document.body.appendChild(wrap); document.body.classList.add("cf-open");
+      document.addEventListener("keydown", onKey, true);
+      try { if (document.activeElement && document.activeElement.blur) document.activeElement.blur(); } catch (e) {}
+    }
+    document.addEventListener("click", function (e) {
+      var btn = e.target && e.target.closest ? e.target.closest("#send-clover, #save-sale, #save-receipt") : null;
+      if (!btn || btn.disabled) return;
+      if (confirmedBtn === btn) { confirmedBtn = null; return; }
+      /* Anything the button would complain about (no location, no price, already sent) is left to the button itself */
+      if (needLoc()) return;
+      var rc = collectReceipt();
+      if (!rc) return;
+      if (btn.id === "send-clover") {
+        var cfg = getCfg(), p = cloverPayload();
+        if (!cfg || !p) return;
+        if (cloverSent && cloverSent.sig === cloverSig(p)) return;
+      }
+      e.preventDefault(); e.stopImmediatePropagation();
+      open(btn, rc);
+    }, true);
+  })();
 
   $("sheet-toggle").addEventListener("click", function () {
     var form = $("sheet-form");
