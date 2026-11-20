@@ -929,6 +929,8 @@ footer { color: var(--muted); font-size: 0.8rem; }
 .cf-tot .cf-total { color: var(--fg); font-weight: 700; font-size: 1.2rem; padding-top: 8px; margin-top: 4px; border-top: 1.5px solid var(--line); }
 .cf-btns { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 14px; }
 body.cf-open { overflow: hidden; }
+/* ---- Send to Clover: one button wide, centered above the pair (4.9.11) ---- */
+.savebar .cloverbtn { width: calc((100% - 8px) / 2); align-self: center; line-height: 1.15; padding: 6px 8px; }
 </style>
 </head>
 <body>
@@ -1070,7 +1072,7 @@ body.cf-open { overflow: hidden; }
       </div>
       <div class="statrow">
         <span class="sheetstat" id="sheet-stat" role="status">Spreadsheet: not connected</span>
-        <span class="ver"><span id="app-ver">Version 4.9.10Clover</span></span>
+        <span class="ver"><span id="app-ver">Version 4.9.11Clover</span></span>
       </div>
     </div>
   </section>
