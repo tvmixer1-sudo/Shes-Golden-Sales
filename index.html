@@ -1053,7 +1053,7 @@ footer { color: var(--muted); font-size: 0.8rem; }
       </div>
       <div class="statrow">
         <span class="sheetstat" id="sheet-stat" role="status">Spreadsheet: not connected</span>
-        <span class="ver"><span id="app-ver">Version 4.9.7Clover</span></span>
+        <span class="ver"><span id="app-ver">Version 4.9.8Clover</span></span>
       </div>
     </div>
   </section>
@@ -12724,6 +12724,22 @@ function findAlignmentPattern(matrix, alignmentPatternQuads, topRight, topLeft, 
   }
   $("pick-open").addEventListener("click", function () { openPicker(); });
   $("pick-done").addEventListener("click", closePicker);
+  /* Opened Find item but typed nothing, then pressed the keyboard's check mark: go back to the main screen.
+     Touching the list (scrolling it, tapping a category) also puts the keyboard away, so those don't count. */
+  (function () {
+    var pk = $("picker"), pq = $("pick-q"), lastTouch = 0;
+    var touched = function () { lastTouch = Date.now(); };
+    pk.addEventListener("touchstart", touched, { capture: true, passive: true });
+    pk.addEventListener("touchmove", touched, { capture: true, passive: true });
+    pk.addEventListener("mousedown", touched, true);
+    pq.addEventListener("blur", function () {
+      setTimeout(function () {
+        if (pk.hidden || pq.value.trim() || document.activeElement === pq) return;
+        if (Date.now() - lastTouch < 700) return;
+        closePicker();
+      }, 250);
+    });
+  })();
   $("pick-q").addEventListener("input", function () { renderPicker(); renderRecent(); });
   document.addEventListener("keydown", function (e) { if (e.key === "Escape" && !$("picker").hidden) closePicker(); });
 
