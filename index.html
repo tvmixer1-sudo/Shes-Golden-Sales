@@ -1120,7 +1120,7 @@ body.cf-open { overflow: hidden; }
       </div>
       <div class="statrow">
         <span class="sheetstat" id="sheet-stat" role="status">Spreadsheet: not connected</span>
-        <span class="ver"><span id="app-ver">Version 4.9.24Clover</span></span>
+        <span class="ver"><span id="app-ver">Version 4.9.25Clover</span></span>
       </div>
     </div>
   </section>
@@ -13975,7 +13975,9 @@ function findAlignmentPattern(matrix, alignmentPatternQuads, topRight, topLeft, 
   $("geo-save").addEventListener("click", function () {
     var n = currentLoc(); if (!n) return;
     if (!navigator.geolocation) { geoMsg("This phone's browser can't share its location."); return; }
-    if (geoGet(n).lat != null && !confirm("Replace the saved spot for " + n + "? Every phone will use the new spot.")) return;
+    var had = geoGet(n).lat != null;
+    if (!confirm(had ? "Replace the saved spot for " + n + " with where you are right now? Every phone will use the new spot."
+                     : "Save where you are right now as the spot for " + n + "? Only do this if you are at " + n + ".")) return;
     geoMsg("Finding your spot...");
     navigator.geolocation.getCurrentPosition(function (p) {
       var ft = Math.round(p.coords.accuracy * 3.28);
