@@ -931,6 +931,46 @@ footer { color: var(--muted); font-size: 0.8rem; }
 body.cf-open { overflow: hidden; }
 /* ---- Send to Clover: one button wide, centered above the pair (4.9.11) ---- */
 .savebar .cloverbtn { width: calc((100% - 8px) / 2); align-self: center; line-height: 1.15; padding: 6px 8px; }
+
+/* Stock mode: a Sale | Stock switch under the title; Stock swaps the sale screen for a scan-to-add-stock screen */
+.modebar { display: flex; margin: 4px 12px 10px; border: 1.5px solid var(--accent); border-radius: 12px; overflow: hidden; background: var(--surface); }
+.modebar button { flex: 1; font: 600 0.95rem var(--font-body); padding: 9px 0; border: 0; background: transparent; color: var(--accent); cursor: pointer; -webkit-tap-highlight-color: transparent; }
+.modebar button[aria-pressed="true"] { background: var(--accent); color: var(--accent-fg); }
+.modebar #mode-stock[aria-pressed="true"] { background: #b08a2e; color: #fff; }
+.stockpanel { padding: 0 12px 24px; }
+.stockpanel[hidden] { display: none; }
+body.stock-on #panel-a { display: none; }
+.stk-banner { background: #fbf3dc; border: 1.5px solid #b08a2e; border-radius: 12px; padding: 10px 12px; margin: 0 0 10px; font: 600 0.85rem var(--font-body); color: #6b5314; }
+:root[data-theme="dark"] .stk-banner { background: #2f2619; color: #e6cd8a; }
+.stk-btns { display: flex; gap: 8px; margin-bottom: 10px; }
+.stk-big { flex: 1; min-height: 50px; border: 0; border-radius: 12px; background: var(--accent); color: var(--accent-fg); font: 600 1rem var(--font-body); cursor: pointer; }
+.stk-big.alt { background: var(--accent-soft); color: var(--accent); }
+.stk-how { display: flex; gap: 8px; margin-bottom: 14px; }
+.stk-how button { flex: 1; padding: 9px 4px; border-radius: 10px; border: 1.5px solid var(--line); background: var(--surface); color: var(--accent); font: 600 0.85rem var(--font-body); cursor: pointer; }
+.stk-how button[aria-checked="true"] { background: var(--accent); color: var(--accent-fg); border-color: var(--accent); }
+.stk-head { display: flex; justify-content: space-between; align-items: baseline; margin: 4px 2px 6px; }
+.stk-sum { font: 0.78rem var(--font-body); color: var(--muted); }
+.stk-list { list-style: none; margin: 0; padding: 0; }
+.stk-row { display: flex; align-items: center; gap: 8px; background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 8px 10px; margin-bottom: 8px; }
+.stk-row .thumb { width: 54px; height: 54px; flex: none; border-radius: 8px; object-fit: cover; }
+.stk-row .stk-t { flex: 1; min-width: 0; }
+.stk-row .stk-n { font: 600 0.92rem var(--font-body); color: var(--fg); line-height: 1.2; }
+.stk-row .stk-i { font: 0.74rem var(--font-body); color: var(--muted); }
+.stk-row .stk-q { font: 700 1.3rem var(--font-body); min-width: 30px; text-align: center; color: var(--fg); }
+.stk-row .stk-q.zero { color: var(--save); }
+.stk-row .stk-b { width: 38px; height: 38px; border-radius: 10px; border: 1.5px solid var(--line); background: var(--surface); color: var(--accent); font: 600 1.3rem/1 var(--font-body); cursor: pointer; }
+.stk-row.flash { animation: stkflash 0.9s ease; }
+@keyframes stkflash { from { background: #fbf3dc; } to { background: var(--surface); } }
+.stk-empty { color: var(--muted); font: 0.9rem var(--font-body); text-align: center; margin: 14px 8px; }
+.stk-save { display: block; width: 100%; min-height: 50px; margin-top: 12px; border: 0; border-radius: 12px; background: var(--accent); color: var(--accent-fg); font: 600 1rem var(--font-body); cursor: pointer; }
+.stk-status { color: var(--muted); font: 0.82rem var(--font-body); text-align: center; margin: 8px 0 0; }
+.stk-status.ok { color: #2f6b3a; }
+.stk-ver { color: var(--muted); font: 0.78rem var(--font-body); text-align: right; margin: 10px 2px 0; }
+.stkcard .stk-c-name { font: 600 1.05rem var(--font-body); }
+.stkcard .stk-c-id { font: 0.8rem var(--font-body); color: var(--muted); margin-bottom: 8px; }
+.stkcard .stk-c-now { font: 0.95rem var(--font-body); margin-bottom: 10px; }
+.stkcard .stk-c-lab { font: 600 0.78rem var(--font-body); letter-spacing: .06em; text-transform: uppercase; color: var(--muted); }
+.stkcard input { font-size: 1.6rem; text-align: center; }
 </style>
 </head>
 <body>
@@ -940,6 +980,29 @@ body.cf-open { overflow: hidden; }
     <h1>She's Golden Sales</h1>
     <button class="menubtn" id="menu-btn" type="button" aria-label="Sale settings" aria-haspopup="dialog">&#9776;</button>
   </header>
+
+  <div class="modebar" id="modebar" role="group" aria-label="Mode">
+    <button type="button" id="mode-sale" aria-pressed="true">Sale</button>
+    <button type="button" id="mode-stock" aria-pressed="false">Stock</button>
+  </div>
+
+  <section class="panel stockpanel" id="panel-stock" hidden>
+    <div class="stk-banner" id="stk-banner">STOCK MODE &ndash; each scan adds 1 to that item</div>
+    <div class="stk-btns">
+      <button type="button" class="stk-big" id="stk-scan">Scan item</button>
+      <button type="button" class="stk-big alt" id="stk-find">Find item</button>
+    </div>
+    <div class="stk-how" id="stk-how" role="radiogroup" aria-label="How scans change stock">
+      <button type="button" id="stk-m-add" role="radio" aria-checked="true">+1 each scan</button>
+      <button type="button" id="stk-m-count" role="radio" aria-checked="false">Count (type a number)</button>
+    </div>
+    <div class="stk-head"><span class="label">Recent items</span><span class="stk-sum" id="stk-sum"></span></div>
+    <ul class="stk-list" id="stk-list"></ul>
+    <p class="stk-empty" id="stk-empty">Nothing scanned yet. Tap Scan item and point the camera at a label.</p>
+    <button type="button" class="stk-save" id="stk-save">Save counts</button>
+    <p class="stk-status" id="stk-status"></p>
+    <p class="stk-ver" id="stk-ver"></p>
+  </section>
 
   <section class="panel" id="panel-a">
     <div class="tag" aria-live="polite">
@@ -1072,7 +1135,7 @@ body.cf-open { overflow: hidden; }
       </div>
       <div class="statrow">
         <span class="sheetstat" id="sheet-stat" role="status">Spreadsheet: not connected</span>
-        <span class="ver"><span id="app-ver">Version 4.9.20Clover</span></span>
+        <span class="ver"><span id="app-ver">Version 5.0.0Stock</span></span>
       </div>
     </div>
   </section>
@@ -1219,6 +1282,19 @@ body.cf-open { overflow: hidden; }
       <ul class="pr-list" id="pr-list"></ul>
       <button class="addbtn pr-retake" type="button" id="pr-retake">Retake photo</button>
     </div>
+</div>
+<div class="menu" id="stk-count" hidden>
+  <div class="menucard details mset stkcard" role="dialog" aria-modal="true" aria-labelledby="stk-c-name">
+    <div class="menuhead"><span class="label">Count</span><button class="linkbtn" type="button" id="stk-c-cancel">Cancel</button></div>
+    <section class="mgroup">
+      <div class="stk-c-name" id="stk-c-name"></div>
+      <div class="stk-c-id" id="stk-c-id"></div>
+      <div class="stk-c-now" id="stk-c-now"></div>
+      <label class="stk-c-lab" for="stk-c-in">How many do you have?</label>
+      <div class="input"><input id="stk-c-in" type="text" inputmode="numeric" pattern="[0-9]*" autocomplete="off" placeholder="0"></div>
+      <button type="button" class="stk-save" id="stk-c-ok">Set count</button>
+    </section>
+  </div>
 </div>
 <div class="added-toast" id="added-toast" hidden role="status" aria-live="polite">
   <img class="at-photo" id="at-photo" alt="" hidden>
@@ -12520,8 +12596,16 @@ function findAlignmentPattern(matrix, alignmentPatternQuads, topRight, topLeft, 
       if (ph.complete && ph.naturalWidth) { ph.hidden = false; ck.hidden = true; }
     }
     $("at-name").textContent = name;
-    $("at-price").textContent = money.format(Number(price));
-    $("at-note").textContent = (sold ? "Marked sold out. " : "") + (count > 1 ? count + " items added" : "");
+    var ttl = t.querySelector(".at-title");
+    if (stockMode && stockLast) {
+      if (ttl) ttl.textContent = stockLast.delta < 0 ? "Stock −" + (-stockLast.delta) : "Stock +" + stockLast.delta;
+      $("at-price").textContent = "Now " + stockLast.qty + " in stock";
+      $("at-note").textContent = "";
+    } else {
+      if (ttl) ttl.textContent = "Added";
+      $("at-price").textContent = money.format(Number(price));
+      $("at-note").textContent = (sold ? "Marked sold out. " : "") + (count > 1 ? count + " items added" : "");
+    }
     t.hidden = false;
     t.classList.remove("pop");
     void t.offsetWidth;
@@ -12727,6 +12811,12 @@ function findAlignmentPattern(matrix, alignmentPatternQuads, topRight, topLeft, 
     rememberSearch();
     addScanned({ id: it.id, name: it.name, price: it.price.toFixed(2) });
     pickCount++;
+    if (stockMode) {
+      if (stockHow === "count") { closePicker(); return; }
+      showAdded(it.name, it.price, pickCount, it.sold, it.id);
+      $("pick-msg").textContent = stockMsg(it);
+      return;
+    }
     showAdded(it.name, it.price, pickCount, it.sold, it.id);
     $("pick-msg").textContent = "Added: " + it.name + " " + money.format(it.price) + (it.sold ? " (marked sold out)" : "") + "   (" + pickCount + " added)";
     try { if (navigator.vibrate) navigator.vibrate(40); } catch (e) {}
@@ -12801,6 +12891,7 @@ function findAlignmentPattern(matrix, alignmentPatternQuads, topRight, topLeft, 
     return parseItem(text);
   }
   function addScanned(item) {
+    if (stockMode) { stockAdd(item); return; }
     var list = rows();
     /* Fill the first blank row if there is one; otherwise add a new row */
     var first = null;
@@ -12825,6 +12916,111 @@ function findAlignmentPattern(matrix, alignmentPatternQuads, topRight, topLeft, 
     var after = rows(), lastRow = after[after.length - 1];
     if (lastRow && (lastRow.querySelector(".price").value.trim() || lastRow.querySelector(".name").value.trim())) addRow("", false);
   }
+  /* ---------- Stock mode ---------- */
+  var STK_QTY_KEY = "stock-qty", STK_LOG_KEY = "stock-recent", STK_OUT_KEY = "stock-outbox";
+  var stockMode = false, stockHow = "add", stockLast = null, stockCountItem = null;
+  function jget(k, d) { try { var v = JSON.parse(lsGet(k) || ""); return v && typeof v === "object" ? v : d; } catch (e) { return d; } }
+  function stockQty() { return jget(STK_QTY_KEY, {}); }
+  function stockRecent() { var a = jget(STK_LOG_KEY, []); return Array.isArray(a) ? a : []; }
+  function stockOutbox() { var a = jget(STK_OUT_KEY, []); return Array.isArray(a) ? a : []; }
+  function qtyOf(id) { var n = stockQty()[id]; return typeof n === "number" ? n : 0; }
+  /* Every change is kept as +/- amounts, so it can be sent on to the spreadsheet and website later without overwriting online sales */
+  function stockChange(it, delta) {
+    var q = stockQty(), before = typeof q[it.id] === "number" ? q[it.id] : 0;
+    var now = Math.max(0, before + delta);
+    q[it.id] = now;
+    lsSet(STK_QTY_KEY, JSON.stringify(q));
+    var applied = now - before;
+    var out = stockOutbox(); out.push({ id: it.id, d: applied, t: Date.now() }); lsSet(STK_OUT_KEY, JSON.stringify(out.slice(-2000)));
+    var rec = stockRecent().filter(function (r) { return r.id !== it.id; });
+    rec.unshift({ id: it.id, name: it.name });
+    lsSet(STK_LOG_KEY, JSON.stringify(rec.slice(0, 30)));
+    stockLast = { id: it.id, delta: applied, qty: now };
+    renderStock(it.id);
+    return now;
+  }
+  function stockAdd(item) {
+    var it = findItem(item.id) || { id: item.id, name: item.name };
+    if (stockHow === "count") { openStockCount(it); return; }
+    stockChange(it, 1);
+  }
+  function stockMsg(it) { return "Stock +1: " + it.name + " (now " + qtyOf(it.id) + ")"; }
+  function renderStock(flashId) {
+    var list = $("stk-list"), rec = stockRecent(), q = stockQty();
+    list.innerHTML = "";
+    rec.forEach(function (r) {
+      var li = document.createElement("li"); li.className = "stk-row" + (r.id === flashId ? " flash" : "");
+      li.appendChild(makeThumb(r.id));
+      var tx = document.createElement("div"); tx.className = "stk-t";
+      var n = document.createElement("div"); n.className = "stk-n"; n.textContent = r.name;
+      var i = document.createElement("div"); i.className = "stk-i"; i.textContent = r.id;
+      tx.appendChild(n); tx.appendChild(i);
+      var mi = document.createElement("button"); mi.type = "button"; mi.className = "stk-b"; mi.textContent = "−"; mi.setAttribute("aria-label", "Remove one " + r.name);
+      var qn = typeof q[r.id] === "number" ? q[r.id] : 0;
+      var qq = document.createElement("div"); qq.className = "stk-q" + (qn === 0 ? " zero" : ""); qq.textContent = qn;
+      qq.setAttribute("role", "button"); qq.setAttribute("aria-label", "Type a count for " + r.name);
+      var pl = document.createElement("button"); pl.type = "button"; pl.className = "stk-b"; pl.textContent = "+"; pl.setAttribute("aria-label", "Add one " + r.name);
+      var it = findItem(r.id) || { id: r.id, name: r.name };
+      mi.addEventListener("click", function () { stockChange(it, -1); });
+      pl.addEventListener("click", function () { stockChange(it, 1); });
+      qq.addEventListener("click", function () { openStockCount(it); });
+      li.appendChild(tx); li.appendChild(mi); li.appendChild(qq); li.appendChild(pl);
+      list.appendChild(li);
+    });
+    $("stk-empty").hidden = rec.length > 0;
+    var kinds = 0, pieces = 0; Object.keys(q).forEach(function (k) { if (q[k] > 0) { kinds++; pieces += q[k]; } });
+    $("stk-sum").textContent = kinds ? kinds + " items, " + pieces + " pieces counted" : "";
+    var waiting = stockOutbox().length;
+    var st = $("stk-status");
+    st.className = "stk-status";
+    st.textContent = waiting ? "Saved on this phone. " + waiting + " change" + (waiting > 1 ? "s" : "") + " not yet sent to the spreadsheet or website." : "";
+  }
+  function openStockCount(it) {
+    stockCountItem = it;
+    $("stk-c-name").textContent = it.name;
+    $("stk-c-id").textContent = it.id;
+    $("stk-c-now").textContent = "In stock now: " + qtyOf(it.id);
+    $("stk-c-in").value = "";
+    $("stk-count").hidden = false;
+    setTimeout(function () { try { $("stk-c-in").focus(); } catch (e) {} }, 50);
+  }
+  function closeStockCount() { $("stk-count").hidden = true; stockCountItem = null; }
+  $("stk-c-cancel").addEventListener("click", closeStockCount);
+  $("stk-c-ok").addEventListener("click", function () {
+    var v = $("stk-c-in").value.trim();
+    if (!/^\d+$/.test(v) || !stockCountItem) { $("stk-c-in").focus(); return; }
+    var it = stockCountItem;
+    stockChange(it, parseInt(v, 10) - qtyOf(it.id));
+    closeStockCount();
+  });
+  $("stk-c-in").addEventListener("keydown", function (e) { if (e.key === "Enter") { e.preventDefault(); $("stk-c-ok").click(); } });
+  function setStockHow(h) {
+    stockHow = h;
+    $("stk-m-add").setAttribute("aria-checked", h === "add" ? "true" : "false");
+    $("stk-m-count").setAttribute("aria-checked", h === "count" ? "true" : "false");
+    $("stk-banner").innerHTML = h === "add" ? "STOCK MODE &ndash; each scan adds 1 to that item" : "STOCK MODE &ndash; scan an item, then type how many you have";
+  }
+  function setMode(stock) {
+    stockMode = !!stock;
+    document.body.classList.toggle("stock-on", stockMode);
+    $("panel-stock").hidden = !stockMode;
+    $("mode-sale").setAttribute("aria-pressed", stockMode ? "false" : "true");
+    $("mode-stock").setAttribute("aria-pressed", stockMode ? "true" : "false");
+    if (stockMode) { renderStock(); window.scrollTo(0, 0); }
+  }
+  $("mode-sale").addEventListener("click", function () { setMode(false); });
+  $("mode-stock").addEventListener("click", function () { setMode(true); });
+  $("stk-m-add").addEventListener("click", function () { setStockHow("add"); });
+  $("stk-m-count").addEventListener("click", function () { setStockHow("count"); });
+  $("stk-scan").addEventListener("click", function () { openScanner(); });
+  $("stk-find").addEventListener("click", function () { openPicker(); });
+  $("stk-save").addEventListener("click", function () {
+    var st = $("stk-status");
+    st.className = "stk-status ok";
+    st.textContent = "Counts saved on this phone. Sending to the spreadsheet and website isn't set up yet.";
+  });
+  $("stk-ver").textContent = ($("app-ver") || {}).textContent || "";
+
   function handleCode(text) {
     var now = Date.now();
     /* A code that stays in view counts as one scan. Move away and back to add another. */
@@ -12837,6 +13033,13 @@ function findAlignmentPattern(matrix, alignmentPatternQuads, topRight, topLeft, 
     if (item.missing) { scanMsg.textContent = "Item " + item.missing + " isn't in your item list. Check the Products tab in your sheet."; return false; }
     addScanned(item);
     addedCount++;
+    if (stockMode) {
+      if (stockHow === "count") { closeScanner(); return true; }
+      showAdded(item.name, item.price, addedCount, item.sold, item.id);
+      scanMsg.textContent = stockMsg(item) + "  (" + addedCount + " scanned)";
+      try { if (navigator.vibrate) navigator.vibrate(60); } catch (e) {}
+      return true;
+    }
     showAdded(item.name, item.price, addedCount, item.sold, item.id);
     scanMsg.textContent = "Added: " + item.name + " " + money.format(Number(item.price)) + (item.sold ? " (marked sold out)" : "") + "  (" + addedCount + " scanned)";
     try { if (navigator.vibrate) navigator.vibrate(60); } catch (e) {}
