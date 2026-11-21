@@ -947,6 +947,14 @@ footer { color: var(--muted); font-size: 0.8rem; }
 body.cf-open { overflow: hidden; }
 /* ---- Send to Clover: one button wide, centered above the pair (4.9.11) ---- */
 .savebar .cloverbtn { width: calc((100% - 8px) / 2); align-self: center; line-height: 1.15; padding: 6px 8px; }
+/* ---- Install prompt (add to home screen) ---- */
+.installbar { display:flex; align-items:center; gap:10px; margin:2px 0 10px; padding:10px 12px; border:1px solid var(--gold); background:var(--surface); border-radius:12px; font-size:0.92rem; line-height:1.3; color:var(--fg); }
+.installbar[hidden] { display:none; }
+.installbar .ibtxt { flex:1; min-width:0; }
+.installbar .ibtxt b { font-weight:600; }
+.installbar .ibgo { flex:none; min-height:38px; padding:0 16px; border:0; border-radius:10px; background:var(--accent); color:var(--accent-fg); font:inherit; font-weight:600; }
+.installbar .ibx { flex:none; width:32px; height:32px; border:0; background:transparent; color:var(--muted); font-size:1.5rem; line-height:1; }
+.installbar .ibshare { display:inline-block; vertical-align:-3px; width:18px; height:18px; }
 </style>
 </head>
 <body>
@@ -957,6 +965,11 @@ body.cf-open { overflow: hidden; }
     <button class="menubtn" id="menu-btn" type="button" aria-label="Sale settings" aria-haspopup="dialog">&#9776;</button>
   </header>
 
+  <div class="installbar" id="installbar" hidden>
+    <div class="ibtxt" id="ib-txt"></div>
+    <button type="button" class="ibgo" id="ib-go" hidden>Install</button>
+    <button type="button" class="ibx" id="ib-x" aria-label="Dismiss">&times;</button>
+  </div>
   <section class="panel" id="panel-a">
     <div class="tag" aria-live="polite">
       <button class="ctxline" id="ctx-line" type="button" aria-label="Edit location"><span id="ctx-loc"></span><span class="ctx-sep" id="ctx-sep" hidden>·</span><span id="ctx-sp" hidden></span></button>
@@ -1088,7 +1101,7 @@ body.cf-open { overflow: hidden; }
       </div>
       <div class="statrow">
         <span class="sheetstat" id="sheet-stat" role="status">Spreadsheet: not connected</span>
-        <span class="ver"><span id="app-ver">Version 4.9.21Clover</span></span>
+        <span class="ver"><span id="app-ver">Version 4.9.22Clover</span></span>
       </div>
     </div>
   </section>
@@ -12840,6 +12853,25 @@ function findAlignmentPattern(matrix, alignmentPatternQuads, topRight, topLeft, 
     var after = rows(), lastRow = after[after.length - 1];
     if (lastRow && (lastRow.querySelector(".price").value.trim() || lastRow.querySelector(".name").value.trim())) addRow("", false);
   }
+  /* Install prompt: Android gets a real Install button; iPhone gets the Share steps (Apple has no install button) */
+  (function () {
+    var bar = $("installbar"), txt = $("ib-txt"), go = $("ib-go"), x = $("ib-x");
+    if (!bar) return;
+    var KEY = "install-dismissed", deferred = null;
+    function standalone() { return (window.matchMedia && matchMedia("(display-mode: standalone)").matches) || window.navigator.standalone === true; }
+    function dismissed() { try { var t = +localStorage.getItem(KEY); return t && Date.now() - t < 14 * 864e5; } catch (e) { return false; } }
+    function hide(remember) { bar.hidden = true; if (remember) { try { localStorage.setItem(KEY, String(Date.now())); } catch (e) {} } }
+    var share = '<svg class="ibshare" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12M8 7l4-4 4 4M5 11v9h14v-9"/></svg>';
+    function show(html, withBtn) { if (standalone() || dismissed()) return; txt.innerHTML = html; go.hidden = !withBtn; bar.hidden = false; }
+    var ua = navigator.userAgent || "";
+    var ios = /iPhone|iPad|iPod/.test(ua) || (/Macintosh/.test(ua) && navigator.maxTouchPoints > 1);
+    window.addEventListener("beforeinstallprompt", function (e) { e.preventDefault(); deferred = e; show("<b>Install this app</b><br>Opens full screen, like a real app.", true); });
+    window.addEventListener("appinstalled", function () { hide(false); deferred = null; });
+    go.addEventListener("click", function () { if (!deferred) return; deferred.prompt(); deferred.userChoice.then(function () { deferred = null; hide(false); }); });
+    x.addEventListener("click", function () { hide(true); });
+    if (ios && !/CriOS|FxiOS|EdgiOS/.test(ua)) show("<b>Put this app on your home screen</b><br>Tap " + share + " Share, then <b>Add to Home Screen</b>.", false);
+    else if (ios) show("<b>To install on iPhone</b><br>Open this page in <b>Safari</b>, tap " + share + " Share, then <b>Add to Home Screen</b>.", false);
+  })();
   function handleCode(text) {
     var now = Date.now();
     /* A code that stays in view counts as one scan. Move away and back to add another. */
