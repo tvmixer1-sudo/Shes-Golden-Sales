@@ -1140,7 +1140,7 @@ body.stock-on #panel-a { display: none; }
       </div>
       <div class="statrow">
         <span class="sheetstat" id="sheet-stat" role="status">Spreadsheet: not connected</span>
-        <span class="ver"><span id="app-ver">Version 5.0.0Stock</span></span>
+        <span class="ver"><span id="app-ver">Version 5.0.1Stock</span></span>
       </div>
     </div>
   </section>
@@ -13014,8 +13014,16 @@ function findAlignmentPattern(matrix, alignmentPatternQuads, topRight, topLeft, 
     $("mode-sale").classList.toggle("on", !stockMode);
     $("mode-stock").classList.toggle("on", stockMode);
     $("mode-switch").setAttribute("aria-checked", stockMode ? "true" : "false");
-    if (stockMode) { renderStock(); window.scrollTo(0, 0); }
+    if (stockMode) {
+      ["saved-pop", "bogo-pop", "clear-pop", "zoom", "menu"].forEach(function (id) { var e = $(id); if (e) e.hidden = true; });
+      renderStock(); window.scrollTo(0, 0);
+    }
   }
+  /* No sales in stock mode: block every sale action (save, Clover, payment, price/discount) even if one is somehow reached */
+  document.addEventListener("click", function (e) {
+    if (!stockMode || !e.target.closest) return;
+    if (e.target.closest("#panel-a, #receipt-box, #saved-pop, #bogo-pop")) { e.stopPropagation(); e.preventDefault(); }
+  }, true);
   $("mode-sale").addEventListener("click", function () { setMode(false); });
   $("mode-stock").addEventListener("click", function () { setMode(true); });
   $("mode-switch").addEventListener("click", function () { setMode(!stockMode); });
