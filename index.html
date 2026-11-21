@@ -933,10 +933,14 @@ body.cf-open { overflow: hidden; }
 .savebar .cloverbtn { width: calc((100% - 8px) / 2); align-self: center; line-height: 1.15; padding: 6px 8px; }
 
 /* Stock mode: a Sale | Stock switch under the title; Stock swaps the sale screen for a scan-to-add-stock screen */
-.modebar { display: flex; margin: 4px 12px 10px; border: 1.5px solid var(--accent); border-radius: 12px; overflow: hidden; background: var(--surface); }
-.modebar button { flex: 1; font: 600 0.95rem var(--font-body); padding: 9px 0; border: 0; background: transparent; color: var(--accent); cursor: pointer; -webkit-tap-highlight-color: transparent; }
-.modebar button[aria-pressed="true"] { background: var(--accent); color: var(--accent-fg); }
-.modebar #mode-stock[aria-pressed="true"] { background: #b08a2e; color: #fff; }
+.modebar { display: flex; align-items: center; gap: 8px; margin: -2px 0 10px 3px; }
+.modebar .mlab { border: 0; background: transparent; padding: 4px 0; font: 600 0.9rem var(--font-body); color: var(--muted); cursor: pointer; -webkit-tap-highlight-color: transparent; }
+.modebar .mlab.on { color: var(--fg); }
+.modebar #mode-stock.on { color: #8a6a14; }
+.modebar .mtrack { position: relative; width: 52px; height: 30px; padding: 0; border: 0; border-radius: 15px; background: var(--accent); cursor: pointer; transition: background .2s; -webkit-tap-highlight-color: transparent; }
+.modebar .mtrack[aria-checked="true"] { background: #b08a2e; }
+.modebar .mknob { position: absolute; top: 3px; left: 3px; width: 24px; height: 24px; border-radius: 50%; background: #fff; box-shadow: 0 1px 3px rgba(0,0,0,.35); transition: transform .2s; }
+.modebar .mtrack[aria-checked="true"] .mknob { transform: translateX(22px); }
 .stockpanel { padding: 0 12px 24px; }
 .stockpanel[hidden] { display: none; }
 body.stock-on #panel-a { display: none; }
@@ -982,8 +986,9 @@ body.stock-on #panel-a { display: none; }
   </header>
 
   <div class="modebar" id="modebar" role="group" aria-label="Mode">
-    <button type="button" id="mode-sale" aria-pressed="true">Sale</button>
-    <button type="button" id="mode-stock" aria-pressed="false">Stock</button>
+    <button type="button" class="mlab on" id="mode-sale" aria-pressed="true">Sale</button>
+    <button type="button" class="mtrack" id="mode-switch" role="switch" aria-checked="false" aria-label="Stock mode"><span class="mknob"></span></button>
+    <button type="button" class="mlab" id="mode-stock" aria-pressed="false">Stock</button>
   </div>
 
   <section class="panel stockpanel" id="panel-stock" hidden>
@@ -13006,10 +13011,14 @@ function findAlignmentPattern(matrix, alignmentPatternQuads, topRight, topLeft, 
     $("panel-stock").hidden = !stockMode;
     $("mode-sale").setAttribute("aria-pressed", stockMode ? "false" : "true");
     $("mode-stock").setAttribute("aria-pressed", stockMode ? "true" : "false");
+    $("mode-sale").classList.toggle("on", !stockMode);
+    $("mode-stock").classList.toggle("on", stockMode);
+    $("mode-switch").setAttribute("aria-checked", stockMode ? "true" : "false");
     if (stockMode) { renderStock(); window.scrollTo(0, 0); }
   }
   $("mode-sale").addEventListener("click", function () { setMode(false); });
   $("mode-stock").addEventListener("click", function () { setMode(true); });
+  $("mode-switch").addEventListener("click", function () { setMode(!stockMode); });
   $("stk-m-add").addEventListener("click", function () { setStockHow("add"); });
   $("stk-m-count").addEventListener("click", function () { setStockHow("count"); });
   $("stk-scan").addEventListener("click", function () { openScanner(); });
