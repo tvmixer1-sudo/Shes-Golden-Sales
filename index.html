@@ -515,6 +515,22 @@ body .tag { padding-top: 18px; padding-bottom: 18px; }
 .mswitch:checked { background: var(--accent); }
 .mswitch:checked::after { transform: translateX(20px); }
 .mswitch:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+/* ---- Sale settings: compact so it fits on one screen (4.9.21) ---- */
+#menu .mset { padding: 0 16px 10px; }
+#menu .menuhead { min-height: 38px; }
+#menu .msec { padding: 8px 0 2px; }
+#menu .msec:first-of-type { padding-top: 0; }
+#menu .mhd { margin: 0 0 6px; }
+#menu .mfield { display: grid; grid-template-columns: 96px 1fr; align-items: center; column-gap: 10px; row-gap: 0; margin-bottom: 8px; }
+#menu .mfield > label { grid-column: 1; }
+#menu .mfield > select, #menu .mfield > .input { grid-column: 2; }
+#menu .mfield > .taxbtns { grid-column: 2; }
+#menu .mfield .input, #menu .taxsel { height: 40px; }
+#menu .taxadd .mfield { grid-template-columns: 1fr; row-gap: 4px; }
+#menu .taxadd .mfield > select, #menu .taxadd .mfield > .input, #menu .taxadd .mfield > label { grid-column: 1; }
+#menu .mrow { min-height: 38px; margin-bottom: 0; }
+#menu .mbtn { min-height: 42px; margin: 4px 0 6px; }
+#menu .msec .note { margin: 2px 0 4px; font-size: 0.78rem; }
 
 /* ---- BOGO pop-up ---- */
 .bogocard .msec { border-top: 0; padding-top: 4px; }
@@ -1072,7 +1088,7 @@ body.cf-open { overflow: hidden; }
       </div>
       <div class="statrow">
         <span class="sheetstat" id="sheet-stat" role="status">Spreadsheet: not connected</span>
-        <span class="ver"><span id="app-ver">Version 4.9.20Clover</span></span>
+        <span class="ver"><span id="app-ver">Version 4.9.21Clover</span></span>
       </div>
     </div>
   </section>
@@ -1125,7 +1141,7 @@ body.cf-open { overflow: hidden; }
     <section class="msec">
       <h3 class="mhd">Clover</h3>
       <div class="mfield">
-        <label for="cl-name">Your name (salesperson)</label>
+        <label for="cl-name">Salesperson</label>
         <div class="input"><input id="cl-name" type="text" autocomplete="off" maxlength="30" placeholder="Name as in Clover"></div>
       </div>
       <div class="mrow">
@@ -1148,7 +1164,6 @@ body.cf-open { overflow: hidden; }
     </section>
 
     <section class="msec">
-      <h3 class="mhd">Sales report</h3>
       <button class="mbtn solid" type="button" id="rpt-open">View Sales Report</button>
     </section>
   </div>
