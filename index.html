@@ -963,6 +963,13 @@ body.cf-open { overflow: hidden; }
 #menu .taxbtns { margin: 0 0 2px; min-height: 0; }
 #menu .taxbtns .linkbtn { min-height: 26px; padding: 2px 0; }
 #menu #geo-msg { margin: -2px 0 6px; }
+/* ---- Save-time location / tax check (4.9.24) ---- */
+.cf-where { font: 700 1.05rem var(--font-body); color: var(--accent); margin: 8px 0 2px; }
+.gd-body { font-size: 1.02rem; line-height: 1.4; margin: 10px 0 2px; }
+.gd-body b { font-weight: 700; }
+.gd-big { font: 700 1.25rem var(--font-body); margin: 12px 0 2px; }
+.gd-btns { display: grid; gap: 10px; margin-top: 16px; }
+.gd-btns .savebtn { width: 100%; }
 </style>
 </head>
 <body>
@@ -1113,7 +1120,7 @@ body.cf-open { overflow: hidden; }
       </div>
       <div class="statrow">
         <span class="sheetstat" id="sheet-stat" role="status">Spreadsheet: not connected</span>
-        <span class="ver"><span id="app-ver">Version 4.9.23Clover</span></span>
+        <span class="ver"><span id="app-ver">Version 4.9.24Clover</span></span>
       </div>
     </div>
   </section>
@@ -13062,6 +13069,17 @@ function findAlignmentPattern(matrix, alignmentPatternQuads, topRight, topLeft, 
   var GEO_KEY = "sg-loc-geo", GPS_ON_KEY = "sg-gps-on", geo = {};
   try { geo = JSON.parse(localStorage.getItem(GEO_KEY) || "{}") || {}; } catch (e) { geo = {}; }
   function geoSave() { try { localStorage.setItem(GEO_KEY, JSON.stringify(geo)); } catch (e) {} }
+  /* Shared details (tax link + spot) come from the Locations tab of the sheet; the phone-only copy above is the fallback */
+  var DET_KEY = "sg-loc-details", locDet = {};
+  try { var _d = JSON.parse(localStorage.getItem(DET_KEY) || "{}") || {}; Object.keys(_d).forEach(function (k) { locDet[geoKey(k)] = _d[k]; }); } catch (e) { locDet = {}; }
+  function detSave(map) {
+    locDet = {}; Object.keys(map || {}).forEach(function (k) { locDet[geoKey(k)] = map[k]; });
+    try { localStorage.setItem(DET_KEY, JSON.stringify(map || {})); } catch (e) {}
+  }
+  function geoGet(n) {
+    var k = geoKey(n), sv = locDet[k] || {}, lc = geo[k] || {}, hasS = sv.lat != null && sv.lng != null;
+    return { tax: sv.tax || lc.tax || "", lat: hasS ? sv.lat : (lc.lat != null ? lc.lat : null), lng: hasS ? sv.lng : (lc.lng != null ? lc.lng : null), shared: hasS };
+  }
   function geoKey(n) { return String(n || "").trim().toLowerCase(); }
   function geoMsg(t) { var m = $("geo-msg"); if (!m) return; m.textContent = t || ""; m.hidden = !t; }
   function geoTaxes() { return (typeof taxes !== "undefined" && taxes) || []; }
@@ -13069,14 +13087,14 @@ function findAlignmentPattern(matrix, alignmentPatternQuads, topRight, topLeft, 
     var row = $("geo-row"); if (!row) return;
     var n = currentLoc(); row.hidden = !n;
     if (!n) { geoMsg(""); return; }
-    var g = geo[geoKey(n)] || {}, ts = geoTaxes(), h = '<option value="">Tax: none</option>', i, pick = "";
+    var g = geoGet(n), ts = geoTaxes(), h = '<option value="">Tax: none</option>', i, pick = "";
     for (i = 0; i < ts.length; i++) { h += '<option value="' + i + '">Tax: ' + ts[i].name.replace(/&/g, "&amp;").replace(/</g, "&lt;") + "</option>"; if (g.tax === ts[i].name) pick = String(i); }
     $("geo-tax").innerHTML = h; $("geo-tax").value = pick;
     var b = $("geo-save"); b.textContent = g.lat != null ? "Spot saved \u2713" : "Save this spot"; b.classList.toggle("on", g.lat != null);
   }
   function geoApplyTax(n) {
-    var g = geo[geoKey(n)], ts = geoTaxes(), i;
-    if (!g || !g.tax) return;
+    var g = geoGet(n), ts = geoTaxes(), i;
+    if (!g.tax) return;
     for (i = 0; i < ts.length; i++) if (ts[i].name === g.tax) { applyTax(ts[i]); return; }
   }
   function geoMeters(a, b, c, d) {
@@ -13089,7 +13107,7 @@ function findAlignmentPattern(matrix, alignmentPatternQuads, topRight, topLeft, 
     for (i = 0; i < ins.length; i++) if (String(ins[i].value || "").trim()) return false;
     return true;
   }
-  var gpsNoteTimer = 0, gpsLast = 0;
+  var gpsNoteTimer = 0, gpsLast = 0, geoAfterSync = false;
   function gpsNote(html) {
     $("gps-txt").innerHTML = html; $("gpsnote").hidden = false;
     clearTimeout(gpsNoteTimer); gpsNoteTimer = setTimeout(function () { $("gpsnote").hidden = true; }, 12000);
@@ -13098,16 +13116,16 @@ function findAlignmentPattern(matrix, alignmentPatternQuads, topRight, topLeft, 
     if (typeof stockMode !== "undefined" && stockMode) return;
     var on = true; try { on = localStorage.getItem(GPS_ON_KEY) !== "0"; } catch (e) {}
     if (!on || !navigator.geolocation || !saleIsEmpty()) return;
-    var cands = locs.filter(function (l) { var g = geo[geoKey(l)]; return g && g.lat != null; });
+    var cands = locs.filter(function (l) { return geoGet(l).lat != null; });
     if (!cands.length) return;
     navigator.geolocation.getCurrentPosition(function (p) {
       if (!saleIsEmpty()) return;
       var best = null, bd = 1e12;
-      cands.forEach(function (l) { var g = geo[geoKey(l)], d = geoMeters(p.coords.latitude, p.coords.longitude, g.lat, g.lng); if (d < bd) { bd = d; best = l; } });
+      cands.forEach(function (l) { var g = geoGet(l), d = geoMeters(p.coords.latitude, p.coords.longitude, g.lat, g.lng); if (d < bd) { bd = d; best = l; } });
       if (!best || bd > 250 || p.coords.accuracy > 500) return;
       if (currentLoc().toLowerCase() === best.toLowerCase()) return;
       chooseLoc(best);
-      var g2 = geo[geoKey(best)] || {}, ts = geoTaxes(), t = null, i;
+      var g2 = geoGet(best), ts = geoTaxes(), t = null, i;
       for (i = 0; i < ts.length; i++) if (g2.tax && ts[i].name === g2.tax) t = ts[i];
       var esc = function (x) { return String(x).replace(/&/g, "&amp;").replace(/</g, "&lt;"); };
       gpsNote("<b>Location: " + esc(best) + "</b> (from GPS)" + (t ? "<br>Tax: <b>" + esc(t.name) + " " + pctLabel(t.pct) + "%</b>" : "<br>Check the sales tax."));
@@ -13157,7 +13175,9 @@ function findAlignmentPattern(matrix, alignmentPatternQuads, topRight, topLeft, 
           if (j && j.ok && Array.isArray(j.locations)) {
             var cur = currentLoc();
             locs = cleanLocs(j.locations.concat(cur ? [cur] : []));
+            if (j.details && typeof j.details === "object") detSave(j.details);
             saveLocs(); renderLocSel(); locSyncNote("");
+            if (!geoAfterSync) { geoAfterSync = true; try { geoAuto(); } catch (e) {} }
           }
         })
         .catch(function () {})
@@ -13706,6 +13726,102 @@ function findAlignmentPattern(matrix, alignmentPatternQuads, topRight, topLeft, 
   $("cl-on").addEventListener("change", function () { lsSet(CLOVER_ON_KEY, $("cl-on").checked ? "1" : "0"); calcA(); });
 
 
+  /* ---------- Save-time check: right location? right tax? (runs before the confirm window) ---------- */
+  (function () {
+    var CONF_KEY = "sg-guard-confirmed", KEEP_KEY = "sg-guard-keep", CONF_MS = 4 * 3600e3, KEEP_MS = 30 * 60e3;
+    var passUntil = 0, wrap = null, busy = false;
+    function rec(k) { try { return JSON.parse(localStorage.getItem(k) || "null"); } catch (e) { return null; } }
+    function setRate() { return num($("a-tax").value); }
+    function noTaxPay() { return !!(NO_TAX && NO_TAX[$("a-pay").value]); }
+    function mark(k) { try { localStorage.setItem(k, JSON.stringify({ loc: currentLoc().toLowerCase(), pct: setRate(), t: Date.now() })); } catch (e) {} }
+    function fresh(k, ms) { var r = rec(k); return !!r && r.loc === currentLoc().toLowerCase() && r.pct === setRate() && Date.now() - r.t < ms; }
+    function esc(x) { return String(x).replace(/&/g, "&amp;").replace(/</g, "&lt;"); }
+    function close() { if (wrap && wrap.parentNode) wrap.parentNode.removeChild(wrap); wrap = null; document.body.classList.remove("cf-open"); }
+    function taxByName(nm) { var ts = geoTaxes(), i; for (i = 0; i < ts.length; i++) if (ts[i].name === nm) return ts[i]; return null; }
+    function miles(m) { var mi = m / 1609.34; return mi < 0.2 ? Math.round(m * 3.28 / 10) * 10 + " feet" : (mi < 10 ? mi.toFixed(1) : Math.round(mi)) + " miles"; }
+    function where() {
+      return new Promise(function (res) {
+        var any = locs.some(function (l) { return geoGet(l).lat != null; });
+        if (!any || !navigator.geolocation) { res(null); return; }
+        var done = false, to = setTimeout(function () { if (!done) { done = true; res(null); } }, 3500);
+        navigator.geolocation.getCurrentPosition(function (p) { if (!done) { done = true; clearTimeout(to); res(p.coords.accuracy > 500 ? null : p.coords); } },
+          function () { if (!done) { done = true; clearTimeout(to); res(null); } }, { enableHighAccuracy: false, timeout: 3000, maximumAge: 300000 });
+      });
+    }
+    function problem() {
+      var cur = currentLoc(), pct = setRate(), g = geoGet(cur), keep = fresh(KEEP_KEY, KEEP_MS);
+      return where().then(function (pos) {
+        if (!keep) {
+          if (pos) {
+            var best = null, bd = 1e12, dCur = null;
+            locs.forEach(function (l) { var q = geoGet(l); if (q.lat == null) return; var d = geoMeters(pos.latitude, pos.longitude, q.lat, q.lng); if (l.toLowerCase() === cur.toLowerCase()) dCur = d; if (d < bd) { bd = d; best = l; } });
+            if (best && bd <= 250 && best.toLowerCase() !== cur.toLowerCase()) return { kind: "switch", to: best };
+            if (g.lat != null && dCur !== null && dCur > 250 && !(best && bd <= 250)) return { kind: "far", dist: dCur };
+          }
+          if (g.tax && !noTaxPay()) { var t = taxByName(g.tax); if (t && Math.abs(t.pct - pct) > 0.0001) return { kind: "tax", t: t }; }
+        }
+        if (!fresh(CONF_KEY, CONF_MS)) return { kind: "confirm" };
+        return null;
+      });
+    }
+    function show(pr, btn) {
+      close();
+      var cur = currentLoc(), pct = setRate(), pl = pctText(pct), taxTxt = noTaxPay() ? "No sales tax on " + payLabel() : "Tax " + pl;
+      wrap = document.createElement("div"); wrap.className = "cf-wrap"; wrap.setAttribute("role", "dialog"); wrap.setAttribute("aria-modal", "true");
+      var card = document.createElement("div"); card.className = "cf-card";
+      var h = document.createElement("div"); h.className = "cf-h";
+      var body = document.createElement("div"); body.className = "gd-body";
+      var btns = document.createElement("div"); btns.className = "gd-btns";
+      function b(label, cls, fn) { var x = document.createElement("button"); x.type = "button"; x.className = "savebtn" + (cls ? " " + cls : ""); x.textContent = label; x.addEventListener("click", fn); btns.appendChild(x); }
+      function go(markKeep) { mark(CONF_KEY); if (markKeep) mark(KEEP_KEY); close(); passUntil = Date.now() + 120000; btn.click(); }
+      function again() { close(); run(btn); }
+      function change() { close(); try { $("menu-btn").click(); } catch (e) {} }
+      if (pr.kind === "switch") {
+        var ng = geoGet(pr.to), nt = ng.tax ? taxByName(ng.tax) : null;
+        h.textContent = "Wrong location?";
+        body.innerHTML = "You seem to be at <b>" + esc(pr.to) + "</b>.<div class=\"gd-big\">This sale says " + esc(cur) + " · " + taxTxt + "</div>";
+        b("Switch to " + pr.to + (nt ? " (" + pctText(nt.pct) + ")" : ""), "", function () { chooseLoc(pr.to); again(); });
+        b("Keep " + cur + " and continue", "alt", function () { go(true); });
+      } else if (pr.kind === "far") {
+        h.textContent = "Not at this location?";
+        body.innerHTML = "You are about <b>" + miles(pr.dist) + "</b> from the saved spot for <b>" + esc(cur) + "</b>.<div class=\"gd-big\">" + esc(cur) + " · " + taxTxt + "</div>";
+        b("Change location", "", change);
+        b("Keep " + cur + " and continue", "alt", function () { go(true); });
+      } else if (pr.kind === "tax") {
+        h.textContent = "Check the sales tax";
+        body.innerHTML = "<b>" + esc(cur) + "</b> is set up with <b>" + pctText(pr.t.pct) + "</b> tax, but this sale uses <b>" + pl + "</b>.";
+        b("Use " + pctText(pr.t.pct) + " and continue", "", function () { applyTax(pr.t); again(); });
+        b("Keep " + pl + " and continue", "alt", function () { go(true); });
+      } else {
+        h.textContent = "Is this right?";
+        body.innerHTML = "You are about to sell at:<div class=\"gd-big\">" + esc(cur) + " · " + taxTxt + "</div>";
+        b("Yes, continue", "", function () { go(false); });
+        b("Change", "alt", change);
+      }
+      var back = document.createElement("button"); back.type = "button"; back.className = "linkbtn"; back.textContent = "Go back"; back.addEventListener("click", close);
+      card.appendChild(h); card.appendChild(body); card.appendChild(btns); card.appendChild(back);
+      wrap.appendChild(card); document.body.appendChild(wrap); document.body.classList.add("cf-open");
+      try { if (document.activeElement && document.activeElement.blur) document.activeElement.blur(); } catch (e) {}
+    }
+    function run(btn) {
+      if (busy) return; busy = true;
+      problem().then(function (pr) {
+        busy = false;
+        if (!pr) { passUntil = Date.now() + 120000; btn.click(); return; }
+        show(pr, btn);
+      }, function () { busy = false; passUntil = Date.now() + 120000; btn.click(); });
+    }
+    document.addEventListener("click", function (e) {
+      var btn = e.target && e.target.closest ? e.target.closest("#send-clover, #save-sale, #save-receipt") : null;
+      if (!btn || btn.disabled) return;
+      if (Date.now() < passUntil) return;
+      if (needLoc()) return;
+      var rc = collectReceipt(); if (!rc) return;
+      e.preventDefault(); e.stopImmediatePropagation();
+      run(btn);
+    }, true);
+  })();
+
   /* ---------- Confirm window before Send to Clover / Save Sale / Save + PDF receipt ---------- */
   (function () {
     var wrap = null, confirmedBtn = null;
@@ -13730,7 +13846,8 @@ function findAlignmentPattern(matrix, alignmentPatternQuads, topRight, topLeft, 
       var card = document.createElement("div"); card.className = "cf-card";
       var h = document.createElement("div"); h.className = "cf-h"; h.textContent = "Confirm: " + (TITLES[btn.id] || "sale");
       var sub = document.createElement("div"); sub.className = "cf-sub";
-      sub.textContent = [rc.payment, rc.location].filter(Boolean).join(" \u00b7 ");
+      sub.textContent = rc.payment || "";
+      var where = document.createElement("div"); where.className = "cf-where"; where.textContent = (rc.location || "No location") + " \u00b7 " + (rc.taxPct ? "Tax " + pctText(rc.taxPct) : "No sales tax");
       var list = document.createElement("div"); list.className = "cf-list";
       rc.items.forEach(function (it) {
         var right;
@@ -13757,7 +13874,7 @@ function findAlignmentPattern(matrix, alignmentPatternQuads, topRight, topLeft, 
       cancel.addEventListener("click", close);
       ok.addEventListener("click", function () { close(); confirmedBtn = btn; btn.click(); });
       btns.appendChild(cancel); btns.appendChild(ok);
-      card.appendChild(h); if (sub.textContent) card.appendChild(sub); card.appendChild(list); card.appendChild(tot); card.appendChild(btns);
+      card.appendChild(h); card.appendChild(where); if (sub.textContent) card.appendChild(sub); card.appendChild(list); card.appendChild(tot); card.appendChild(btns);
       wrap.appendChild(card);
       document.body.appendChild(wrap); document.body.classList.add("cf-open");
       document.addEventListener("keydown", onKey, true);
@@ -13847,26 +13964,37 @@ function findAlignmentPattern(matrix, alignmentPatternQuads, topRight, topLeft, 
     if (savedTax !== null && isFinite(parseFloat(savedTax))) { $("a-tax").value = savedTax; taxRate = savedTax; }
   } catch (e) {}
   /* ---------- Sales tax list: shared through the "Taxes" tab of your spreadsheet ---------- */
+  function geoLocal(n, patch) { var k = geoKey(n); geo[k] = geo[k] || {}; Object.keys(patch).forEach(function (f) { if (patch[f] === "" || patch[f] === null) delete geo[k][f]; else geo[k][f] = patch[f]; }); if (geo[k].lat == null && !geo[k].tax) delete geo[k]; geoSave(); }
+  function geoPush(n, patch) {   /* sheet first so every phone shares it; keep a phone copy if the sheet can't be reached */
+    var body = { locSet: { name: n } }; Object.keys(patch).forEach(function (f) { body.locSet[f] = patch[f]; });
+    return taxPost(body).then(function (j) {
+      if (j && j.details) detSave(j.details);
+      geoLocal(n, patch); return true;
+    }, function () { geoLocal(n, patch); return false; });
+  }
   $("geo-save").addEventListener("click", function () {
     var n = currentLoc(); if (!n) return;
     if (!navigator.geolocation) { geoMsg("This phone's browser can't share its location."); return; }
+    if (geoGet(n).lat != null && !confirm("Replace the saved spot for " + n + "? Every phone will use the new spot.")) return;
     geoMsg("Finding your spot...");
     navigator.geolocation.getCurrentPosition(function (p) {
-      var k = geoKey(n); geo[k] = geo[k] || {};
-      geo[k].lat = p.coords.latitude; geo[k].lng = p.coords.longitude; geo[k].acc = Math.round(p.coords.accuracy);
-      geoSave(); renderGeoRow();
-      geoMsg("Saved for " + n + " (within about " + Math.round(p.coords.accuracy * 3.28) + " ft).");
+      var ft = Math.round(p.coords.accuracy * 3.28);
+      geoPush(n, { lat: p.coords.latitude, lng: p.coords.longitude }).then(function (shared) {
+        renderGeoRow();
+        geoMsg("Saved for " + n + " (within about " + ft + " ft)." + (shared ? "" : " Saved on this phone only. The sheet could not be reached or the script is not updated."));
+      });
     }, function (err) {
       geoMsg(err && err.code === 1 ? "Location is blocked. Allow location for this app in your phone's settings, then try again." : "Couldn't get your location. Try again outdoors or near a window.");
     }, { enableHighAccuracy: true, timeout: 20000, maximumAge: 0 });
   });
   $("geo-tax").addEventListener("change", function () {
     var n = currentLoc(); if (!n) return;
-    var k = geoKey(n), v = this.value, ts = geoTaxes();
-    geo[k] = geo[k] || {};
-    if (v === "") delete geo[k].tax; else { geo[k].tax = ts[Number(v)].name; applyTax(ts[Number(v)]); }
-    if (geo[k].lat == null && !geo[k].tax) delete geo[k];
-    geoSave(); renderGeoRow();
+    var v = this.value, ts = geoTaxes();
+    if (v !== "") applyTax(ts[Number(v)]);
+    geoPush(n, { tax: v === "" ? "" : ts[Number(v)].name }).then(function (shared) {
+      renderGeoRow();
+      if (!shared) geoMsg("Tax link saved on this phone only. The sheet could not be reached or the script is not updated.");
+    });
   });
   (function () {
     var sw = $("gps-on"); try { sw.checked = localStorage.getItem(GPS_ON_KEY) !== "0"; } catch (e) {}
