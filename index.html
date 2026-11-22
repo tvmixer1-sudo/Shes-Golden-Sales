@@ -1000,10 +1000,9 @@ body.stock-on #panel-a { display: none; }
 .installbar .ibx { flex:none; width:32px; height:32px; border:0; background:transparent; color:var(--muted); font-size:1.5rem; line-height:1; }
 .installbar .ibshare { display:inline-block; vertical-align:-3px; width:18px; height:18px; }
 /* ---- GPS location + linked tax (4.9.23) ---- */
-#menu .georow { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin: 0 0 8px; }
+#menu .georow { display: grid; grid-template-columns: 1fr; gap: 8px; margin: 0 0 8px; }
 #menu .geobtn { min-height: 40px; border: 1px solid var(--line); border-radius: 10px; background: var(--surface); color: var(--accent); font: inherit; font-size: 0.9rem; font-weight: 600; padding: 0 8px; }
 #menu .geobtn.on { background: var(--accent-soft); }
-#menu .georow .taxsel { height: 40px; grid-column: auto; }
 #menu .taxbtns { margin: 0 0 2px; min-height: 0; }
 #menu .taxbtns .linkbtn { min-height: 26px; padding: 2px 0; }
 #menu #geo-msg { margin: -2px 0 6px; }
@@ -1188,7 +1187,7 @@ body.stock-on #panel-a { display: none; }
       </div>
       <div class="statrow">
         <span class="sheetstat" id="sheet-stat" role="status">Spreadsheet: not connected</span>
-        <span class="ver"><span id="app-ver">Version 5.0.4Stock</span></span>
+        <span class="ver"><span id="app-ver">Version 5.0.5Stock</span></span>
       </div>
     </div>
   </section>
@@ -1210,7 +1209,6 @@ body.stock-on #panel-a { display: none; }
       </div>
       <div class="georow" id="geo-row" hidden>
         <button type="button" class="geobtn" id="geo-save">Save this spot</button>
-        <select id="geo-tax" class="taxsel" aria-label="Tax for this location"></select>
       </div>
       <p class="note" id="geo-msg" hidden></p>
       <div id="loc-add" class="taxadd" hidden>
@@ -13307,9 +13305,7 @@ function findAlignmentPattern(matrix, alignmentPatternQuads, topRight, topLeft, 
     var row = $("geo-row"); if (!row) return;
     var n = currentLoc(); row.hidden = !n;
     if (!n) { geoMsg(""); return; }
-    var g = geoGet(n), ts = geoTaxes(), h = '<option value="">Tax: none</option>', i, pick = "";
-    for (i = 0; i < ts.length; i++) { h += '<option value="' + i + '">Tax: ' + ts[i].name.replace(/&/g, "&amp;").replace(/</g, "&lt;") + "</option>"; if (g.tax === ts[i].name) pick = String(i); }
-    $("geo-tax").innerHTML = h; $("geo-tax").value = pick;
+    var g = geoGet(n);
     var b = $("geo-save"); b.textContent = g.lat != null ? "Spot saved \u2713" : "Save this spot"; b.classList.toggle("on", g.lat != null);
   }
   function geoApplyTax(n) {
@@ -14209,15 +14205,6 @@ function findAlignmentPattern(matrix, alignmentPatternQuads, topRight, topLeft, 
       geoMsg(err && err.code === 1 ? "Location is blocked. Allow location for this app in your phone's settings, then try again." : "Couldn't get your location. Try again outdoors or near a window.");
     }, { enableHighAccuracy: true, timeout: 20000, maximumAge: 0 });
   });
-  $("geo-tax").addEventListener("change", function () {
-    var n = currentLoc(); if (!n) return;
-    var v = this.value, ts = geoTaxes();
-    if (v !== "") applyTax(ts[Number(v)]);
-    geoPush(n, { tax: v === "" ? "" : ts[Number(v)].name }).then(function (shared) {
-      renderGeoRow();
-      if (!shared) geoMsg("Tax link saved on this phone only. The sheet could not be reached or the script is not updated.");
-    });
-  });
   (function () {
     var sw = $("gps-on"); try { sw.checked = localStorage.getItem(GPS_ON_KEY) !== "0"; } catch (e) {}
     sw.addEventListener("change", function () { try { localStorage.setItem(GPS_ON_KEY, sw.checked ? "1" : "0"); } catch (e) {} if (sw.checked) geoAuto(); });
@@ -14533,7 +14520,16 @@ function findAlignmentPattern(matrix, alignmentPatternQuads, topRight, topLeft, 
     if (v === "add") { showTaxAdd(true); return; }
     $("tax-add").hidden = true;
     if (v === "c") return;
-    applyTax(taxes[Number(v)]);
+    var t = taxes[Number(v)]; applyTax(t);
+    /* Offer to make this the tax for the selected location, so every phone uses it there from now on */
+    var n = currentLoc(); if (!n) return;
+    var cur = geoGet(n).tax; if (cur === t.name) return;
+    var label = t.name + " (" + pctLabel(t.pct) + "%)";
+    if (!confirm(cur ? n + " is set to the " + cur + " tax. Change it to " + label + " for every phone?" : "Always use " + label + " for " + n + "? Every phone will use it there.\n\nCancel = this sale only.")) return;
+    geoPush(n, { tax: t.name }).then(function (shared) {
+      renderGeoRow();
+      geoMsg(shared ? n + " will use " + label + "." : "Saved on this phone only. The sheet could not be reached or the script is not updated.");
+    });
   });
   $("tax-cancel").addEventListener("click", function () { showTaxAdd(false); });
   $("tax-save").addEventListener("click", function () {
