@@ -1187,7 +1187,7 @@ body.stock-on #panel-a { display: none; }
       </div>
       <div class="statrow">
         <span class="sheetstat" id="sheet-stat" role="status">Spreadsheet: not connected</span>
-        <span class="ver"><span id="app-ver">Version 5.0.5Stock</span></span>
+        <span class="ver"><span id="app-ver">Version 5.0.6Stock</span></span>
       </div>
     </div>
   </section>
@@ -1316,6 +1316,7 @@ body.stock-on #panel-a { display: none; }
     <div id="rpt-body"><p class="mhint">Loading...</p></div>
     <div class="rpt-btns" id="rpt-btns" hidden>
       <button class="mbtn solid" type="button" id="rpt-print">Share / Save PDF</button>
+      <button class="mbtn" type="button" id="rpt-notes">Customer Notes PDF</button>
     </div>
     </div>
   </div>
@@ -14261,7 +14262,7 @@ function findAlignmentPattern(matrix, alignmentPatternQuads, topRight, topLeft, 
       .then(function (j) { if (!j || !j.ok) throw new Error((j && j.error) || "not accepted"); return j; });
   }
   /* ---------- Sales report (4.9.0): any date range, added up on the phone from the sheet ---------- */
-  var rptRange = "this", rptSeq = 0, rptPin = "", rptPinAt = 0, rptModel = null;
+  var rptRange = "this", rptSeq = 0, rptPin = "", rptPinAt = 0, rptModel = null, rptRecs = [], rptOldScript = false;
   /* The code is checked by the sheet's script (REPORT_PIN in its settings). It is only kept in memory here, never saved, and is forgotten after 5 idle minutes. */
   function rptShowLock(msg, bad) {
     $("rpt-main").hidden = true; $("rpt-lock").hidden = false;
@@ -14322,6 +14323,7 @@ function findAlignmentPattern(matrix, alignmentPatternQuads, topRight, topLeft, 
   }
   function rptRender(j, a, b) {
     var rs = (j.receipts || []).filter(function (r) { return r.sub > 0.005; });
+    rptRecs = rs; rptOldScript = !!(j.receipts && j.receipts.length && !("d" in j.receipts[0]));
     var ok = {}; rs.forEach(function (r) { ok[r.id] = 1; });
     var net = 0, disc = 0, tax = 0, tot = 0, byDay = {}, byLoc = {}, byPay = {};
     rs.forEach(function (r) {
@@ -14474,6 +14476,87 @@ function findAlignmentPattern(matrix, alignmentPatternQuads, topRight, topLeft, 
       var link = blobLink(name, bytes, "Open report PDF"); link.style.display = "none"; document.body.appendChild(link); link.click();
       setTimeout(function () { if (link.parentNode) link.parentNode.removeChild(link); }, 4000); done();
     }, function () { btn.textContent = "Could not make the PDF"; setTimeout(done, 2500); });
+  });
+
+  /* Customer Notes PDF (5.0.6): every sale in the chosen dates that has a note, with the customer's contact details, grouped by location. */
+  function rptNotesPdf(m, recs) {
+    var P = window.PDFLib;
+    if (!P) return Promise.reject(new Error("PDF library missing"));
+    var clean = function (t) { return String(t).replace(/\s+/g, " ").replace(/[^\x20-\x7E\xA0-\xFF]/g, "?"); };
+    var W = 612, H = 792, M = 54, INK = P.rgb(0.11, 0.16, 0.2), MUTE = P.rgb(0.42, 0.48, 0.52), ACC = P.rgb(0.235, 0.376, 0.435);
+    var fmtD = function (d) { return d.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }); };
+    var byLoc = {}, locOrder = [];
+    recs.slice().sort(function (a, b) { return a.t - b.t; }).forEach(function (r) {
+      var k = r.loc || "No location";
+      if (!byLoc[k]) { byLoc[k] = []; locOrder.push(k); }
+      byLoc[k].push(r);
+    });
+    return P.PDFDocument.create().then(function (doc) {
+      return Promise.all([doc.embedFont(P.StandardFonts.Helvetica), doc.embedFont(P.StandardFonts.HelveticaBold), logo ? doc.embedPng(logo.url) : Promise.resolve(null)]).then(function (r) {
+        var reg = r[0], bold = r[1], img = r[2], page, y;
+        function newPage() { page = doc.addPage([W, H]); y = H - M; }
+        function need(h) { if (y - h < M) newPage(); }
+        function lines(t, font, size, maxW) {
+          var out = [], cur = "";
+          clean(t).split(" ").forEach(function (w) {
+            var tryL = cur ? cur + " " + w : w;
+            if (font.widthOfTextAtSize(tryL, size) <= maxW || !cur) cur = tryL; else { out.push(cur); cur = w; }
+          });
+          if (cur) out.push(cur);
+          return out;
+        }
+        function put(t, x, size, font, color) { page.drawText(clean(t), { x: x, y: y, size: size, font: font, color: color || INK }); }
+        function para(t, x, size, font, color, gap) {
+          lines(t, font, size, W - M - x).forEach(function (l) { need(size + 4); y -= size + 3; put(l, x, size, font, color); });
+          y -= gap || 0;
+        }
+        newPage();
+        var tx = M;
+        if (img) { var k = Math.min(110 / logo.w, 44 / logo.h), lw = logo.w * k, lh = logo.h * k; page.drawImage(img, { x: M, y: y - lh, width: lw, height: lh }); tx = M + 128; }
+        y -= 14; put("Customer Notes", tx, 22, bold, ACC);
+        y -= 18; put(fmtD(m.a) + (m.a.getTime() === m.b.getTime() ? "" : " to " + fmtD(m.b)) + "   |   " + recs.length + (recs.length === 1 ? " sale" : " sales") + " with notes", tx, 10.5, reg, MUTE);
+        y -= 30;
+        locOrder.forEach(function (loc) {
+          need(60); y -= 6; put(loc.toUpperCase(), M, 11, bold, ACC); y -= 4;
+          page.drawLine({ start: { x: M, y: y }, end: { x: W - M, y: y }, thickness: 0.8, color: ACC });
+          y -= 6;
+          byLoc[loc].forEach(function (r) {
+            var when = new Date(r.t);
+            var head = when.toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" }) + ", " + when.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" }) + "  -  " + (r.n || "No customer name");
+            need(70); y -= 10; para(head, M, 11, bold, INK, 0);
+            var contact = [r.ph, r.em].filter(Boolean).join("   |   ");
+            if (contact) para(contact, M, 10, reg, MUTE, 0);
+            var sale = [r.pay, rptMoney(r.total), r.it, r.sp ? "sold by " + r.sp : ""].filter(Boolean).join(", ");
+            para(sale, M, 10, reg, MUTE, 2);
+            para("Note: " + r.d, M, 10.5, reg, INK, 4);
+          });
+          y -= 8;
+        });
+        need(24); y -= 18; put("Notes are shown exactly as typed.  Made " + new Date().toLocaleString("en-US", { month: "short", day: "numeric", year: "numeric", hour: "numeric", minute: "2-digit" }), M, 8, reg, MUTE);
+        return doc.save();
+      });
+    });
+  }
+  $("rpt-notes").addEventListener("click", function () {
+    var btn = this, m = rptModel;
+    if (!m || btn.disabled) return;
+    var old = btn.textContent, flash = function (t) { btn.textContent = t; setTimeout(function () { btn.textContent = old; }, 3200); };
+    if (rptOldScript) { flash("Script needs the newest Code.gs"); return; }
+    var recs = (rptRecs || []).filter(function (r) { return r.d && String(r.d).trim(); });
+    if (!recs.length) { flash("No notes in these dates"); return; }
+    btn.disabled = true; btn.textContent = "Making PDF...";
+    var z = function (n) { return (n < 10 ? "0" : "") + n; }, dk = function (d) { return d.getFullYear() + "-" + z(d.getMonth() + 1) + "-" + z(d.getDate()); };
+    var name = "She-s-Golden-customer-notes-" + dk(m.a) + (dk(m.a) === dk(m.b) ? "" : "_to_" + dk(m.b)) + ".pdf";
+    var done = function () { btn.disabled = false; btn.textContent = old; };
+    rptNotesPdf(m, recs).then(function (bytes) {
+      var file = null;
+      try { file = new File([bytes], name, { type: "application/pdf" }); } catch (e) {}
+      if (file && navigator.canShare && navigator.share && navigator.canShare({ files: [file] })) {
+        return navigator.share({ files: [file] }).then(done, function () { done(); });
+      }
+      var link = blobLink(name, bytes, "Open notes PDF"); link.style.display = "none"; document.body.appendChild(link); link.click();
+      setTimeout(function () { if (link.parentNode) link.parentNode.removeChild(link); }, 4000); done();
+    }, function () { btn.disabled = false; flash("Could not make the PDF"); });
   });
 
   function useServerTaxes(list) {
