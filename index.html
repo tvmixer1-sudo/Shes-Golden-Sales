@@ -14517,7 +14517,7 @@ function findAlignmentPattern(matrix, alignmentPatternQuads, topRight, topLeft, 
         y -= 18; put(fmtD(m.a) + (m.a.getTime() === m.b.getTime() ? "" : " to " + fmtD(m.b)) + "   |   " + recs.length + (recs.length === 1 ? " sale" : " sales") + " with notes", tx, 10.5, reg, MUTE);
         y -= 30;
         locOrder.forEach(function (loc) {
-          need(60); y -= 6; put(loc.toUpperCase(), M, 11, bold, ACC); y -= 4;
+          need(70); y -= 18; put(loc.toUpperCase(), M, 11, bold, ACC); y -= 4;
           page.drawLine({ start: { x: M, y: y }, end: { x: W - M, y: y }, thickness: 0.8, color: ACC });
           y -= 6;
           byLoc[loc].forEach(function (r) {
