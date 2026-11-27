@@ -1187,7 +1187,7 @@ body.stock-on #panel-a { display: none; }
       </div>
       <div class="statrow">
         <span class="sheetstat" id="sheet-stat" role="status">Spreadsheet: not connected</span>
-        <span class="ver"><span id="app-ver">Version 5.0.6Stock</span></span>
+        <span class="ver"><span id="app-ver">Version 5.0.7Stock</span></span>
       </div>
     </div>
   </section>
@@ -1250,6 +1250,14 @@ body.stock-on #panel-a { display: none; }
       <div class="mfield">
         <label for="cl-name">Salesperson</label>
         <div class="input"><input id="cl-name" type="text" autocomplete="off" maxlength="30" placeholder="Name as in Clover"></div>
+      </div>
+      <div class="mfield">
+        <label for="cl-store">Send orders to</label>
+        <select id="cl-store" class="taxsel" aria-label="Clover store">
+          <option value="retail">She's Golden Retail</option>
+          <option value="golden">She's Golden</option>
+        </select>
+        <p class="note">She's Golden Retail: Clover adds the card fee. She's Golden: this app adds the card fee to the order.</p>
       </div>
       <div class="mrow">
         <label for="cl-on">Show Send to Clover</label>
@@ -12076,7 +12084,7 @@ function findAlignmentPattern(matrix, alignmentPatternQuads, topRight, topLeft, 
     if (inClover) {
       cl.innerHTML = '<span class="cl-amt"></span><span class="cl-txt"><b>Enter in Clover</b><span></span></span>';
       cl.querySelector(".cl-amt").textContent = money.format(afterCents / 100);
-      cl.querySelector(".cl-txt span").textContent = "Clover adds tax" + (withFee ? " + " + pctText(CARD_FEE_PCT) : "") + (withShip ? "\nShipping " + money.format(shipC / 100) + " extra" : "");
+      cl.querySelector(".cl-txt span").textContent = "Clover adds tax" + (withFee ? (appAddsFee() ? "\nAdd the " + pctText(CARD_FEE_PCT) + " fee (" + money.format(feeCents / 100) + ") as a line, or use Send to Clover" : " + " + pctText(CARD_FEE_PCT)) : "") + (withShip ? "\nShipping " + money.format(shipC / 100) + " extra" : "");
     }
     if (withTax || withFee || withShip) {
       var txt = money.format(afterCents / 100);
@@ -13862,7 +13870,11 @@ function findAlignmentPattern(matrix, alignmentPatternQuads, topRight, topLeft, 
 
 
   /* ---------- Clover: send the sale as an open order ---------- */
-  var CLOVER_ON_KEY = "clover-on", CLOVER_NAME_KEY = "clover-name";
+  var CLOVER_ON_KEY = "clover-on", CLOVER_NAME_KEY = "clover-name", CLOVER_STORE_KEY = "clover-store";
+  function cloverStore() { return lsGet(CLOVER_STORE_KEY) === "golden" ? "golden" : "retail"; }
+  function cloverStoreName(st) { return (st || cloverStore()) === "golden" ? "She's Golden" : "She's Golden Retail"; }
+  /* She's Golden: the app puts the card fee on the order itself. Retail: Clover adds it at payment. */
+  function appAddsFee() { return cloverStore() === "golden"; }
   function cloverEnabled() { return lsGet(CLOVER_ON_KEY) === "1" && !!getCfg(); }
   function cloverEligible() { var t = payType(); return t === "credit" || t === "debit"; }
   function cloverPayload() {
@@ -13877,11 +13889,14 @@ function findAlignmentPattern(matrix, alignmentPatternQuads, topRight, topLeft, 
       shippingCents: Math.round((rc.shipping || 0) * 100),
       taxPct: rc.taxPct,
       taxName: currentTaxName(),
-      expectedCents: Math.round((rc.total - (rc.surcharge || 0)) * 100),
-      replaces: cloverSent ? cloverSent.orderId : ""
+      store: cloverStore(),
+      feePct: (appAddsFee() && rc.surcharge > 0) ? CARD_FEE_PCT : 0,
+      expectedCents: Math.round((rc.total - (appAddsFee() ? 0 : (rc.surcharge || 0))) * 100),
+      replaces: cloverSent ? cloverSent.orderId : "",
+      replacesStore: cloverSent ? (cloverSent.store || "retail") : ""
     };
   }
-  function cloverSig(p) { return JSON.stringify([p.items, p.shippingCents, p.location, p.name, p.taxPct]); }
+  function cloverSig(p) { return JSON.stringify([p.items, p.shippingCents, p.location, p.name, p.taxPct, p.store, p.feePct]); }
   function syncCloverBtn() {
     var b = $("send-clover");
     if (!b) return;
@@ -13891,7 +13906,7 @@ function findAlignmentPattern(matrix, alignmentPatternQuads, topRight, topLeft, 
     var p = cloverPayload();
     var same = cloverSent && p && cloverSent.sig === cloverSig(p);
     b.className = "savebtn cloverbtn" + (same ? " sent" : "");
-    b.textContent = same ? "Sent to Clover ✓ (order " + cloverSent.shortId + ")" : (cloverSent ? "Cart changed. Send again" : "Send to Clover");
+    b.textContent = same ? "Sent to Clover ✓ (order " + cloverSent.shortId + ")" : (cloverSent ? "Cart changed. Send again" : "Send to Clover \u00b7 " + cloverStoreName());
   }
   $("send-clover").addEventListener("click", function () {
     if (needLoc()) { updateCtx(); return; }
@@ -13909,7 +13924,7 @@ function findAlignmentPattern(matrix, alignmentPatternQuads, topRight, topLeft, 
     }).then(function (j) {
       btn.disabled = false;
       if (j && j.ok) {
-        cloverSent = { sig: sig, orderId: j.orderId, shortId: j.shortId || "" };
+        cloverSent = { sig: sig, orderId: j.orderId, shortId: j.shortId || "", store: p.store };
         var cents = j.totalCents, diff = Math.abs(cents - p.expectedCents);
         if (diff > 1) {
           msg.className = "note warn";
@@ -13919,7 +13934,7 @@ function findAlignmentPattern(matrix, alignmentPatternQuads, topRight, topLeft, 
           rememberLoc();
           sendToSheet(rcNow);
           msg.className = "note";
-          msg.textContent = "Sent to Clover and saved. Open it in Orders on the device and charge " + money.format(cents / 100) + feeNote + " (order " + (j.shortId || "") + ").";
+          msg.textContent = "Sent to " + cloverStoreName(p.store) + " (Clover) and saved. Open it in Orders on the device and charge " + money.format(cents / 100) + feeNote + " (order " + (j.shortId || "") + ").";
           try { if (document.activeElement && document.activeElement.blur) document.activeElement.blur(); } catch (e) {}
           showSaved(rcNow, false, cashNow);
           clearSale(true);
@@ -13936,9 +13951,11 @@ function findAlignmentPattern(matrix, alignmentPatternQuads, topRight, topLeft, 
       syncCloverBtn();
     });
   });
-  function cloverFeeNote() { return payType() === "credit" ? " (Clover adds the " + pctText(CARD_FEE_PCT) + " card fee)" : ""; }
+  function cloverFeeNote() { return payType() === "credit" ? (appAddsFee() ? " (the " + pctText(CARD_FEE_PCT) + " card fee is already in this total)" : " (Clover adds the " + pctText(CARD_FEE_PCT) + " card fee)") : ""; }
   $("cl-name").value = lsGet(CLOVER_NAME_KEY) || "";
   $("cl-on").checked = lsGet(CLOVER_ON_KEY) === "1";
+  $("cl-store").value = cloverStore();
+  $("cl-store").addEventListener("change", function () { lsSet(CLOVER_STORE_KEY, $("cl-store").value); calcA(); });
   $("cl-name").addEventListener("input", function () { lsSet(CLOVER_NAME_KEY, $("cl-name").value.trim()); updateCtx(); });
   $("cl-on").addEventListener("change", function () { lsSet(CLOVER_ON_KEY, $("cl-on").checked ? "1" : "0"); calcA(); });
 
@@ -14061,7 +14078,7 @@ function findAlignmentPattern(matrix, alignmentPatternQuads, topRight, topLeft, 
       wrap = document.createElement("div"); wrap.className = "cf-wrap";
       wrap.setAttribute("role", "dialog"); wrap.setAttribute("aria-modal", "true"); wrap.setAttribute("aria-label", "Confirm sale");
       var card = document.createElement("div"); card.className = "cf-card";
-      var h = document.createElement("div"); h.className = "cf-h"; h.textContent = "Confirm: " + (TITLES[btn.id] || "sale");
+      var h = document.createElement("div"); h.className = "cf-h"; h.textContent = "Confirm: " + (TITLES[btn.id] || "sale") + (btn.id === "send-clover" ? " \u00b7 " + cloverStoreName() : "");
       var sub = document.createElement("div"); sub.className = "cf-sub";
       sub.textContent = rc.payment || "";
       var where = document.createElement("div"); where.className = "cf-where"; where.textContent = (rc.location || "No location") + " \u00b7 " + (rc.taxPct ? "Tax " + pctText(rc.taxPct) : "No sales tax");
