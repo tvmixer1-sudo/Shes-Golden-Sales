@@ -1187,7 +1187,7 @@ body.stock-on #panel-a { display: none; }
       </div>
       <div class="statrow">
         <span class="sheetstat" id="sheet-stat" role="status">Spreadsheet: not connected</span>
-        <span class="ver"><span id="app-ver">Version 5.0.7Stock</span></span>
+        <span class="ver"><span id="app-ver">Version 5.0.9Stock</span></span>
       </div>
     </div>
   </section>
@@ -13875,6 +13875,9 @@ function findAlignmentPattern(matrix, alignmentPatternQuads, topRight, topLeft, 
   function cloverStoreName(st) { return (st || cloverStore()) === "golden" ? "She's Golden" : "She's Golden Retail"; }
   /* She's Golden: the app puts the card fee on the order itself. Retail: Clover adds it at payment. */
   function appAddsFee() { return cloverStore() === "golden"; }
+  /* Salespeople tied to a store (5.0.9): typing one of these names in Settings picks that store. Lowercase, both spellings. Anyone else keeps whatever store is chosen. */
+  var STORE_BY_PERSON = { "suzi barry": "golden", "suzy barry": "golden", "suzi berry": "golden", "suzy berry": "golden" };
+  function storeForPerson(name) { return STORE_BY_PERSON[String(name || "").trim().toLowerCase().replace(/\s+/g, " ")] || ""; }
   function cloverEnabled() { return lsGet(CLOVER_ON_KEY) === "1" && !!getCfg(); }
   function cloverEligible() { var t = payType(); return t === "credit" || t === "debit"; }
   function cloverPayload() {
@@ -13956,7 +13959,12 @@ function findAlignmentPattern(matrix, alignmentPatternQuads, topRight, topLeft, 
   $("cl-on").checked = lsGet(CLOVER_ON_KEY) === "1";
   $("cl-store").value = cloverStore();
   $("cl-store").addEventListener("change", function () { lsSet(CLOVER_STORE_KEY, $("cl-store").value); calcA(); });
-  $("cl-name").addEventListener("input", function () { lsSet(CLOVER_NAME_KEY, $("cl-name").value.trim()); updateCtx(); });
+  $("cl-name").addEventListener("input", function () {
+    lsSet(CLOVER_NAME_KEY, $("cl-name").value.trim());
+    var st = storeForPerson($("cl-name").value);
+    if (st && st !== cloverStore()) { lsSet(CLOVER_STORE_KEY, st); $("cl-store").value = st; try { calcA(); } catch (e) {} }
+    updateCtx();
+  });
   $("cl-on").addEventListener("change", function () { lsSet(CLOVER_ON_KEY, $("cl-on").checked ? "1" : "0"); calcA(); });
 
 
