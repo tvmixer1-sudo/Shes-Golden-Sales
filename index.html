@@ -1070,13 +1070,14 @@ body.stock-on #panel-a { display: none; }
       <div class="payblock top">
         <span class="label" id="pay-label">Payment type</span>
         <div class="paybtns" id="paybtns" role="radiogroup" aria-labelledby="pay-label">
-          <button type="button" class="paybtn" role="radio" data-pay="cash" aria-checked="true">Cash</button>
+          <button type="button" class="paybtn" role="radio" data-pay="cash" aria-checked="false">Cash</button>
           <button type="button" class="paybtn" role="radio" data-pay="credit" aria-checked="false">Credit</button>
           <button type="button" class="paybtn" role="radio" data-pay="debit" aria-checked="false">Debit</button>
           <button type="button" class="paybtn" role="radio" data-pay="venmo" aria-checked="false">Venmo</button>
           <button type="button" class="paybtn" role="radio" data-pay="zelle" aria-checked="false">Zelle</button>
         </div>
         <select id="a-pay" class="paysel" hidden>
+          <option value="" selected>Choose payment</option>
           <option value="cash">Cash</option>
           <option value="credit">Credit</option>
           <option value="debit">Debit</option>
@@ -1187,7 +1188,7 @@ body.stock-on #panel-a { display: none; }
       </div>
       <div class="statrow">
         <span class="sheetstat" id="sheet-stat" role="status">Spreadsheet: not connected</span>
-        <span class="ver"><span id="app-ver">Version 5.0.9Stock</span></span>
+        <span class="ver"><span id="app-ver">Version 5.0.10Stock</span></span>
       </div>
     </div>
   </section>
@@ -11953,18 +11954,21 @@ function findAlignmentPattern(matrix, alignmentPatternQuads, topRight, topLeft, 
     var sp = ""; try { sp = (localStorage.getItem("clover-name") || "").trim(); } catch (e) {}
     $("ctx-sp").textContent = sp; $("ctx-sp").hidden = !sp; $("ctx-sep").hidden = !sp;
     $("ctx-line").className = "ctxline" + (loc ? "" : " warn");
-    lockSave(!!loc);
+    lockSave(!!loc, !!payType());
   }
   /* No location, no saving: the buttons stay locked until one is chosen */
-  function lockSave(hasLoc) {
+  function lockSave(hasLoc, hasPay) {
+    var ok = hasLoc && hasPay;
     ["save-sale", "save-receipt", "send-clover"].forEach(function (id) {
       var b = $(id); if (!b) return;
-      b.classList.toggle("locked", !hasLoc);
-      b.setAttribute("aria-disabled", hasLoc ? "false" : "true");
+      b.classList.toggle("locked", !ok);
+      b.setAttribute("aria-disabled", ok ? "false" : "true");
     });
-    $("loc-lock").hidden = hasLoc;
+    $("loc-lock").textContent = !hasLoc ? "Choose a location in settings to save this sale." : "Choose a payment type to save this sale.";
+    $("loc-lock").hidden = ok;
   }
-  function needLoc() { return !$("a-loc").value.trim(); }
+  /* A sale needs a location AND a payment type before it can be saved or sent (5.0.10) */
+  function needLoc() { return !$("a-loc").value.trim() || !payType(); }
   var saleId = null, cloverSent = null;   /* one id per sale; the Clover order made for this sale, if any */
   function calcA() {
     try { syncPayButtons(); } catch (e) {}
@@ -12140,7 +12144,7 @@ function findAlignmentPattern(matrix, alignmentPatternQuads, topRight, topLeft, 
     setCustomer({});
     setBogo(false);
     $("notes").open = false;
-    $("a-pay").value = "cash";
+    $("a-pay").value = "";   /* 5.0.10: every new sale starts with no payment type chosen */
     $("a-ship").value = "";
     applyTaxMode();
     $("a-cash").value = "";
@@ -13247,7 +13251,7 @@ function findAlignmentPattern(matrix, alignmentPatternQuads, topRight, topLeft, 
   function applyTaxMode() { /* The Sales tax box in the menu always shows the saved rate; taxVal() applies the payment rule. */ }
   function taxVal() { return (NO_TAX && NO_TAX[$("a-pay").value]) ? "0" : $("a-tax").value; }
   function payType() { return $("a-pay").value; }
-  function payLabel() { var o = $("a-pay"); return o.options[o.selectedIndex].text; }
+  function payLabel() { var o = $("a-pay"); return o.value ? o.options[o.selectedIndex].text : ""; }
   // Shipping is added after tax (it is not taxed or discounted). The card fee covers the whole card charge.
   function shipCents() { var n = num($("a-ship").value); return isNaN(n) || n <= 0 ? 0 : Math.round(n * 100); }
   function cardFee(afterCents, taxCents, shipC) { return payType() === "credit" ? roundHalfUp((afterCents + taxCents + (shipC || 0)) * CARD_FEE_PCT / 100) : 0; }
