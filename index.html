@@ -1187,7 +1187,7 @@ body.stock-on #panel-a { display: none; }
       </div>
       <div class="statrow">
         <span class="sheetstat" id="sheet-stat" role="status">Spreadsheet: not connected</span>
-        <span class="ver"><span id="app-ver">Version 5.0.7Stock</span></span>
+        <span class="ver"><span id="app-ver">Version 5.0.8Stock</span></span>
       </div>
     </div>
   </section>
@@ -1259,6 +1259,11 @@ body.stock-on #panel-a { display: none; }
         </select>
       </div>
       <p class="note">Retail: Clover adds the 3% card fee. She's Golden: this app adds it to the order.</p>
+      <div class="mfield">
+        <label for="cl-go">Clover Go link</label>
+        <div class="input"><input id="cl-go" type="text" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="clovergo://orders"></div>
+      </div>
+      <button class="linkbtn" type="button" id="cl-go-test">Test: open Clover Go</button>
       <div class="mrow">
         <label for="cl-on">Show Send to Clover</label>
         <input id="cl-on" class="mswitch" type="checkbox" role="switch">
@@ -13875,6 +13880,14 @@ function findAlignmentPattern(matrix, alignmentPatternQuads, topRight, topLeft, 
   function cloverStoreName(st) { return (st || cloverStore()) === "golden" ? "She's Golden" : "She's Golden Retail"; }
   /* She's Golden: the app puts the card fee on the order itself. Retail: Clover adds it at payment. */
   function appAddsFee() { return cloverStore() === "golden"; }
+  /* Open Clover Go (5.0.8): a link the phone hands to the Clover Go app. Whether it works depends on the Clover Go version; the link can be changed in Settings. */
+  var CLOVER_GO_KEY = "clover-go-url", CLOVER_GO_DEFAULT = "clovergo://orders";
+  function cloverGoUrl() { return (lsGet(CLOVER_GO_KEY) || "").trim() || CLOVER_GO_DEFAULT; }
+  function cloverGoLink() {
+    var a = document.createElement("a");
+    a.href = cloverGoUrl(); a.textContent = "Open Clover Go"; a.className = "linkbtn"; a.style.marginLeft = "8px";
+    return a;
+  }
   function cloverEnabled() { return lsGet(CLOVER_ON_KEY) === "1" && !!getCfg(); }
   function cloverEligible() { var t = payType(); return t === "credit" || t === "debit"; }
   function cloverPayload() {
@@ -13935,8 +13948,10 @@ function findAlignmentPattern(matrix, alignmentPatternQuads, topRight, topLeft, 
           sendToSheet(rcNow);
           msg.className = "note";
           msg.textContent = "Sent to " + cloverStoreName(p.store) + " (Clover) and saved. Open it in Orders on the device and charge " + money.format(cents / 100) + feeNote + " (order " + (j.shortId || "") + ").";
+          try { msg.appendChild(cloverGoLink()); } catch (e) {}
           try { if (document.activeElement && document.activeElement.blur) document.activeElement.blur(); } catch (e) {}
           showSaved(rcNow, false, cashNow);
+          try { var cg = cloverGoLink(); cg.style.display = "block"; cg.style.margin = "10px 0 0"; $("sp-detail").appendChild(cg); } catch (e) {}
           clearSale(true);
         }
       } else {
@@ -13955,6 +13970,9 @@ function findAlignmentPattern(matrix, alignmentPatternQuads, topRight, topLeft, 
   $("cl-name").value = lsGet(CLOVER_NAME_KEY) || "";
   $("cl-on").checked = lsGet(CLOVER_ON_KEY) === "1";
   $("cl-store").value = cloverStore();
+  $("cl-go").value = lsGet(CLOVER_GO_KEY) || "";
+  $("cl-go").addEventListener("input", function () { lsSet(CLOVER_GO_KEY, $("cl-go").value.trim()); });
+  $("cl-go-test").addEventListener("click", function () { window.location.href = cloverGoUrl(); });
   $("cl-store").addEventListener("change", function () { lsSet(CLOVER_STORE_KEY, $("cl-store").value); calcA(); });
   $("cl-name").addEventListener("input", function () { lsSet(CLOVER_NAME_KEY, $("cl-name").value.trim()); updateCtx(); });
   $("cl-on").addEventListener("change", function () { lsSet(CLOVER_ON_KEY, $("cl-on").checked ? "1" : "0"); calcA(); });
